@@ -3,4 +3,4 @@
 <br/>
 
 👉Architecture of the API<br/>
-<img src="readmeimages/serverless.png" height=500 width=300>
+<img src="readmeimages/serverless.png" height=500 width=1000>
