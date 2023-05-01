@@ -1,0 +1,41 @@
+ open ~/.aws
+ cd notes
+ npx serverless create --template aws-nodejs
+ serverless create -t aws-nodejs
+ npm init
+ touch .gitignore
+
+ https://www.serverless.com/plugins/serverless-plugin-typescript
+
+ npm i @types/aws-lambda
+
+
+serverless deploy
+serverless deploy -f createAuction -v
+
+serverless logs -f createAuction
+serverless logs -f getAuctions
+
+// serverless deploy function --function getAuctions
+// serverless logs -f getAuctions -t
+
+
+
+
+"indentRainbow.includedLanguages": ["python", "yaml", "yml", "nim", "nims"] 
+
+serverless deploy --stage prod
+
+npm i --save-dev serverless-iam-roles-per-function
+
+serverless logs -f getAllNotes
+serverless logs -f authorizer
+serverless logs -f createNote
+serverless logs -f deleteNote
+serverless logs -f updateNote
+
+serverless logs -f putEvents
+serverless logs -f checkInventory
+serverless logs -f sqsWorker
+
+serverless package --package my-artifact --stage dev

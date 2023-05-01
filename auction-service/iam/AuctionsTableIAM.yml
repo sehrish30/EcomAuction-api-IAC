@@ -1,0 +1,26 @@
+AuctionsTableCreateAuctionIAM:
+        Effect: Allow
+        Action:
+          - dynamodb:PutItem
+        Resource: 
+          - ${self:custom.AuctionsTable.arn}
+AuctionsTableGetAuctionsIAM:
+        Effect: Allow
+        Action:
+          - dynamodb:QueryItem
+        Resource: 
+          - ${self:custom.AuctionsTable.arn}
+
+AuctionsTableGetAuctionIAM:
+        Effect: Allow
+        Action:
+          - dynamodb:GetItem
+        Resource: 
+          - ${self:custom.AuctionsTable.arn}
+
+AuctionsTableUpdateAuctionIAM:
+        Effect: Allow
+        Action:
+          - dynamodb:UpdateItem
+        Resource: 
+          - ${self:custom.AuctionsTable.arn}
