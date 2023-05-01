@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.321.1",
+    "@aws-sdk/client-sqs": "^3.321.1",
     "@aws-sdk/lib-dynamodb": "^3.321.1",
     "@middy/core": "^4.4.0",
     "@middy/http-cors": "^4.4.0",

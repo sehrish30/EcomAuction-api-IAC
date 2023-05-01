@@ -4,12 +4,14 @@ AuctionsTableCreateAuctionIAM:
           - dynamodb:PutItem
         Resource: 
           - ${self:custom.AuctionsTable.arn}
+
 AuctionsTableGetAuctionsIAM:
         Effect: Allow
         Action:
-          - dynamodb:QueryItem
+          - dynamodb:Query
         Resource: 
           - ${self:custom.AuctionsTable.arn}
+          - !Join ['/', [ '${self:custom.AuctionsTable.arn}', 'index', 'StatusAndEndDate' ]]
 
 AuctionsTableGetAuctionIAM:
         Effect: Allow
@@ -24,3 +26,17 @@ AuctionsTableUpdateAuctionIAM:
           - dynamodb:UpdateItem
         Resource: 
           - ${self:custom.AuctionsTable.arn}
+          
+AuctionsTableProcessAuctionsIAM:
+        Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: 
+          - ${self:custom.AuctionsTable.arn}
+          # global secondary index are sort of like virtual table of their own
+          # so they also have their own resource arn
+          # with this intrinsice function we will end up with something like this 
+          # ${self:custom.AuctionsTable.arn}/index/StatusAndEndDate
+          - !Join ['/', [ '${self:custom.AuctionsTable.arn}', 'index', 'StatusAndEndDate' ]]
+            
+         
