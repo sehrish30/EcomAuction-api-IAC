@@ -13,6 +13,7 @@ const schema = {
       required: ["status"],
     },
   },
+  // array of required properties in our schema that besically must be defined
   required: ["queryStringParameters"],
 };
 

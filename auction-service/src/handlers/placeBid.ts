@@ -3,10 +3,7 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { APIGatewayEvent, Context } from "aws-lambda";
 import validator from "@middy/validator";
 import { transpileSchema } from "@middy/validator/transpile";
-import {
-    DynamoDBDocumentClient,
-    UpdateCommand
-  } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 
 import placeBidSchema from "../lib/schemas/placeBidSchema";
 import { getAuctionById } from "./getAuction";
@@ -21,47 +18,48 @@ const ddbDocClient = DynamoDBDocumentClient.from(client);
 
 async function placeBid(event: APIGatewayEvent, ctx: Context) {
   const { id } = event.pathParameters as { id: string };
-  const { amount } = event.body as unknown as {amount: number};
+  const { amount } = event.body as unknown as { amount: number };
   const { email } = event.requestContext.authorizer as { email: string };
 
-  // validate placing a bid
+  // if bid exists then place auction else will throw error
   const auction = await getAuctionById(id);
+
   // Bid identitly validation
-  if (email === auction?.seller) {
+  if (email === auction?.Seller) {
     throw new createError.Forbidden(`You cannot bid your own auctions`);
   }
 
   // avoid double bidding
-  if (email === auction?.highestBidBidder) {
+  if (email === auction?.HighestBidAmount) {
     throw new createError.Forbidden(`You are already the highest bidder`);
   }
 
-  // Auction Status validation
-  if (auction.status !== "OPEN") {
+  // Only place bid for open auctions
+  if (auction.Status !== "OPEN") {
     throw new createError.Forbidden("You cannot bid on closed auctions");
   }
 
   // Bid amount validation
-  if (auction?.highestBidAmount && amount <= +auction?.highestBidAmount) {
+  if (auction?.HighestBidAmount && amount <= +auction?.HighestBidAmount) {
     throw new createError.Forbidden(
-      `You bid must be higher than ${auction.highestBidAmount}`
+      `You bid must be higher than ${auction.HighestBidAmount}`
     );
   }
 
   const params = {
     TableName: process.env.AUCTIONS_TABLE_NAME,
     ExpressionAttributeNames: {
-      "#GAM": "highestBidAmount",
-      "#HBB": "highestBidBidder",
+      "#HBA": "HighestBidAmount",
+      "#HBB": "HighestBidBidder",
     },
     ExpressionAttributeValues: {
       ":amount": amount,
       ":bidder": email,
     },
     Key: {
-      id,
+      Id: id,
     },
-    UpdateExpression: "SET #GAM = :amount, #HBB = :bidder",
+    UpdateExpression: "SET #HBA = :amount, #HBB = :bidder",
     // item we have just updated
     ReturnValues: "ALL_NEW",
   };

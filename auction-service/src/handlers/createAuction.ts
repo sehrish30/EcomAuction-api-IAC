@@ -28,6 +28,10 @@ const createAuction = async (event: APIGatewayEvent, ctx: Context) => {
   const { title } = event.body as unknown as { title: string };
 
   const now = new Date();
+  const endDate = new Date();
+
+  // close auction after 24 hour
+  endDate.setHours(now.getHours() + 24);
 
   const auction = {
     Item: {
@@ -35,12 +39,13 @@ const createAuction = async (event: APIGatewayEvent, ctx: Context) => {
       Title: title,
       Status: "OPEN",
       CreatedAt: now.toISOString(),
-      highestBidAmount: 0,
+      HighestBidAmount: 0,
+      EndingAt: endDate.toISOString(),
     },
     TableName: process.env.AUCTIONS_TABLE_NAME,
   };
 
-  console.log({auction})
+  console.log({ auction });
 
   const command = new PutCommand(auction);
   let response;
@@ -60,7 +65,6 @@ export const handler = commonMiddleware(createAuction).use(
     eventSchema: transpileSchema(createAuctionSchema),
   })
 );
-
 
 /**
  * serverless logs -f createAuction

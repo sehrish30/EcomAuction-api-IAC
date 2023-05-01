@@ -69,6 +69,10 @@ functions:
       - http:
           method: get
           path: /auctions
+          # arn of the lambda authorizer
+          # our auth service is in the same account as this service
+          # else we would assume a role
+          authorizer: 
     iamRoleStatements:
       - ${file(./iam/AuctionsTableIAM.yml):AuctionsTableGetAuctionsIAM}
   getAuction:
@@ -83,11 +87,17 @@ functions:
     handler: src/handlers/placeBid.handler
     events:
       - http:
-          method: PATCH
+          method: PUT
           path: auction/{id}/bid
+          authorizer: 
     iamRoleStatements:
       - ${file(./iam/AuctionsTableIAM.yml):AuctionsTableUpdateAuctionIAM}
-          
+  processAuctions:
+    handler: src/handlers/processAuctions.handler
+    events:
+      - schedule: rate(60 minutes)
+    iamRoleStatements:
+      - ${file(./iam/AuctionsTableIAM.yml):AuctionsTableProcessAuctionsIAM}
 
   # - websocket: $connect
   # - s3: ${env:BUCKET}
@@ -124,6 +134,8 @@ resources:
     AuctionsTable: ${file(./resources/AuctionsTable.yml):AuctionsTable}
 
 custom:
+ #psudeo parameters = #{AWS::Region}:#{AWS::AccountId}
+#  authorizer: 
   bundle:
     linting: true
   AuctionsTable:

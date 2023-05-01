@@ -1,0 +1,65 @@
+
+
+service: authentication-service
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-2
+  stage: ${opt:stage, 'dev'}
+  environment:
+    # takes the content of secret.pem and put it in environment variable
+    AUTH0_PUBLIC_KEY: ${file(secret.pem)}
+
+plugins:
+  - serverless-plugin-typescript
+
+functions:
+  auth: 
+    handler: src/handlers/auth.handler
+    # cors: true
+  publicEndpoint:
+    handler: src/handlers/public.handler
+    events:
+      - http:
+          path: public
+          method: POST
+          # cors: true
+  privateEndpoint:
+    handler: src/handlers/private.handler
+    events:
+      - http:
+          path: private
+          method: POST
+          # use auth.handler auth function to authorize itself
+          authorizer: auth
+          # cors: true
+
+resources:
+  # these resources are needed in order to properly handle 401 and unauthrizued 403 cases
+  Resources:
+    # This response is needed for custom authorizer failures cors support ¯\_(ツ)_/¯
+    GatewayResponse:
+      Type: "AWS::ApiGateway::GatewayResponse"
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: EXPIRED_TOKEN
+        RestApiId:
+          Ref: "ApiGatewayRestApi"
+        StatusCode: "401"
+    AuthFailureGatewayResponse:
+      Type: "AWS::ApiGateway::GatewayResponse"
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: UNAUTHORIZED
+        RestApiId:
+          Ref: "ApiGatewayRestApi"
+        StatusCode: "401"
+custom:
+  bundle:
+    linting: true

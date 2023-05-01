@@ -19,6 +19,37 @@ serverless logs -f getAuctions
 // serverless deploy function --function getAuctions
 // serverless logs -f getAuctions -t
 
+// serverless logs -f processAuctions -t
+// serverless logs -f processAuctions --startTime 1m
+// serverless logs -f processAuctions --startTime 1h
+// serverless invoke -f processAuctions -l
+// with -l u will get logs of invoked function
+// createAuction
+// serverless logs -f createAuction -t
+// serverless deploy function --function processAuctions
+
+curl --location --request POST 'https://dev-mtzrfmcr246svjn6.us.auth0.com/oauth/token' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--data-urlencode 'client_id=ky4C6XXzXQhXHNnnPh9iDJqo6QW59zPV' \
+--data-urlencode 'username=sehrishwaheed98@gmail.com' \
+--data-urlencode 'password=testing1234!' \
+--data-urlencode 'grant_type=password' \
+--data-urlencode 'scope=openid'
+
+{
+  "nickname": "sehrishwaheed98",
+  "name": "sehrishwaheed98@gmail.com",
+  "picture": "https://s.gravatar.com/avatar/f2ec43d44b79520fb880f0b00b1f62b9?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fse.png",
+  "updated_at": "2023-05-01T14:25:06.173Z",
+  "email": "sehrishwaheed98@gmail.com",
+  "email_verified": true,
+  "iss": "https://dev-mtzrfmcr246svjn6.us.auth0.com/",
+  "aud": "ky4C6XXzXQhXHNnnPh9iDJqo6QW59zPV",
+  "iat": 1682951106,
+  "exp": 1682987106,
+  "sub": "auth0|641e11cff939365a568f0faf"
+}
+
 
 
 

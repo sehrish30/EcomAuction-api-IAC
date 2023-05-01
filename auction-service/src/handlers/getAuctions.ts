@@ -56,11 +56,11 @@ async function getAuctions(event: APIGatewayEvent, context: Context) {
         ":status": status,
       },
       ExpressionAttributeNames: {
-        "#status": "status",
+        "#status": "Status",
       },
       KeyConditionExpression: "#status = :status",
       TableName: process.env.AUCTIONS_TABLE_NAME,
-      IndexName: "statusAndEndDate",
+      IndexName: "StatusAndEndDate",
     };
 
     const command = new QueryCommand(input);
@@ -68,7 +68,7 @@ async function getAuctions(event: APIGatewayEvent, context: Context) {
     auctions = response.Items;
   } catch (err) {
     console.error(err);
-    throw new createError.InternalServerError(err);
+    throw new createError.InternalServerError("Internal server error");
   }
   return {
     statusCode: 200,
@@ -82,10 +82,17 @@ export const handler = commonMiddleware(getAuctions).use(
     eventSchema: transpileSchema(getAuctionsSchema, {
       // @ts-ignore
       ajvOptions: {
+        // if queryStringParameters were not defined
+        // we will set default value as defined in the schema
         useDefaults: true,
+        // user can provide or skip query parameters wont throw an error and useDefaults property will use default value from schema
+        strict: false,
       },
-    }),
-    // if queryStringParameters were not defined
-    // we will set default value as defined in the schema
+    }),   
   })
 );
+
+/**
+ *  serverless deploy function --function getAuctions
+   serverless logs -f getAuctions --startTime 1h
+ */
