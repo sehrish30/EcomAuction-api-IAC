@@ -32,6 +32,7 @@ AuctionsTableProcessAuctionsIAM:
         Effect: Allow
         Action:
           - dynamodb:Query
+          - dynamodb:UpdateItem
         Resource: 
           - ${self:custom.AuctionsTable.arn}
           # global secondary index are sort of like virtual table of their own

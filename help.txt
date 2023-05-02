@@ -18,6 +18,10 @@ serverless deploy -f createAuction -v
 serverless logs -f createAuction
 serverless logs -f getAuctions
 
+Some ways to optimize AWS Lambda function performance include
+choosing the right memory allocation, limiting the number of 
+modules imported, minimizing network latency, and reducing the initial startup time.
+
 // serverless deploy function --function getAuctions
 // serverless logs -f getAuctions -t
 

@@ -15,10 +15,13 @@ provider:
   region: us-east-2
   environment:
     AUCTIONS_TABLE_NAME: ${self:custom.AuctionsTable.name}
+    MAIL_QUEUE_URL: ${self:custom.MailQueue.url}
 
 plugins:
   - serverless-plugin-typescript
   - serverless-iam-roles-per-function
+
+
 
 # you can add statements to the Lambda function's IAM Role here
 #  iam:
@@ -97,9 +100,11 @@ functions:
   processAuctions:
     handler: src/handlers/processAuctions.handler
     events:
-      - schedule: rate(60 minutes)
+      - schedule: rate(300 minutes)
     iamRoleStatements:
       - ${file(./iam/AuctionsTableIAM.yml):AuctionsTableProcessAuctionsIAM}
+      # allow lambda functions to send messages to this queue
+      - ${file(./iam/MailQueueIAM.yml):MailQueueIAM}
 
   # - websocket: $connect
   # - s3: ${env:BUCKET}
@@ -144,10 +149,13 @@ custom:
   AuctionsTable:
     name: !Ref AuctionsTable
     arn: !GetAtt AuctionsTable.Arn
-#  Outputs:
-#     NewOutput:
-#       Description: "Description for the output"
-#       Value: "Some output value"
+  # also put it in environment variable because will be accessed by lambda
+  MailQueue:
+    # access cloudformation outputs from notification service
+    arn: ${cf:notifications-service-${self:provider.stage}.MailQueueArn}
+    url: ${cf:notifications-service-${self:provider.stage}.MailQueueUrl}
+
+
 
 # custom variable self, refers to this serverless.yml file
 # and then we can select object from upper scope of this file provider
