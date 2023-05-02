@@ -1,8 +1,8 @@
 {
-  "name": "auction-serverless-api",
+  "name": "notifications-service",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "handler.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,11 +10,11 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/aws-lambda": "^8.10.114",
     "serverless-plugin-typescript": "^2.1.4",
-    "typescript": "^5.0.4",
-    "@types/aws-lambda": "^8.10.114"
+    "typescript": "^5.0.4"
   },
   "dependencies": {
-    
+    "@aws-sdk/client-ses": "^3.321.1"
   }
 }

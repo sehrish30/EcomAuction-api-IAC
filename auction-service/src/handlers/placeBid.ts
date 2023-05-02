@@ -29,7 +29,7 @@ async function placeBid(event: APIGatewayEvent, ctx: Context) {
     throw new createError.Forbidden(`You cannot bid your own auctions`);
   }
 
-  // avoid double bidding
+  // avoid double bidding when already you have highest bid
   if (email === auction?.HighestBidAmount) {
     throw new createError.Forbidden(`You are already the highest bidder`);
   }
@@ -87,6 +87,7 @@ export const handler = commonMiddleware(placeBid).use(
 // serverless logs -f placeBid --startTime 1h
 
 /**
+ * event.requestContext.authorizer =
  * {
   "nickname": "sehrishwaheed98",
   "name": "sehrishwaheed98@gmail.com",

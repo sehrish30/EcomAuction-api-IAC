@@ -1,10 +1,12 @@
  open ~/.aws
+ mkdir notes
  cd notes
  npx serverless create --template aws-nodejs
  serverless create -t aws-nodejs
- npm init
+ npm init -y
  touch .gitignore
 
+npm i --save-dev @types/aws-lambda
  https://www.serverless.com/plugins/serverless-plugin-typescript
 
  npm i @types/aws-lambda

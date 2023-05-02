@@ -26,6 +26,8 @@ const ddbDocClient = DynamoDBDocumentClient.from(client);
 const createAuction = async (event: APIGatewayEvent, ctx: Context) => {
   // body is automaticall parsed by middy middleware
   const { title } = event.body as unknown as { title: string };
+  console.log("BASIT",event.requestContext.authorizer)
+  const {email} = event.requestContext.authorizer as {email: string}
 
   const now = new Date();
   const endDate = new Date();
@@ -41,11 +43,11 @@ const createAuction = async (event: APIGatewayEvent, ctx: Context) => {
       CreatedAt: now.toISOString(),
       HighestBidAmount: 0,
       EndingAt: endDate.toISOString(),
+      Seller: email
     },
     TableName: process.env.AUCTIONS_TABLE_NAME,
   };
 
-  console.log({ auction });
 
   const command = new PutCommand(auction);
   let response;
