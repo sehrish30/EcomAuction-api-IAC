@@ -24,6 +24,7 @@ AuctionsTableUpdateAuctionIAM:
         Effect: Allow
         Action:
           - dynamodb:UpdateItem
+          - dynamodb:GetItem
         Resource: 
           - ${self:custom.AuctionsTable.arn}
           

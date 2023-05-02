@@ -10,8 +10,10 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/aws-lambda": "^8.10.114",
     "@types/http-errors": "^2.0.1",
     "@types/uuid": "^9.0.1",
+    "aws-lambda": "^1.0.7",
     "serverless-iam-roles-per-function": "^3.2.0",
     "serverless-plugin-typescript": "^2.1.4",
     "typescript": "^5.0.4"

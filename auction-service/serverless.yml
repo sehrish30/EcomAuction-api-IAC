@@ -63,6 +63,7 @@ functions:
           path: /auction
           method: post
           cors: true
+          authorizer: ${self:custom.authorizer}
   getAuctions:
     handler: src/handlers/getAuctions.handler
     events:
@@ -72,7 +73,7 @@ functions:
           # arn of the lambda authorizer
           # our auth service is in the same account as this service
           # else we would assume a role
-          authorizer: 
+          authorizer: ${self:custom.authorizer}
     iamRoleStatements:
       - ${file(./iam/AuctionsTableIAM.yml):AuctionsTableGetAuctionsIAM}
   getAuction:
@@ -81,15 +82,16 @@ functions:
       - http:
           method: get
           path: /auction/${id}
+          authorizer: ${self:custom.authorizer}
     iamRoleStatements:
       - ${file(./iam/AuctionsTableIAM.yml):AuctionsTableGetAuctionIAM}
   placeBid:
     handler: src/handlers/placeBid.handler
     events:
       - http:
-          method: PUT
+          method: PATCH
           path: auction/{id}/bid
-          authorizer: 
+          authorizer: ${self:custom.authorizer}
     iamRoleStatements:
       - ${file(./iam/AuctionsTableIAM.yml):AuctionsTableUpdateAuctionIAM}
   processAuctions:
@@ -134,8 +136,9 @@ resources:
     AuctionsTable: ${file(./resources/AuctionsTable.yml):AuctionsTable}
 
 custom:
- #psudeo parameters = #{AWS::Region}:#{AWS::AccountId}
-#  authorizer: 
+  #psudeo parameters = #{AWS::Region}:#{AWS::AccountId}
+  # to authorize in another lambda before hitting this route
+  authorizer: arn:aws:lambda:${self:provider.region}:${aws:accountId}:function:authentication-service-${self:provider.stage}-auth
   bundle:
     linting: true
   AuctionsTable:
