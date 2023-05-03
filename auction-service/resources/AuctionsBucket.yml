@@ -18,10 +18,6 @@ AuctionsBucket:
     # i want bucket to be read only for public
     # so anyone can view pictures for our auctions
 
-# wasnot able to set this permission so used this hack created the bucket
-# then turning off Block all public access
-# then serverless deploy
-# then turning it on back
 AuctionsBucketPolicy:
   Type: AWS::S3::BucketPolicy
   DependsOn: AuctionsBucket

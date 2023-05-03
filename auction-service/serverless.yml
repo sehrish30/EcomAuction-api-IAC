@@ -103,6 +103,8 @@ resources:
     AuctionsTable: ${file(./resources/AuctionsTable.yml):AuctionsTable}
     AuctionsBucket: ${file(./resources/AuctionsBucket.yml):AuctionsBucket}
     AuctionsBucketPolicy: ${file(./resources/AuctionsBucket.yml):AuctionsBucketPolicy}
+    DownloadPdfUrl: ${file(./resources/DownloadPdfUrl.yml):DownloadPdfUrl}
+    PermissionForURLInvoke: ${file(./resources/DownloadPdfUrl.yml):PermissionForURLInvoke}
 
 custom:
   #psudeo parameters = #{AWS::Region}:#{AWS::AccountId}
