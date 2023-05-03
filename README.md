@@ -9,4 +9,4 @@
 <img src="readmeimages/SQS.png" height=300 width=1000>
 
 👉Architecture of Streaming PDF<br/>
-<img src="readmeimages/getReceipt.png" height=500 width=1000>
+<img src="readmeimages/getReceipt.png" height=400 width=1000>
