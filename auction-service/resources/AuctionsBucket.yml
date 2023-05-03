@@ -1,0 +1,46 @@
+AuctionsBucket:
+  Type: AWS::S3::Bucket
+  Properties:
+    BucketName: ${self:custom.AuctionsBucket.name}
+    # by default objects stay forever
+    # until programeticlaly or manually deleted
+    # this can increase cost
+    # so you need to set expiry for objects in development
+    LifecycleConfiguration:
+      Rules:
+        # call this id whatever u want
+        - Id: ExpirePictures
+          # to enable this rule
+          Status: Enabled
+          ExpirationInDays: 2
+          # ExpirationDate: Timestamp
+    # by default buckets will be blocked for public
+    # i want bucket to be read only for public
+    # so anyone can view pictures for our auctions
+
+# wasnot able to set this permission so used this hack created the bucket
+# then turning off Block all public access
+# then serverless deploy
+# then turning it on back
+AuctionsBucketPolicy:
+  Type: AWS::S3::BucketPolicy
+  DependsOn: AuctionsBucket
+  Properties:
+    Bucket: !Ref AuctionsBucket
+    PolicyDocument:
+      Version: "2012-10-17"
+      Statement:
+        - Sid: PublicRead
+          Effect: Allow
+          Principal: "*"
+          Action:
+            - s3:GetObject
+            # * for any subfolders we might have in our bucket
+          # Resource: arn:aws:s3:::${self:custom.AuctionsBucket.name}/*
+          # !Join ['', ['arn:aws:s3:::', ${self:custom.AuctionsBucket.name}, '/*']]
+          Resource:
+            Fn::Join:
+              - ""
+              - - "arn:aws:s3:::"
+                - ${self:custom.AuctionsBucket.name}
+                - "/*"
