@@ -3,7 +3,7 @@ import middy from "@middy/core";
 import httpEventNormalizer from "@middy/http-event-normalizer";
 import httpJSONBodyParser from "@middy/http-json-body-parser";
 // each lambda defines allowed origins in each lambda functions
-import cors from "@middy/http-cors";
+import httpCors from "@middy/http-cors";
 
 export default (handler: any) =>
   middy(handler).use([
@@ -17,5 +17,13 @@ export default (handler: any) =>
     httpErrorHandler(),
     // accept requests from all origins in the web not recommended in the frontend
     // specify specific urls both in serverless.yml and middy middleware
-    cors(),
+    httpCors(),
+
+    /**
+     * httpCors({
+      origin: 'https://example.com',
+      headers: 'Content-Type,Authorization,X-Api-Key',
+      credientials: true
+      })
+     */
   ]);
