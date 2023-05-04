@@ -1,18 +1,18 @@
 # this resource to enable function url of the lambda function
-DownloadPdfUrl:
+OrderReceiptDownloadPdfUrl:
   Type: AWS::Lambda::Url
   Properties:
     AuthType: NONE
     # to stream response of function
     InvokeMode: RESPONSE_STREAM
-    # function logical name get it from serverless package
-    TargetFunctionArn: !Ref OrderReceiptLambdaFunction
+    # function logical name get it from serverless package its normally capital first letter and LambdaFunction comes at the end
+    TargetFunctionArn: !Ref OrderReceiptPDFLambdaFunction
 
 # permission so lambda function url is publicly avaiable
 PermissionForURLInvoke:
   Type: AWS::Lambda::Permission
   Properties:
-    FunctionName: !Ref OrderReceiptLambdaFunction
+    FunctionName: !Ref OrderReceiptPDFLambdaFunction
     # none so public can access it
     FunctionUrlAuthType: "NONE"
     Action: lambda:InvokeFunctionUrl

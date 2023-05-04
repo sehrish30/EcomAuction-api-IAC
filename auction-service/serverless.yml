@@ -1,7 +1,5 @@
 service: auction-service
 
-# You can pin your service to only deploy with a specific Serverless version
-# Check out our docs for more details
 frameworkVersion: "3"
 
 # Configuration validation
@@ -11,6 +9,7 @@ provider:
   name: aws
   runtime: nodejs18.x
   memorySize: 256
+  timeout: 10
   stage: ${opt:stage, 'dev'}
   region: us-east-2
   environment:
@@ -92,19 +91,33 @@ functions:
     iamRoleStatements:
       - ${file(./iam/AuctionsTableIAM.yml):AuctionsTableUpdateAuctionIAM}
       - ${file(./iam/AuctionsBucketIAM.yml):AuctionsBucketIAM}
-  orderReceipt:
-    handler: src/handlers/orderReceipt.handler
+  orderReceiptPDF:
+    handler: src/handlers/orderReceiptPDF.handler
+    # deploy a function with a URL
     # will create a public url
+    # url: true # I am not adding this because I am already making it URL from this resource "OrderReceiptDownloadPdfUrl"
     # can also configure cors here
-    url: true
+    # The domain will be unique to the Lambda function, and any URI path will invoke the function handler
+    # events:
+    #   - cloudFront:
+    #       eventType: viewer-response
+    #       origin: ${self:custom.orderReceiptPDFLambda.url}
+    #       # lambda function urls are only accessible by https only
+    #       behavior:
+    #         ViewerProtocolPolicy: https-only
+    #       cachePolicies:
+    #         myCachePolicy:
+    #           MinTTL: 0
+    #           MaxTTL: 31536000
+    #           DefaultTTL: 86400
 
 resources:
   Resources:
     AuctionsTable: ${file(./resources/AuctionsTable.yml):AuctionsTable}
     AuctionsBucket: ${file(./resources/AuctionsBucket.yml):AuctionsBucket}
     AuctionsBucketPolicy: ${file(./resources/AuctionsBucket.yml):AuctionsBucketPolicy}
-    DownloadPdfUrl: ${file(./resources/DownloadPdfUrl.yml):DownloadPdfUrl}
-    PermissionForURLInvoke: ${file(./resources/DownloadPdfUrl.yml):PermissionForURLInvoke}
+    OrderReceiptDownloadPdfUrl: ${file(./resources/OrderReceiptDownloadPdfUrl.yml):OrderReceiptDownloadPdfUrl}
+    PermissionForURLInvoke: ${file(./resources/OrderReceiptDownloadPdfUrl.yml):PermissionForURLInvoke}
 
 custom:
   #psudeo parameters = #{AWS::Region}:#{AWS::AccountId}
@@ -122,6 +135,9 @@ custom:
     url: ${cf:notifications-service-${self:provider.stage}.MailQueueUrl}
   AuctionsBucket:
     name: auctions-bucket-sdsjj32kjds-${self:provider.stage}
+  orderReceiptPDFLambda:
+    url: !GetAtt OrderReceiptPDFLambdaFunction.FunctionUrl
+      #  Fn::GetAtt: orderReceiptPDFUrl.FunctionUrl
 # custom variable self, refers to this serverless.yml file
 # and then we can select object from upper scope of this file provider
 # self:provider.stage

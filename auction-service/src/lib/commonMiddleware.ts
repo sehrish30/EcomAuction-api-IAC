@@ -2,6 +2,7 @@ import httpErrorHandler from "@middy/http-error-handler";
 import middy from "@middy/core";
 import httpEventNormalizer from "@middy/http-event-normalizer";
 import httpJSONBodyParser from "@middy/http-json-body-parser";
+
 // each lambda defines allowed origins in each lambda functions
 import httpCors from "@middy/http-cors";
 
@@ -27,3 +28,7 @@ export default (handler: any) =>
       })
      */
   ]);
+
+  export const lambdaFunctionUrlsMiddleware = (handler: any) => middy(handler).use([
+    httpEventNormalizer()
+  ])
