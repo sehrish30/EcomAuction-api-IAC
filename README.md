@@ -10,3 +10,6 @@
 
 👉Architecture of Streaming Order Receipts<br/>
 <img src="readmeimages/getReceipt.png" height=400 width=1000>
+
+👉Architecture of Generating QR code for auction details<br/>
+<img src="readmeimages/qrcode.png" height=400 width=1000>

@@ -39,6 +39,8 @@ plugins:
 functions:
   orderReceiptPDF:
     handler: src/handlers/orderReceiptPDF.handler
+    url:
+      cors: true
     events:
       - cloudFront:
           eventType: viewer-response
