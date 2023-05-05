@@ -28,7 +28,3 @@ export default (handler: any) =>
       })
      */
   ]);
-
-  export const lambdaFunctionUrlsMiddleware = (handler: any) => middy(handler).use([
-    httpEventNormalizer()
-  ])
