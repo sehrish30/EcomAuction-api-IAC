@@ -1,0 +1,7 @@
+CloudFrontIAM:
+  Effect: Allow
+  Action:
+    - lambda:InvokeFunction
+  Resource: arn:aws:cloudfront::*
+
+

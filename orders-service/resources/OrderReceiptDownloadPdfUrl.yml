@@ -17,3 +17,6 @@ PermissionForURLInvoke:
     FunctionUrlAuthType: "NONE"
     Action: lambda:InvokeFunctionUrl
     Principal: "*"
+
+
+
