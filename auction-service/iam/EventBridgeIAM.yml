@@ -1,4 +1,5 @@
 EventBridgeIAM:
-  - Effect: Allow
-    Action: events.PutEvents
-    Resource: !GetAtt EventBridge.Arn
+  Effect: Allow
+  Action: events:PutEvents
+  Resource: !GetAtt AuctionsEventBridge.Arn
+
