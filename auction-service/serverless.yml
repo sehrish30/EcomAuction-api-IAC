@@ -17,14 +17,10 @@ provider:
     MAIL_QUEUE_URL: ${self:custom.MailQueue.url}
     AUCTIONS_BUCKET_NAME: ${self:custom.AuctionsBucket.name}
 
-iam:
-  role:
-    statements:
-      - ${file(./iam/EventBridgeIAM.yml):EventBridgeIAM}
-
 plugins:
   - serverless-plugin-typescript
   - serverless-iam-roles-per-function
+  - serverless-apigateway-service-proxy
 
 functions:
   createAuction:
@@ -97,27 +93,51 @@ functions:
       - ${file(./iam/AuctionsTableIAM.yml):AuctionsTableUpdateAuctionIAM}
       - ${file(./iam/AuctionsBucketIAM.yml):AuctionsBucketIAM}
 
-  generateQRCode:
-    handler: src/handlers/generateQRCode.handler
+  addQRCodeEvent:
+    handler: src/handlers/addQRCodeEvent.handler
     environment:
-     # same as self:custom.EventBus.value this will also return value which is event bus name
-      EventBusName: !Ref EventBus
+      # same as self:custom.EventBus.value this will also return value which is event bus name
+      EventBusName: !Ref AuctionsEventBridge
+      EventBridgeSource: ${self:custom.eventBridgeSource}
     events:
       - http:
           path: /qr-code
           method: post
+    iamRoleStatements:
+      - ${file(./iam/EventBridgeIAM.yml):EventBridgeIAM}
+
+  # lambda function that will process messages in sqs queue
+  processQRCodeEvents:
+    handler: src/handlers/processQRCodeEvents.handler
+    events:
+      - sqs:
+          arn: !GetAtt TargetSQS.Arn
+          batchSize: 10
+          # maximumConcurrency means maximum lambda invocations in parallel
+          maximumConcurrency: 5
+          # return failures messages
+          functionResponseType: ReportBatchItemFailures
+      # this lambda functions is triggered by event source mapping
+      # which is a managed Lambda service which will pull the messages from sqs queue
+      # and invoke lambda function
+      # so we have to set event source mapping with sqs queue
 
 resources:
   Resources:
     AuctionsTable: ${file(./resources/AuctionsTable.yml):AuctionsTable}
     AuctionsBucket: ${file(./resources/AuctionsBucket.yml):AuctionsBucket}
     AuctionsBucketPolicy: ${file(./resources/AuctionsBucket.yml):AuctionsBucketPolicy}
-    EventBridge: ${file(./resources/EventBridge.yml):EventBridge}
+    AuctionsEventBridge: ${file(./resources/EventBridge.yml):AuctionsEventBridge}
+    TargetSQS: ${file(./resources/EventBridge.yml):TargetSQS}
+    TargetSQSRule: ${file(./resources/EventBridge.yml):TargetSQSRule}
+    TargetSQSPolicy: ${file(./resources/EventBridge.yml):TargetSQSPolicy}
+    TargetDLQ: ${file(./resources/EventBridge.yml):TargetDLQ}
 
 custom:
   #psudeo parameters = #{AWS::Region}:#{AWS::AccountId}
   # to authorize in another lambda before hitting this route
   authorizer: arn:aws:lambda:${self:provider.region}:${aws:accountId}:function:authentication-service-${self:provider.stage}-auth
+  eventBridgeSource: "auction-service"
   bundle:
     linting: true
   AuctionsTable:
@@ -131,7 +151,17 @@ custom:
   AuctionsBucket:
     name: auctions-bucket-sdsjj32kjds-${self:provider.stage}
   EventBus:
-    value: !Ref EventBridge
+    value: !Ref AuctionsEventBridge
+  # service proxy integration
+  apiGatewayServiceProxies:
+    # should see another endpoint in api gateway "/eventbridge"
+    - eventbridge: # source and detailType are hardcoded; detail defaults to POST body
+        path: /qr-code-event
+        method: post
+        source: ${self:custom.eventBridgeSource}
+        detailType: "auctionDetail"
+        eventBusName: { Ref: AuctionsEventBridge }
+        cors: true
 # custom variable self, refers to this serverless.yml file
 # and then we can select object from upper scope of this file provider
 # self:provider.stage
@@ -139,3 +169,11 @@ custom:
 # intrinsic functions
 # Ref when u pass logocal id of the resource it returns resource name
 # !GetAtt to return Arn
+
+# whenever we connect api gateway to anything other than lambda function
+
+# we will have to do vtl template behind the scenes
+# and we can simply use that plugin to pass the data
+# that we wanted to pass down to the event bridge
+# Service APIGatway Service Proxy
+# https://www.serverless.com/plugins/serverless-apigateway-service-proxy#eventbridge
