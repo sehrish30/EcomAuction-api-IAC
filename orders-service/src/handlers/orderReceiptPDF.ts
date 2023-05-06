@@ -37,8 +37,11 @@ const orderReceiptPDF = async (
     // depends on ur business requirement
     fileName = "404.jpeg";
   }
-
-  console.log({bucketName: process.env.AUCTIONS_BUCKET_NAME, region: process.env.REGION});
+  console.log({ basit: process.env.TRY });
+  console.log({
+    bucketName: process.env.AUCTIONS_BUCKET_NAME,
+    region: process.env.REGION,
+  });
 
   const s3Command = {
     Bucket: process.env.AUCTIONS_BUCKET_NAME,
@@ -85,4 +88,5 @@ export const handler = awslambda.streamifyResponse(orderReceiptPDF);
 /**
  * serverless deploy function --function orderReceiptPDF
  * serverless logs -f orderReceiptPDF
+ * serverless invoke -f orderReceiptPDF -l
  */

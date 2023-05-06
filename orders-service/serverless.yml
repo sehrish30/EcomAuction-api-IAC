@@ -11,26 +11,10 @@ provider:
     role:
       statements:
         - ${file(./iam/CloudFrontIAM.yml):CloudFrontIAM}
-  cloudFront:
-    cachePolicies:
-      urlCachePolicy:
-        MinTTL: 0
-        MaxTTL: 31526000
-        DefaultTTL: 86400
-        # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudfront-cachepolicy-parametersincachekeyandforwardedtoorigin.html
-        ParametersInCacheKeyAndForwardedToOrigin:
-          QueryStringsConfig:
-            QueryStringBehavior: all # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudfront-cachepolicy-querystringsconfig.html
-            # QueryStrings: fileName
-          CookiesConfig:
-            CookieBehavior: none
-          EnableAcceptEncodingGzip: false
-          HeadersConfig:
-            HeaderBehavior: none
+
   environment:
     REGION: us-east-2 # bucket is in us-east-2
     AUCTIONS_BUCKET_NAME: ${self:custom.AuctionsBucket.name}
-
 
 plugins:
   - serverless-plugin-typescript
@@ -39,49 +23,17 @@ plugins:
 functions:
   orderReceiptPDF:
     handler: src/handlers/orderReceiptPDF.handler
-    url:
-      cors: true
-    events:
-      - cloudFront:
-          eventType: viewer-response
-          origin: 
-           DomainName: lahwcmns2rhqg57c2zytkwc72q0wwcng.lambda-url.${self:provider.region}.on.aws
-           CustomOriginConfig:
-              OriginProtocolPolicy: match-viewer
-          behavior:
-            ViewerProtocolPolicy: allow-all
-          cachePolicy:
-            name: urlCachePolicy
-    # deploy a function with a URL
-    # will create a public url
     # url:
     #   cors: true # I am not adding this because I am already making it URL from this resource "OrderReceiptDownloadPdfUrl"
-    # can also configure cors here
-    # The domain will be unique to the Lambda function, and any URI path will invoke the function handler
-    # Don't forget to manually remove your Lambda@Edge functions once the CloudFront distribution removal is successfully propagated!
-    # events:
-    #   - cloudFront: 
-    #       eventType: origin-response # before the response returned to the client # 3008MB memory and 30 seconds timeout for origin-request or origin-response
-    #       # CloudFront associated functions have to be deployed to the us-east-1 region.
-    #       # https://www.serverless.com/blog/lambda-at-edge-support-added
-    #       # https://lahwcmns2rhqg57c2zytkwc72q0wwcng.lambda-url.${self:provider.region}.on.aws
-    #       # !GetAtt OrderReceiptPDFLambdaFunction.Url
-    #       origin: lahwcmns2rhqg57c2zytkwc72q0wwcng.lambda-url.${self:provider.region}.on.aws
-    #         # DomainName: lahwcmns2rhqg57c2zytkwc72q0wwcng.lambda-url.${self:provider.region}.on.aws
-    #         # CustomOriginConfig:
-    #         #   OriginProtocolPolicy: match-viewer
-    #       # lambda function urls are only accessible by https only
-    #       behavior:
-    #         ViewerProtocolPolicy: https-only
-    #       cachePolicy:
-    #         name: urlCachePolicy
 
 resources:
   Resources:
     OrderReceiptDownloadPdfUrl: ${file(./resources/OrderReceiptDownloadPdfUrl.yml):OrderReceiptDownloadPdfUrl}
     PermissionForURLInvoke: ${file(./resources/OrderReceiptDownloadPdfUrl.yml):PermissionForURLInvoke}
-  
+    CloudFrontCachePolicy: ${file(./resources/CloudFront.yml):CloudFrontCachePolicy}
+    CloudFrontDistribution: ${file(./resources/CloudFront.yml):CloudFrontDistribution}
+
 custom:
   AuctionsBucket:
     name: auctions-bucket-sdsjj32kjds-${self:provider.stage}
-    
+

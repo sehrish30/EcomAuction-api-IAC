@@ -1,0 +1,33 @@
+EventBridge:
+  Type: AWS::Events::EventBus
+  Properties:
+    Name: AUCTION_EVENT_BUS
+
+TargetSQS:
+  Type: AWS::SQS::Queue
+  Properties:
+    QueueName: QR_MESSAGE_QUEUE
+
+# this rule will make sure only the events
+# that match this pattern will be forwarded to this sqs
+TargetSQSRule:
+  Type: AWS::Events::Rule
+  Properties:
+    EventBusName: !GetAtt EventBridge.Arn
+    Target:
+      - Arn: !GetAtt TargetSQS.Arn
+        Id: qr-event-bus-target-sqs-${self:provider.stage}
+
+# sls:stage
+# we need policy to allow event bridge to add message from eventQueue to sqs queue
+TargetSQSPolicy:
+  Type: AWS::SQS::QueuePolicy
+  Properties:
+    Queues:
+      - !Ref TargetSQS
+    PolicyDocument:
+      Statement:
+        - Action:
+            - "SQS:SendMessage"
+          Effect: "Allow"
+          Resource: !GetAtt TargetSQS.Arn

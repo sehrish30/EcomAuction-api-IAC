@@ -1,4 +1,4 @@
-# this resource to enable function url of the lambda function
+# this resource creates a function URL and enable function url of the lambda function
 OrderReceiptDownloadPdfUrl:
   Type: AWS::Lambda::Url
   Properties:
@@ -17,6 +17,3 @@ PermissionForURLInvoke:
     FunctionUrlAuthType: "NONE"
     Action: lambda:InvokeFunctionUrl
     Principal: "*"
-
-
-

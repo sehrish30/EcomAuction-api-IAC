@@ -1,0 +1,48 @@
+# cache policy
+CloudFrontCachePolicy:
+  Type: AWS::CloudFront::CachePolicy
+  Properties:
+    CachePolicyConfig:
+      DefaultTTL: 86400
+      MaxTTL: 31536000
+      MinTTL: 60
+      Name: orderpdf
+      ParametersInCacheKeyAndForwardedToOrigin:
+        CookiesConfig:
+          CookieBehavior: none
+        EnableAcceptEncodingBrotli: true
+        EnableAcceptEncodingGzip: true
+        HeadersConfig:
+          HeaderBehavior: whitelist # Only the HTTP headers that are listed in the Headers type are included in the cache key and in requests that CloudFront sends to the origin.
+          Headers:
+            - Authorization
+        QueryStringsConfig:
+          QueryStringBehavior: all
+
+# cloudfront distribution
+CloudFrontDistribution:
+  Type: AWS::CloudFront::Distribution
+  Properties:
+    DistributionConfig:
+      Enabled: true
+      DefaultCacheBehavior:
+        TargetOriginId: orderReceiptPDF
+        # how client access cloudfront
+        ViewerProtocolPolicy: https-only
+        CachePolicyId: !Ref CloudFrontCachePolicy
+      # u can use this in api gateway
+      # CacheBehaviors:
+      #   - PathPattern: /dev/*
+      #     TargetOriginId: orderReceiptPDF
+      #     # how client access cloudfront
+      #     ViewerProtocolPolicy: https-only
+      #     CachePolicyId: !Ref CloudFrontCachePolicy
+      #  location where content is stored
+      Origins:
+        - Id: orderReceiptPDF
+          # url: !GetAtt OrderReceiptDownloadPdfUrl.FunctionUrl
+          # https://6o5pj4fsgop47rpxvmx4ktbdam0xzutt.lambda-url.us-east-1.on.aws/
+          DomainName: !Select [2, !Split ["/", !GetAtt OrderReceiptDownloadPdfUrl.FunctionUrl]]
+          CustomOriginConfig:
+            # protocol used by cloudfront
+            OriginProtocolPolicy: https-only
