@@ -17,6 +17,11 @@ provider:
     MAIL_QUEUE_URL: ${self:custom.MailQueue.url}
     AUCTIONS_BUCKET_NAME: ${self:custom.AuctionsBucket.name}
 
+iam:
+  role:
+    statements:
+      - ${file(./iam/EventBridgeIAM.yml):EventBridgeIAM}
+
 plugins:
   - serverless-plugin-typescript
   - serverless-iam-roles-per-function
@@ -92,11 +97,22 @@ functions:
       - ${file(./iam/AuctionsTableIAM.yml):AuctionsTableUpdateAuctionIAM}
       - ${file(./iam/AuctionsBucketIAM.yml):AuctionsBucketIAM}
 
+  generateQRCode:
+    handler: src/handlers/generateQRCode.handler
+    environment:
+     # same as self:custom.EventBus.value this will also return value which is event bus name
+      EventBusName: !Ref EventBus
+    events:
+      - http:
+          path: /qr-code
+          method: post
+
 resources:
   Resources:
     AuctionsTable: ${file(./resources/AuctionsTable.yml):AuctionsTable}
     AuctionsBucket: ${file(./resources/AuctionsBucket.yml):AuctionsBucket}
     AuctionsBucketPolicy: ${file(./resources/AuctionsBucket.yml):AuctionsBucketPolicy}
+    EventBridge: ${file(./resources/EventBridge.yml):EventBridge}
 
 custom:
   #psudeo parameters = #{AWS::Region}:#{AWS::AccountId}
@@ -114,6 +130,8 @@ custom:
     url: ${cf:notifications-service-${self:provider.stage}.MailQueueUrl}
   AuctionsBucket:
     name: auctions-bucket-sdsjj32kjds-${self:provider.stage}
+  EventBus:
+    value: !Ref EventBridge
 # custom variable self, refers to this serverless.yml file
 # and then we can select object from upper scope of this file provider
 # self:provider.stage
