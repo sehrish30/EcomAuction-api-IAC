@@ -21,7 +21,6 @@ TargetDLQ:
   Type: AWS::SQS::Queue
   Properties:
     QueueName: QR_MESSAGE_DLQ
-    
 
 # this rule will make sure only the events = event rule
 # event rules in event bridge that matches this pattern will be forwarded to this sqs
@@ -40,10 +39,10 @@ TargetSQSRule:
     EventPattern:
       # source Identifies the service that generated the event
       source:
-        - ${self:custom.eventBridgeSource}
+        - ${self:custom.EVENT_BRIDGE_SOURCE}
       # fields and values that appear in the detail field
       detail-type:
-        - "auctionDetail"
+        - ${self:custom.AUCTION_DETAIL_TYPE}
       # detail:
       # JSON object that contains information about the event.
       # here u can add other attabributes that you want to filter

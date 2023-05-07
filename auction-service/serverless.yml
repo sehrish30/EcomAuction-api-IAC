@@ -16,6 +16,9 @@ provider:
     AUCTIONS_TABLE_NAME: ${self:custom.AuctionsTable.name}
     MAIL_QUEUE_URL: ${self:custom.MailQueue.url}
     AUCTIONS_BUCKET_NAME: ${self:custom.AuctionsBucket.name}
+    AUCTION_DETAIL_TYPE: auctionDetail
+    EVENT_BRIDGE_SOURCE: auction-service
+    REGION: us-east-2
 
 plugins:
   - serverless-plugin-typescript
@@ -121,6 +124,8 @@ functions:
       # which is a managed Lambda service which will pull the messages from sqs queue
       # and invoke lambda function
       # so we have to set event source mapping with sqs queue
+    iamRoleStatements:
+      - ${file(./iam/AuctionsBucketIAM.yml):AuctionsBucketIAM}
 
 resources:
   Resources:
@@ -138,6 +143,7 @@ custom:
   # to authorize in another lambda before hitting this route
   authorizer: arn:aws:lambda:${self:provider.region}:${aws:accountId}:function:authentication-service-${self:provider.stage}-auth
   eventBridgeSource: "auction-service"
+
   bundle:
     linting: true
   AuctionsTable:
@@ -152,14 +158,17 @@ custom:
     name: auctions-bucket-sdsjj32kjds-${self:provider.stage}
   EventBus:
     value: !Ref AuctionsEventBridge
+  # bcz custom or resources doesnot have access to environment variables it is accessible in events
+  AUCTION_DETAIL_TYPE: auctionDetail
+  EVENT_BRIDGE_SOURCE: auction-service
   # service proxy integration
   apiGatewayServiceProxies:
     # should see another endpoint in api gateway "/eventbridge"
     - eventbridge: # source and detailType are hardcoded; detail defaults to POST body
         path: /qr-code-event
         method: post
-        source: ${self:custom.eventBridgeSource}
-        detailType: "auctionDetail"
+        source: ${self:custom.EVENT_BRIDGE_SOURCE}
+        detailType: ${self:custom.AUCTION_DETAIL_TYPE}
         eventBusName: { Ref: AuctionsEventBridge }
         cors: true
 # custom variable self, refers to this serverless.yml file

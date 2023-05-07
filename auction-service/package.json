@@ -12,6 +12,7 @@
   "devDependencies": {
     "@types/aws-lambda": "^8.10.114",
     "@types/http-errors": "^2.0.1",
+    "@types/qrcode": "^1.5.0",
     "@types/uuid": "^9.0.1",
     "aws-lambda": "^1.0.7",
     "serverless-apigateway-service-proxy": "^2.2.1",
@@ -32,6 +33,7 @@
     "@middy/http-json-body-parser": "^4.4.0",
     "@middy/validator": "^4.4.0",
     "http-errors": "^2.0.0",
+    "qrcode": "^1.5.3",
     "uuid": "^9.0.0"
   }
 }

@@ -5,7 +5,7 @@ const client = new S3Client({
   region: "us-east-2",
 });
 
-export async function uploadPictureToS3(key: string, body: Buffer) {
+export async function uploadPictureToS3(key: string, body: Buffer, contentType?: string) {
   // key is the name of the file
   // body is going to be actual data we are going to upload
   const command = new PutObjectCommand({
@@ -13,7 +13,7 @@ export async function uploadPictureToS3(key: string, body: Buffer) {
     Body: body,
     Key: key,
     ContentEncoding: "base64",
-    ContentType: "image/jpeg",
+    ContentType: contentType || "image/jpeg",
   });
   try {
     const response = await client.send(command);
@@ -21,7 +21,7 @@ export async function uploadPictureToS3(key: string, body: Buffer) {
     console.log({ response });
     return key;
   } catch (err) {
-    const { requestId, cfId, extendedRequestId } = err.$$metadata;
+    const { requestId, cfId, extendedRequestId } = err.$metadata;
     console.log({ requestId, cfId, extendedRequestId });
     throw new createError.InternalServerError(err);
   }
