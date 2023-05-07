@@ -1,58 +1,60 @@
+import {
+  EventBridgeClient,
+  PutEventsCommand,
+} from "@aws-sdk/client-eventbridge";
 
-
-import {EventBridgeClient,
-    PutEventsCommand,} from "@aws-sdk/client-eventbridge"
-
-    import { APIGatewayEvent, Context } from "aws-lambda";
+import { APIGatewayEvent } from "aws-lambda";
 
 let eventBridgeClient = new EventBridgeClient({
-    region: "us-east-2",
+  region:  process.env.REGION,
 });
 
 const EVENT_BUS_NAME = process.env.EventBusName;
-const EVENT_BRIDGE_SOURCE = process.env.EventBridgeSource
+const EVENT_BRIDGE_SOURCE = process.env.EVENT_BRIDGE_SOURCE;
+const AUCTION_DETAIL_TYPE = process.env.AUCTION_DETAIL_TYPE;
 
- const addQRCodeEvent = async(event) => {
-    let body = JSON.parse(event.body);
-    // put event to event bridge
-    let data;
-    try {
-      // same attributes should be included
-      // in service proxy integration as well
-      // body will be automatically passed down to event bridge
-      // but we have to specify what is the source that we are using the detail type
-      // the event bus name
-      const params = {
-        Entries: [
-          {
-            Source: EVENT_BRIDGE_SOURCE,
-            DetailType: "auctionDetail",
-            Detail: JSON.stringify({
-              auctionId: body.auctionId,
-            }),
-            EventBusName: EVENT_BUS_NAME,
-          },
-        ],
-      };
-      const command = new PutEventsCommand(params);
-      data = await eventBridgeClient.send(command);
-    } catch (err) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify(err.message),
-      };
-    }
-    return {
-      statusCode: 200,
-      body: JSON.stringify(data),
+const addQRCodeEvent = async (event:APIGatewayEvent) => {
+  let body = JSON.parse(event.body as string);
+  // put event to event bridge
+  let data;
+  try {
+    // same attributes should be included
+    // in service proxy integration as well
+    // body will be automatically passed down to event bridge
+    // but we have to specify what is the source that we are using the detail type
+    // the event bus name
+    const params = {
+      Entries: [
+        {
+          Source: EVENT_BRIDGE_SOURCE,
+          DetailType: AUCTION_DETAIL_TYPE,
+          Detail: JSON.stringify({
+            auctionId: body.auctionId,
+          }),
+          EventBusName: EVENT_BUS_NAME,
+        },
+      ],
     };
-}
+    const command = new PutEventsCommand(params);
+    data = await eventBridgeClient.send(command);
+  } catch (err) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify(err.message),
+    };
+  }
+  return {
+    statusCode: 200,
+    body: JSON.stringify(data),
+  };
+};
 
-export const handler  = addQRCodeEvent
+export const handler = addQRCodeEvent;
 
-
-
-
+/**
+ * serverless logs -f addQRCodeEvent
+ * serverless deploy function --function addQRCodeEvent
+ */
 
 // # lambda consumer to batch process these messages that are in the queue
 // # batch processing SQS messages with AWS Lambda
