@@ -5,7 +5,7 @@ frameworkVersion: "3"
 provider:
   name: aws
   runtime: nodejs18.x
-  region: us-east-1
+  region: us-east-2
   stage: dev
   iam:
     role:
@@ -15,25 +15,73 @@ provider:
   environment:
     REGION: us-east-2 # bucket is in us-east-2
     AUCTIONS_BUCKET_NAME: ${self:custom.AuctionsBucket.name}
+    AUCTIONS_TABLE_NAME: ${self:custom.AuctionsTable.name}
 
 plugins:
   - serverless-plugin-typescript
   - serverless-iam-roles-per-function
+  - serverless-step-functions
 
 functions:
-  orderReceiptPDF:
-    handler: src/handlers/orderReceiptPDF.handler
-    # url:
-    #   cors: true # I am not adding this because I am already making it URL from this resource "OrderReceiptDownloadPdfUrl"
+  # orderReceiptPDF:
+  #   handler: src/handlers/orderReceiptPDF.handler
+  # url:
+  #   cors: true # I am not adding this because I am already making it URL from this resource "OrderReceiptDownloadPdfUrl"
+  checkInventory:
+    handler: src/handlers/checkInventory.handler
+    iamRoleStatements:
+      - ${file(./iam/AuctionTableIAM.yml):AuctionsTableGetAuctionsIAM}
+  calculateTotal:
+    handler: src/handlers/calculateTotal.handler
 
-resources:
-  Resources:
-    OrderReceiptDownloadPdfUrl: ${file(./resources/OrderReceiptDownloadPdfUrl.yml):OrderReceiptDownloadPdfUrl}
-    PermissionForURLInvoke: ${file(./resources/OrderReceiptDownloadPdfUrl.yml):PermissionForURLInvoke}
-    CloudFrontCachePolicy: ${file(./resources/CloudFront.yml):CloudFrontCachePolicy}
-    CloudFrontDistribution: ${file(./resources/CloudFront.yml):CloudFrontDistribution}
+# resources:
+#   Resources:
+# OrderReceiptDownloadPdfUrl: ${file(./resources/OrderReceiptDownloadPdfUrl.yml):OrderReceiptDownloadPdfUrl}
+# PermissionForURLInvoke: ${file(./resources/OrderReceiptDownloadPdfUrl.yml):PermissionForURLInvoke}
+# CloudFrontCachePolicy: ${file(./resources/CloudFront.yml):CloudFrontCachePolicy}
+# CloudFrontDistribution: ${file(./resources/CloudFront.yml):CloudFrontDistribution}
+
+stepFunctions:
+  stateMachines:
+    storeCheckoutFlow:
+      name: storeCheckoutFlow
+      # definition means tell starting state
+      definition:
+        StartAt: checkInventory
+        States:
+          checkInventory:
+            # first define type of state since its unit of task
+            Type: Task
+            Resource:
+              # logical if arn of lambda function
+              Fn::GetAtt: [checkInventory, Arn] # Or !GetAtt checkInventory.Arn
+            # Catch the error we threw from lambda function
+            Catch:
+              - ErrorEquals: [AuctionNotFound]
+                # next to another state if error found
+                Next: auctionNotFoundError
+              - ErrorEquals: [AuctionOutOfStock]
+                # next to another state if this error found
+                Next: auctionOutOfStockError
+            Next: calculateTotal
+          calculateTotal:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [calculateTotal, Arn]
+            End: true
+          auctionNotFoundError:
+            Type: Pass
+            Result: "No such auction found"
+            End: true
+          auctionOutOfStockError:
+            Type: Pass
+            Result: "Sorry the book is out of stock"
+            End: true
 
 custom:
+  AuctionsTable:
+    # recheck all names properly from aws cloudformation as well
+    arn: ${cf:auction-service-${sls:stage}.AuctionsTableArn}
+    name: ${cf:auction-service-${sls:stage}.AuctionsTableName}
   AuctionsBucket:
     name: auctions-bucket-sdsjj32kjds-${self:provider.stage}
-

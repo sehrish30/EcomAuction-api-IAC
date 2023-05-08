@@ -6,10 +6,7 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import validator from "@middy/validator";
 import { transpileSchema } from "@middy/validator/transpile";
 import createError from "http-errors";
-import {
-  DynamoDBDocumentClient,
-  PutCommand,
-} from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
 import commonMiddleware from "../lib/commonMiddleware";
 import createAuctionSchema from "../lib/schemas/createAuctionsSchema";
 
@@ -22,11 +19,18 @@ const ddbDocClient = DynamoDBDocumentClient.from(client);
 
 const createAuction = async (event: APIGatewayEvent, ctx: Context) => {
   // body is automaticall parsed by middy middleware
-  const { title } = event.body as unknown as { title: string };
-  const {email} = event.requestContext.authorizer as {email: string}
+  const { title, quantity } = event.body as unknown as {
+    title: string;
+    quantity: number;
+  };
+  const { email } = event.requestContext.authorizer as { email: string };
 
   const now = new Date();
   const endDate = new Date();
+
+  if (quantity <= 0) {
+    throw new createError.Forbidden("Auction item should have valid quantity");
+  }
 
   // close auction after 24 hour
   endDate.setHours(now.getHours() + 24);
@@ -40,11 +44,12 @@ const createAuction = async (event: APIGatewayEvent, ctx: Context) => {
       HighestBidAmount: 0,
       EndingAt: endDate.toISOString(),
       Seller: email,
-      PictureUrl: null
+      PictureUrl: null,
+      Points: 0,
+      Quantity: quantity,
     },
     TableName: process.env.AUCTIONS_TABLE_NAME,
   };
-
 
   const command = new PutCommand(auction);
   let response;
