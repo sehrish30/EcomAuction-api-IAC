@@ -138,6 +138,10 @@ resources:
     TargetSQSPolicy: ${file(./resources/EventBridge.yml):TargetSQSPolicy}
     TargetDLQ: ${file(./resources/EventBridge.yml):TargetDLQ}
 
+  Outputs:
+    AuctionsTableName: ${file(./resources/AuctionsTable.yml):Outputs.AuctionsTableName}
+    AuctionsTableArn: ${file(./resources/AuctionsTable.yml):Outputs.AuctionsTableArn}
+
 custom:
   #psudeo parameters = #{AWS::Region}:#{AWS::AccountId}
   # to authorize in another lambda before hitting this route

@@ -1,0 +1,10 @@
+AuctionsTableGetAuctionsIAM:
+  Effect: Allow
+  Action:
+    - dynamodb:Query
+  Resource:
+    - ${self:custom.AuctionsTable.arn}
+    - !Join [
+        "/",
+        ["${self:custom.AuctionsTable.arn}", "index", "StatusAndEndDate"],
+      ]
