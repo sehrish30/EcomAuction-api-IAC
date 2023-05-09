@@ -1,12 +1,23 @@
+
 "use strict";
 
-import { APIGatewayEvent, Context } from "aws-lambda";
+import { AuctionType } from './../../types/auction.table';
 
-const calculateTotal = async (event: APIGatewayEvent, ctx: Context) => {};
+type CalculateTotalType = {
+    auction: AuctionType;
+    quantity: number
+}
+
+const calculateTotal = ({auction, quantity}:CalculateTotalType) => {
+  let total = auction.HighestBidAmount || 0 * quantity;
+  return {
+    total,
+  };
+};
 
 export const handler = calculateTotal;
 
 /**
- * serverless logs -f checkInventory
- * serverless deploy function --function checkInventory
+ * serverless logs -f calculateTotal
+ * serverless deploy function --function calculateTotal
  */
