@@ -16,6 +16,7 @@ provider:
     REGION: us-east-2 # bucket is in us-east-2
     AUCTIONS_BUCKET_NAME: ${self:custom.AuctionsBucket.name}
     AUCTIONS_TABLE_NAME: ${self:custom.AuctionsTable.name}
+    AUTHENTICATION_TABLE_NAME: ${self:custom.AuthenticationTable.name}
 
 plugins:
   - serverless-plugin-typescript
@@ -33,6 +34,8 @@ functions:
       - ${file(./iam/AuctionTableIAM.yml):AuctionsTableGetAuctionsIAM}
   calculateTotal:
     handler: src/handlers/calculateTotal.handler
+  redeemPoints:
+    handler: src/handlers/redeemPoints.handler
 
 # resources:
 #   Resources:
@@ -63,12 +66,38 @@ stepFunctions:
               - ErrorEquals: [AuctionOutOfStock]
                 # next to another state if this error found
                 Next: auctionOutOfStockError
+            ResultPath: "$.auction" # so input dont get replaced by return value, $ is entire input document and we are attching returned value of checkIndevntory as auction to it, if only $ to next function will replace the entire object with input of prev lambda function
             Next: calculateTotal
           calculateTotal:
             Type: Task
             Resource:
               Fn::GetAtt: [calculateTotal, Arn]
-            End: true
+            ResultPath: "$.total"
+            Next: isRedeemNeeded
+          isRedeemNeeded:
+            Type: Choice
+            Choices:
+              - Variable: $.redeem
+                BooleanEquals: true
+                Next: RedeemPoints
+                # Default anything doesnot match this state, here it means customer doesnot want to redeem
+            Default: BillCustomer
+          RedeemPoints:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [redeemPoints, Arn]
+            Catch:
+              # States.ALL means match with all errors general error handling because we have not given error names in lambda function as well
+              - ErrorEquals: [States.ALL]
+                Next: redeemPointsError
+            Next: BillCustomer
+          BillCustomer:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [billCustomer, Arn]
+            Next: PrepareOrder
+          # PrepareOrder:
+
           auctionNotFoundError:
             Type: Pass
             Result: "No such auction found"
@@ -77,11 +106,18 @@ stepFunctions:
             Type: Pass
             Result: "Sorry the book is out of stock"
             End: true
+          redeemPointsError:
+            Type: Pass
+            Result: "Error in redeeming points"
+            End: true
 
 custom:
   AuctionsTable:
     # recheck all names properly from aws cloudformation as well
     arn: ${cf:auction-service-${sls:stage}.AuctionsTableArn}
     name: ${cf:auction-service-${sls:stage}.AuctionsTableName}
+  AuthenticationTable:
+    name: ${cf:authentication-service-${sls:stage}.AuthenticationTableName}
+    arn: ${cf:authentication-service-${sls:stage}.AuthenticationTableArn}
   AuctionsBucket:
     name: auctions-bucket-sdsjj32kjds-${self:provider.stage}

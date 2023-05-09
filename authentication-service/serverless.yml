@@ -1,7 +1,5 @@
-
-
 service: authentication-service
-frameworkVersion: '3'
+frameworkVersion: "3"
 
 provider:
   name: aws
@@ -11,14 +9,30 @@ provider:
   environment:
     # takes the content of secret.pem and put it in environment variable
     AUTH0_PUBLIC_KEY: ${file(secret.pem)}
+    REGION: ${self:provider.region}
+    AUTHENTICATION_TABLE_NAME: ${self:custom.AuthenticationTable.name}
 
 plugins:
   - serverless-plugin-typescript
+  - serverless-iam-roles-per-function
 
 functions:
-  auth: 
+  auth:
     handler: src/handlers/auth.handler
-    # cors: true
+
+  loginOrRegister:
+    handler: src/handlers/loginOrRegister.handler
+    iamRoleStatements:
+      - ${file(./iam/AuthenticationTableIAM.yml):QueryAuthenticationTableIAM}
+      - ${file(./iam/AuthenticationTableIAM.yml):CreateAuthenticationTableIAM}
+    events:
+      - http:
+          cors: true
+          path: login-or-register
+          method: POST
+          # use auth.handler auth function to authorize itself
+          authorizer: ${self:custom.authorizer}
+
   publicEndpoint:
     handler: src/handlers/public.handler
     events:
@@ -32,13 +46,12 @@ functions:
       - http:
           path: private
           method: POST
-          # use auth.handler auth function to authorize itself
-          authorizer: auth
-          # cors: true
+          cors: true
 
 resources:
   # these resources are needed in order to properly handle 401 and unauthrizued 403 cases
   Resources:
+    AuthenticationTable: ${file(./resources/AuthenticationTable.yml):AuthenticationTable}
     # This response is needed for custom authorizer failures cors support ¯\_(ツ)_/¯
     GatewayResponse:
       Type: "AWS::ApiGateway::GatewayResponse"
@@ -60,6 +73,13 @@ resources:
         RestApiId:
           Ref: "ApiGatewayRestApi"
         StatusCode: "401"
+  Outputs:
+    AuthenticationTableName: ${file(./resources/AuthenticationTable.yml):Outputs.AuthenticationTableName}
+    AuthenticationTableArn: ${file(./resources/AuthenticationTable.yml):Outputs.AuthenticationTableArn}
 custom:
+  AuthenticationTable:
+    name: !Ref AuthenticationTable
+    arn: !GetAtt AuthenticationTable.Arn
+  authorizer: arn:aws:lambda:${self:provider.region}:${aws:accountId}:function:authentication-service-${self:provider.stage}-auth
   bundle:
     linting: true

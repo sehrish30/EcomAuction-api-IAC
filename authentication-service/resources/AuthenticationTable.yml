@@ -1,0 +1,21 @@
+AuthenticationTable:
+  Type: AWS::DynamoDB::Table
+  Properties:
+    TableName: AuthenticationTable-${sls:stage}
+    BillingMode: PAY_PER_REQUEST
+    AttributeDefinitions:
+      - AttributeName: Email
+        AttributeType: S
+    KeySchema:
+      - AttributeName: Email
+        KeyType: HASH
+
+Outputs:
+  AuthenticationTableName:
+    Value: ${self:custom.AuthenticationTable.name}
+    Export:
+      Name: AuthenticationTable-${sls:stage}-Name
+  AuthenticationTableArn:
+    Value: ${self:custom.AuthenticationTable.arn}
+    Export:
+      Name: AuthenticationTable-${sls:stage}-Arn
