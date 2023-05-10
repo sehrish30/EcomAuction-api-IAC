@@ -1,5 +1,4 @@
 OrdersQueue:
   Type: AWS::SQS::Queue
   Properties:
-    FifoQueue: false #use standard queue
-    QueueName: { self:custom.OrdersQueue.name }
+    QueueName: ${self:custom.OrdersQueue.name}

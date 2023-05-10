@@ -1,0 +1,4 @@
+OrdersQueueIAM:
+  Effect: Allow
+  Action: sqs:*
+  Resource: !GetAtt OrdersQueue.Arn

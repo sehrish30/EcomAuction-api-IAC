@@ -13,6 +13,7 @@ provider:
     role:
       statements:
         - ${file(iam/SendMailIAM.yml):SendMailIAM}
+
   environment:
     SES_SENDER_EMAIL: "sehrishwaheed30@gmail.com"
 
@@ -46,14 +47,12 @@ custom:
     url: !Ref MailQueue
   bundle:
     linting: true
-
 # other services send messages to this queue
 # then messages will be forwarded to notification services by sqs queue we built
 # and the emails will be sent
 # for this other services require url of the message queue
 
-
-# using outputs you can output variables from one stack 
+# using outputs you can output variables from one stack
 # and import them in other stack like global variables
 # sqs message queues have public urls used by clients to send messages to queue
 # by using these outputs we create a sort of dependency

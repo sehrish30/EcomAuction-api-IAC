@@ -1,0 +1,7 @@
+NotifyCourier:
+  Type: AWS::SNS::Topic
+  Properties:
+    TopicName: NotifyCourier
+    Subscription:
+      - Endpoint: ${self:custom.courierAdminEmail}
+        Protocol: email
