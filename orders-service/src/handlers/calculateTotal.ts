@@ -1,15 +1,18 @@
-
 "use strict";
 
-import { AuctionType } from './../../types/auction.table';
+import { AuctionType } from "./../../types/auction.table";
 
 type CalculateTotalType = {
-    auction: AuctionType;
-    quantity: number
-}
+  auction: AuctionType;
+  quantity: number;
+};
 
-const calculateTotal = ({auction, quantity}:CalculateTotalType) => {
-  let total = auction.HighestBidAmount || 0 * quantity;
+const calculateTotal = async ({ auction, quantity }: CalculateTotalType) => {
+  let total = 0;
+  if (auction.HighestBidAmount) {
+    total = auction.HighestBidAmount * quantity;
+  }
+  console.log({ total, high: auction.HighestBidAmount });
   return {
     total,
   };

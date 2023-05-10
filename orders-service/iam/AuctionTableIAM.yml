@@ -4,7 +4,10 @@ AuctionsTableGetAuctionsIAM:
     - dynamodb:Query
   Resource:
     - ${self:custom.AuctionsTable.arn}
-    - !Join [
-        "/",
-        ["${self:custom.AuctionsTable.arn}", "index", "StatusAndEndDate"],
-      ]
+
+AuctionsTableUpdateAuctionsIAM:
+  Effect: Allow
+  Action:
+    - dynamodb:Update
+  Resource:
+    - ${self:custom.AuctionsTable.arn}
