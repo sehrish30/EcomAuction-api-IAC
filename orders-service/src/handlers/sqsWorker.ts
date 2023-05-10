@@ -24,7 +24,7 @@ const updateAuctionItemQuantity = async (
   auctionId: string,
   orderQuantity: number
 ) => {
-  console.log("bookId: ", auctionId);
+  console.log("auctionId: ", auctionId);
   console.log("orderQuantity: ", orderQuantity);
   const command = new UpdateCommand({
     TableName: process.env.AUCTIONS_TABLE_NAME!,
@@ -48,7 +48,7 @@ const sqsWorker = async (event: SQSEvent) => {
      * we have to reduce auction item quantity from our inventory so far
      */
     /** Find a courier and attach courier information to the order from 3rd party API */
-    let courier = "sehrishwaheed98@gmail.com";
+    let courier = process.env.COURIER_ADMIN_EMAIL as string;
     console.log(body.Input.auction.Id, body.Input.quantity);
     // update auction item quantity
     try {
@@ -57,6 +57,7 @@ const sqsWorker = async (event: SQSEvent) => {
         body.Input.quantity
       );
     } catch (err) {
+      console.log(err);
       throw new Error("Something wrong with Courier API");
     }
 
@@ -97,3 +98,8 @@ const sqsWorker = async (event: SQSEvent) => {
 };
 
 export const handler = sqsWorker;
+
+/**
+ * serverless logs -f sqsWorker
+ * serverless deploy function --function sqsWorker
+ */

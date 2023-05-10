@@ -1,0 +1,4 @@
+NotifyCourierIAM:
+  Effect: Allow
+  Action: sns:*
+  Resource: !Ref NotifyCourier
