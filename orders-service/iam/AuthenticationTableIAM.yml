@@ -1,0 +1,13 @@
+AuthenticationTableGetItemIAM:
+  Effect: Allow
+  Action:
+    - dynamodb:GetItem
+  Resource:
+    - ${self:custom.AuthenticationTable.arn}
+
+AuthenticationTableUpdateItemIAM:
+  Effect: Allow
+  Action:
+    - dynamodb:UpdateItem
+  Resource:
+    - ${self:custom.AuthenticationTable.arn}
