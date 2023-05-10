@@ -72,10 +72,10 @@ functions:
 
 resources:
   Resources:
-    # OrderReceiptDownloadPdfUrl: ${file(./resources/OrderReceiptDownloadPdfUrl.yml):OrderReceiptDownloadPdfUrl}
-    # PermissionForURLInvoke: ${file(./resources/OrderReceiptDownloadPdfUrl.yml):PermissionForURLInvoke}
-    # CloudFrontCachePolicy: ${file(./resources/CloudFront.yml):CloudFronftCachePolicy}
-    # CloudFrontDistribution: ${file(./resources/CloudFront.yml):CloudFrontDistribution}
+    OrderReceiptDownloadPdfUrl: ${file(./resources/OrderReceiptDownloadPdfUrl.yml):OrderReceiptDownloadPdfUrl}
+    PermissionForURLInvoke: ${file(./resources/OrderReceiptDownloadPdfUrl.yml):PermissionForURLInvoke}
+    CloudFrontCachePolicy: ${file(./resources/CloudFront.yml):CloudFrontCachePolicy}
+    CloudFrontDistribution: ${file(./resources/CloudFront.yml):CloudFrontDistribution}
     OrdersQueue: ${file(./resources/OrdersQueue.yml):OrdersQueue}
     NotifyCourier: ${file(./resources/NotifyCourier.yml):NotifyCourier}
 

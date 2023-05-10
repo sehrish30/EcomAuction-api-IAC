@@ -75,14 +75,14 @@ functions:
           authorizer: ${self:custom.authorizer}
     iamRoleStatements:
       - ${file(./iam/AuctionsTableIAM.yml):AuctionsTableUpdateAuctionIAM}
-  processAuctions:
-    handler: src/handlers/processAuctions.handler
-    events:
-      - schedule: rate(300 minutes)
-    iamRoleStatements:
-      - ${file(./iam/AuctionsTableIAM.yml):AuctionsTableProcessAuctionsIAM}
-      # allow lambda functions to send messages to this queue
-      - ${file(./iam/MailQueueIAM.yml):MailQueueIAM}
+  # processAuctions:
+  #   handler: src/handlers/processAuctions.handler
+  #   events:
+  #     - schedule: rate(300 minutes)
+  #   iamRoleStatements:
+  #     - ${file(./iam/AuctionsTableIAM.yml):AuctionsTableProcessAuctionsIAM}
+  #     # allow lambda functions to send messages to this queue
+  #     - ${file(./iam/MailQueueIAM.yml):MailQueueIAM}
 
   uploadAuctionPicture:
     handler: src/handlers/uploadAuctionPicture.handler
@@ -114,7 +114,7 @@ functions:
     handler: src/handlers/processQRCodeEvents.handler
     events:
       - sqs:
-          arn: !GetAtt TargetSQS.Arn
+          arn: ${self:custom.TargetSQS.arn}
           batchSize: 10
           # maximumConcurrency means maximum lambda invocations in parallel
           maximumConcurrency: 5
@@ -153,11 +153,13 @@ custom:
   AuctionsTable:
     name: !Ref AuctionsTable
     arn: !GetAtt AuctionsTable.Arn
+  TargetSQS:
+    arn: !GetAtt TargetSQS.Arn
   # also put it in environment variable because will be accessed by lambda
-  MailQueue:
-    # access cloudformation outputs from notification service
-    arn: ${cf:notifications-service-${self:provider.stage}.MailQueueArn}
-    url: ${cf:notifications-service-${self:provider.stage}.MailQueueUrl}
+  # MailQueue:
+  #   # access cloudformation outputs from notification service
+  #   arn: ${cf:notifications-service-${self:provider.stage}.MailQueueArn}
+  #   url: ${cf:notifications-service-${self:provider.stage}.MailQueueUrl}
   AuctionsBucket:
     name: auctions-bucket-sdsjj32kjds-${self:provider.stage}
   EventBus:
@@ -190,3 +192,10 @@ custom:
 # that we wanted to pass down to the event bridge
 # Service APIGatway Service Proxy
 # https://www.serverless.com/plugins/serverless-apigateway-service-proxy#eventbridge
+
+# Cloudfront+Waf
+# Standard DDOS protection from cloudfront
+# Protect other origins from a centralized place
+# Drop bad traffic at the edge
+# No need to enable CORS
+# Ability to use Cloudfront cache to cache GET requests

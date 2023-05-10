@@ -42,7 +42,11 @@ CloudFrontDistribution:
         - Id: orderReceiptPDF
           # url: !GetAtt OrderReceiptDownloadPdfUrl.FunctionUrl
           # https://6o5pj4fsgop47rpxvmx4ktbdam0xzuta.lambda-url.us-east-1.on.aws/
-          DomainName: !Select [2, !Split ["/", !GetAtt OrderReceiptDownloadPdfUrl.FunctionUrl]]
+          DomainName:
+            !Select [
+              2,
+              !Split ["/", !GetAtt OrderReceiptDownloadPdfUrl.FunctionUrl],
+            ]
           CustomOriginConfig:
             # protocol used by cloudfront
             OriginProtocolPolicy: https-only

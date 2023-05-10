@@ -17,3 +17,6 @@
 👉Architecture of Managed Store Checkout flow using step functions<br/>
 <img src="readmeimages/stepfunctions.png" height=400 width=1000>
 <img src="readmeimages/stepfunctions2.png" height=400 width=1000>
+
+👉Architecture of implementing WAF and Cloudfront on Auction service functions<br/>
+<img src="readmeimages/waf.png" height=400 width=1000>
