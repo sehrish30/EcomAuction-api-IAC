@@ -66,8 +66,8 @@ WebACL: # should be in region 1
       # https://www.serverlessguru.com/blog/connecting-aws-waf-to-api-gateway-via-serverless-framework
       - Name: IPReputationRule
         Priority: 1
-        Action:
-          Block: {}
+        OverrideAction:
+          None: {}
         Statement:
           ManagedRuleGroupStatement:
             VendorName: AWS
@@ -78,8 +78,8 @@ WebACL: # should be in region 1
           MetricName: AnonymousIPRuleMetric
       - Name: AnonymousIPRule
         Priority: 3
-        Action:
-          Block: {}
+        OverrideAction:
+          None: {}
         Statement:
           ManagedRuleGroupStatement:
             VendorName: AWS
@@ -91,8 +91,8 @@ WebACL: # should be in region 1
       # CoreRuleSet provides protection against OWASP and prevents wide range of vunerabilities
       - Name: CoreRuleSet
         Priority: 4
-        Action:
-          Block: {}
+        OverrideAction:
+          None: {}
         Statement:
           ManagedRuleGroupStatement:
             VendorName: AWS
@@ -103,8 +103,8 @@ WebACL: # should be in region 1
           MetricName: CoreRuleSetMetric
       - Name: KnownBadInputsRule
         Priority: 5
-        Action:
-          Block: {}
+        OverrideAction:
+          None: {}
         Statement:
           ManagedRuleGroupStatement:
             VendorName: AWS
@@ -113,6 +113,18 @@ WebACL: # should be in region 1
           SampledRequestsEnabled: true
           CloudWatchMetricsEnabled: true
           MetricName: KnownBadInputsRuleMetric
+      - Name: BotControl
+        Priority: 0
+        OverrideAction:
+          None: {}
+        Statement:
+          ManagedRuleGroupStatement:
+            VendorName: AWS
+            Name: AWSManagedRulesBotControlRuleSet
+        VisibilityConfig:
+          SampledRequestsEnabled: true
+          CloudWatchMetricsEnabled: true
+          MetricName: BotControlRuleMetric
 
 # cloudfront distribution
 CloudFrontDistribution:
@@ -120,8 +132,8 @@ CloudFrontDistribution:
   Properties:
     DistributionConfig:
       Enabled: true
-      # cloudfront protected by waf
-      # WebACLId: !GetAtt WebACL.Id
+      # cloudfront protected by waf add permission so cloudfront can access waf
+      WebACLId: !GetAtt WebACL.Arn
       DefaultCacheBehavior:
         TargetOriginId: orderReceiptPDF
         # how client access cloudfront
