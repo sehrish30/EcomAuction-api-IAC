@@ -14,7 +14,7 @@ provider:
   region: us-east-2
   environment:
     AUCTIONS_TABLE_NAME: ${self:custom.AuctionsTable.name}
-    MAIL_QUEUE_URL: ${self:custom.MailQueue.url}
+    # MAIL_QUEUE_URL: ${self:custom.MailQueue.url}
     AUCTIONS_BUCKET_NAME: ${self:custom.AuctionsBucket.name}
     AUCTION_DETAIL_TYPE: auctionDetail
     EVENT_BRIDGE_SOURCE: auction-service
@@ -137,6 +137,9 @@ resources:
     TargetSQSRule: ${file(./resources/EventBridge.yml):TargetSQSRule}
     TargetSQSPolicy: ${file(./resources/EventBridge.yml):TargetSQSPolicy}
     TargetDLQ: ${file(./resources/EventBridge.yml):TargetDLQ}
+    # WebACL: ${file(./resources/CloudFront.yml):WebACL}
+    # CloudFrontDistribution: ${file(./resources/CloudFront.yml):CloudFrontDistribution}
+    CloudFrontCachePolicy: ${file(./resources/CloudFront.yml):CloudFrontCachePolicy}
 
   Outputs:
     AuctionsTableName: ${file(./resources/AuctionsTable.yml):Outputs.AuctionsTableName}

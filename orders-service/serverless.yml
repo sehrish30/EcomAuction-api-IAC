@@ -7,7 +7,7 @@ useDotenv: true
 provider:
   name: aws
   runtime: nodejs18.x
-  region: us-east-2
+  region: us-east-1
   stage: dev
   iam:
     role:
@@ -76,6 +76,7 @@ resources:
     PermissionForURLInvoke: ${file(./resources/OrderReceiptDownloadPdfUrl.yml):PermissionForURLInvoke}
     CloudFrontCachePolicy: ${file(./resources/CloudFront.yml):CloudFrontCachePolicy}
     CloudFrontDistribution: ${file(./resources/CloudFront.yml):CloudFrontDistribution}
+    # WebACL: ${file(./resources/CloudFront.yml):WebACL}
     OrdersQueue: ${file(./resources/OrdersQueue.yml):OrdersQueue}
     NotifyCourier: ${file(./resources/NotifyCourier.yml):NotifyCourier}
 
@@ -86,11 +87,12 @@ stepFunctions:
 custom:
   AuctionsTable:
     # recheck all names properly from aws cloudformation as well
-    arn: ${cf:auction-service-${sls:stage}.AuctionsTableArn}
-    name: ${cf:auction-service-${sls:stage}.AuctionsTableName}
+    # arn: ${cf:auction-service-${sls:stage}.AuctionsTableArn}
+    arn: ${cf(us-east-2):auction-service-${sls:stage}.AuctionsTableArn}
+    name: ${cf(us-east-2):auction-service-${sls:stage}.AuctionsTableName}
   AuthenticationTable:
-    name: ${cf:authentication-service-${sls:stage}.AuthenticationTableName}
-    arn: ${cf:authentication-service-${sls:stage}.AuthenticationTableArn}
+    name: ${cf(us-east-2):authentication-service-${sls:stage}.AuthenticationTableName}
+    arn: ${cf(us-east-2):authentication-service-${sls:stage}.AuthenticationTableArn}
   AuctionsBucket:
     name: auctions-bucket-sdsjj32kjds-${self:provider.stage}
   OrdersQueue:
