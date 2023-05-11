@@ -76,7 +76,7 @@ resources:
     PermissionForURLInvoke: ${file(./resources/OrderReceiptDownloadPdfUrl.yml):PermissionForURLInvoke}
     CloudFrontCachePolicy: ${file(./resources/CloudFront.yml):CloudFrontCachePolicy}
     CloudFrontDistribution: ${file(./resources/CloudFront.yml):CloudFrontDistribution}
-    # WebACL: ${file(./resources/CloudFront.yml):WebACL}
+    WebACL: ${file(./resources/CloudFront.yml):WebACL}
     OrdersQueue: ${file(./resources/OrdersQueue.yml):OrdersQueue}
     NotifyCourier: ${file(./resources/NotifyCourier.yml):NotifyCourier}
 

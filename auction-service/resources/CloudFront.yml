@@ -99,10 +99,11 @@ WebACL: # should be in region 1
           CloudWatchMetricsEnabled: true
           MetricName: AnonymousIPRuleMetric
       # https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-list.html
+      # https://www.serverlessguru.com/blog/connecting-aws-waf-to-api-gateway-via-serverless-framework
       - Name: IPReputationRule
         Priority: 1
-        Action:
-          Block: {}
+        OverrideAction:
+          None: {}
         Statement:
           ManagedRuleGroupStatement:
             VendorName: AWS
@@ -113,8 +114,8 @@ WebACL: # should be in region 1
           MetricName: AnonymousIPRuleMetric
       - Name: AnonymousIPRule
         Priority: 3
-        Action:
-          Block: {}
+        OverrideAction:
+          None: {}
         Statement:
           ManagedRuleGroupStatement:
             VendorName: AWS
@@ -126,8 +127,8 @@ WebACL: # should be in region 1
       # CoreRuleSet provides protection against OWASP and prevents wide range of vunerabilities
       - Name: CoreRuleSet
         Priority: 4
-        Action:
-          Block: {}
+        OverrideAction:
+          None: {}
         Statement:
           ManagedRuleGroupStatement:
             VendorName: AWS
@@ -138,8 +139,8 @@ WebACL: # should be in region 1
           MetricName: CoreRuleSetMetric
       - Name: KnownBadInputsRule
         Priority: 5
-        Action:
-          Block: {}
+        OverrideAction:
+          None: {}
         Statement:
           ManagedRuleGroupStatement:
             VendorName: AWS
@@ -148,86 +149,18 @@ WebACL: # should be in region 1
           SampledRequestsEnabled: true
           CloudWatchMetricsEnabled: true
           MetricName: KnownBadInputsRuleMetric
-  Type: AWS::WAFv2::WebACL
-  Properties:
-    Name: AuctionWebACL
-    Scope: CLOUDFRONT # or REGIONAL
-    Description: WebACL of auction service cloudfront
-    VisibilityConfig:
-      SampledRequestsEnabled: true
-      CloudWatchMetricsEnabled: true
-      MetricName: AuctionWebACLMetric
-    DefaultAction:
-      # The action to perform if none of the Rules contained in the WebACL match
-      # means legit requests in the context of our application
-      Allow: {}
-    Rules:
-      - Name: AuctionGeolocationRule # 2 capacity units
-        Priority: 1
-        Statement:
-          GeoMatchStatement:
-            # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-wafv2-webacl-geomatchstatement.html#cfn-wafv2-webacl-geomatchstatement-countrycodes
-            CountryCodes:
-              - US
-              - CN
-        VisibilityConfig:
-          SampledRequestsEnabled: true
-          CloudWatchMetricsEnabled: true
-          MetricName: AnonymousIPRuleMetric
-      - Name: RateBasedRule # 2 capacity units
-        Priority: 1
-        Statement:
-          RateBasedStatement:
-            AggregateKeyType: IP # Aggregate the request counts on the IP address from the web request origin.
-            # how many requests should i allow from a single IP address within 5 minutes else ip will be blocked
-            # should be between 100 and 20 million
-            Limit: 1000
-        VisibilityConfig:
-          SampledRequestsEnabled: true
-          CloudWatchMetricsEnabled: true
-          MetricName: AnonymousIPRuleMetric
-      # https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-list.html
-      - Name: IPReputationRule
-        Priority: 1
+      - Name: BotControl
+        Priority: 0
+        OverrideAction:
+          None: {}
         Statement:
           ManagedRuleGroupStatement:
             VendorName: AWS
-            Name: AWSManagedRulesAmazonIpReputationList
+            Name: AWSManagedRulesBotControlRuleSet
         VisibilityConfig:
           SampledRequestsEnabled: true
           CloudWatchMetricsEnabled: true
-          MetricName: AnonymousIPRuleMetric
-      - Name: AnonymousIPRule
-        Priority: 1
-        Statement:
-          ManagedRuleGroupStatement:
-            VendorName: AWS
-            Name: AWSManagedRulesAnonymousIpList
-        VisibilityConfig:
-          SampledRequestsEnabled: true
-          CloudWatchMetricsEnabled: true
-          MetricName: AnonymousIPRuleMetric
-      # CoreRuleSet provides protection against OWASP and prevents wide range of vunerabilities
-      - Name: CoreRuleSet
-        Priority: 1
-        Statement:
-          ManagedRuleGroupStatement:
-            VendorName: AWS
-            Name: AWSManagedRulesCommonRuleSet
-        VisibilityConfig:
-          SampledRequestsEnabled: true
-          CloudWatchMetricsEnabled: true
-          MetricName: CoreRuleSetMetric
-      - Name: KnownBadInputsRule
-        Priority: 1
-        Statement:
-          ManagedRuleGroupStatement:
-            VendorName: AWS
-            Name: AWSManagedRulesKnownBadInputsRuleSet
-        VisibilityConfig:
-          SampledRequestsEnabled: true
-          CloudWatchMetricsEnabled: true
-          MetricName: KnownBadInputsRuleMetric
+          MetricName: BotControlRuleMetric
 
 # Cloud Front Distrbition
 CloudFrontDistribution:
