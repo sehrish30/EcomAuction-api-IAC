@@ -9,25 +9,25 @@ The use case for this implementation is uploading a listing agreement, which is 
 
 ## 👉Architecture of Message Queue
 
-Decouple sending emails to users improving fault tolerance <br/>
+Decoupled sending emails to users improving fault tolerance. <br/>
 
 <img src="readmeimages/SQS.png" height=300 width=1000>
 
 ## 👉Architecture of Streaming Order Receipts
 
-improved customer experiences using lambda streaming technique <br/>
+Improved customer experiences using lambda streaming technique. <br/>
 
 <img src="readmeimages/getReceipt.png" height=400 width=1000>
 
 ## 👉Architecture of Generating QR code for auction details
 
-Decoupling application qr code generation, reducing latency, and improving scalability <br/>
+Decoupled application qr code generation, with event driven architecture reducing latency, and improving scalability using Chreography pattern.<br/>
 
 <img src="readmeimages/qrcode.png" height=400 width=1000>
 
 ## 👉Architecture of Managed Store Checkout flow using step functions
 
-A Managed Store Checkout flow using AWS Step Functions is a system designed to manage the checkout process for an auction payment. <br/>
+A Managed Store Checkout flow using AWS Step Functions is a system designed to manage the checkout process for an auction payment using orchestrator pattern. <br/>
 
 <img src="readmeimages/stepfunctions.png" height=400 width=1000>
 <img src="readmeimages/stepfunctions2.png" height=400 width=1000>
