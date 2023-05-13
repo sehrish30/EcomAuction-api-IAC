@@ -20,3 +20,11 @@
 
 👉Architecture of implementing WAF and Cloudfront on Auction service functions<br/>
 <img src="readmeimages/waf.png" height=400 width=1000>
+
+<!-- 👉Architecture of implementing Upload Listing Agreement<br/> -->
+
+## Architecture of implementing Upload Listing Agreement
+
+The use case for this implementation is uploading a listing agreement, which is a document with heavy payload that outlines the terms and conditions of a real estate transaction.<br/>
+
+<img src="readmeimages/largePayload.png" height=400 width=1000>

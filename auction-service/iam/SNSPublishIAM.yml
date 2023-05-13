@@ -1,0 +1,7 @@
+SNSPublishIAM:
+  Effect: Allow
+  Action:
+    - sns:Publish
+  Resource:
+    - !Ref ExecutePayloadSuccessSNS
+    - !Ref ExecutePayloadFailureSNS

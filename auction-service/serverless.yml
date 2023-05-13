@@ -5,6 +5,8 @@ frameworkVersion: "3"
 # Configuration validation
 configValidationMode: error
 
+# https://www.serverless.com/plugins/serverless-dotenv-plugin
+useDotenv: true
 provider:
   name: aws
   runtime: nodejs18.x
@@ -16,14 +18,22 @@ provider:
     AUCTIONS_TABLE_NAME: ${self:custom.AuctionsTable.name}
     # MAIL_QUEUE_URL: ${self:custom.MailQueue.url}
     AUCTIONS_BUCKET_NAME: ${self:custom.AuctionsBucket.name}
+    LISTING_AGREEMENT_BUCKET_NAME: ${self:custom.ListingAgreement.name}
     AUCTION_DETAIL_TYPE: auctionDetail
     EVENT_BRIDGE_SOURCE: auction-service
     REGION: us-east-2
+
+  iam:
+    role:
+      statements:
+        - ${file(./iam/SSMParameterIAM.yml):SSMParameterIAM}
+        - ${file(./iam/ListingBucketIAM.yml):ListingBucketPutBucketPolicy}
 
 plugins:
   - serverless-plugin-typescript
   - serverless-iam-roles-per-function
   - serverless-apigateway-service-proxy
+  - serverless-dotenv-plugin
 
 functions:
   createAuction:
@@ -127,6 +137,41 @@ functions:
     iamRoleStatements:
       - ${file(./iam/AuctionsBucketIAM.yml):AuctionsBucketIAM}
 
+  getSignedUrl:
+    handler: src/handlers/getSignedUrl.handler
+    events:
+      - http:
+          path: s3Url
+          method: get
+          cors: true
+          authorizer: ${self:custom.authorizer}
+    iamRoleStatements:
+      - ${file(./iam/ListingBucketIAM.yml):ListingBucketGetObjectBucketIAM}
+      - ${file(./iam/ListingBucketIAM.yml):ListingBucketPutIAM}
+
+  executePayload:
+    handler: src/handlers/executePayload.handler
+    iamRoleStatements:
+      - ${file(./iam/SNSPublishIAM.yml):SNSPublishIAM}
+      - ${file(./iam/ListingBucketIAM.yml):ListingBucketGetObjectBucketIAM}
+    destinations:
+      # put message to sns topic to report to admins
+      # resource must be existing
+      # first these params should exist so will comment it and create them before
+      # when deploying the service for the first time and then deploy with these
+      onSuccess: ${ssm:${self:custom.SuccessSnsParam.name}}
+      onFailure: ${ssm:${self:custom.SuccessSnsParam.name}}
+    events:
+      # lambda looking at the event of object created in s3 bucket
+      # that will invoke this lambda function
+      - s3:
+          # resouceId: ListingBucket
+          # try to use event from resource
+          # try to use ssm for arn
+          bucket: ${self:custom.ListingAgreement.arn}
+          event: s3:ObjectCreated:*
+          existing: true
+
 resources:
   Resources:
     AuctionsTable: ${file(./resources/AuctionsTable.yml):AuctionsTable}
@@ -140,6 +185,11 @@ resources:
     # WebACL: ${file(./resources/CloudFront.yml):WebACL}
     # CloudFrontDistribution: ${file(./resources/CloudFront.yml):CloudFrontDistribution}
     CloudFrontCachePolicy: ${file(./resources/CloudFront.yml):CloudFrontCachePolicy}
+    ExecutePayloadSuccessSNS: ${file(./resources/SNS.yml):ExecutePayloadSuccessSNS}
+    ExecutePayloadFailureSNS: ${file(./resources/SNS.yml):ExecutePayloadFailureSNS}
+    ListingBucket: ${file(./resources/ListingBucket.yml):ListingBucket}
+    SuccessSnsParam: ${file(./resources/ApplicationParameter.yml):SuccessSnsParam}
+    FailureSnsParam: ${file(./resources/ApplicationParameter.yml):FailureSnsParam}
 
   Outputs:
     AuctionsTableName: ${file(./resources/AuctionsTable.yml):Outputs.AuctionsTableName}
@@ -165,6 +215,9 @@ custom:
   #   url: ${cf:notifications-service-${self:provider.stage}.MailQueueUrl}
   AuctionsBucket:
     name: auctions-bucket-sdsjj32kjds-${self:provider.stage}
+  ListingAgreement:
+    name: listing-agreement-sdsjj32kjds-${sls:stage}
+    arn: !Ref ListingBucket
   EventBus:
     value: !Ref AuctionsEventBridge
   # bcz custom or resources doesnot have access to environment variables it is accessible in events
@@ -180,6 +233,18 @@ custom:
         detailType: ${self:custom.AUCTION_DETAIL_TYPE}
         eventBusName: { Ref: AuctionsEventBridge }
         cors: true
+  ADMIN_EMAIL: ${env:adminEmail}
+  ADMIN_EMAIL2: ${env:adminEmail2}
+  ExecutePayloadSuccessSNS:
+    arn: !Ref ExecutePayloadSuccessSNS
+    name: ExecutePayloadSuccess-${self:provider.stage}
+  ExecutePayloadFailureSNS:
+    arn: !Ref ExecutePayloadFailureSNS
+    name: ExecutePayloadFailure-${self:provider.stage}
+  SuccessSnsParam:
+    name: /auctions/${sls:stage}/successSnsParam
+  FailureSnsParam:
+    name: /auctions/${sls:stage}/failureSnsParam
 # custom variable self, refers to this serverless.yml file
 # and then we can select object from upper scope of this file provider
 # self:provider.stage
@@ -202,3 +267,4 @@ custom:
 # Drop bad traffic at the edge
 # No need to enable CORS
 # Ability to use Cloudfront cache to cache GET requests
+

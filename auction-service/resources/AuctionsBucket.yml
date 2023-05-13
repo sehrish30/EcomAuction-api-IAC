@@ -2,6 +2,10 @@ AuctionsBucket:
   Type: AWS::S3::Bucket
   Properties:
     BucketName: ${self:custom.AuctionsBucket.name}
+    # explicitly allow the bucket to be public
+    PublicAccessBlockConfiguration:
+      BlockPublicPolicy: false
+      RestrictPublicBuckets: false
     # by default objects stay forever
     # until programeticlaly or manually deleted
     # this can increase cost

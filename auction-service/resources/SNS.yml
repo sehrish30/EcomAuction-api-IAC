@@ -1,0 +1,19 @@
+ExecutePayloadSuccessSNS:
+  Type: AWS::SNS::Topic
+  Properties:
+    TopicName: ${self:custom.ExecutePayloadSuccessSNS.name}
+    Subscription:
+      - Endpoint: ${self:custom.ADMIN_EMAIL}
+        Protocol: email
+      - Endpoint: ${self:custom.ADMIN_EMAIL2}
+        Protocol: "email"
+
+ExecutePayloadFailureSNS:
+  Type: AWS::SNS::Topic
+  Properties:
+    TopicName: ${self:custom.ExecutePayloadFailureSNS.name}
+    Subscription:
+      - Endpoint: ${self:custom.ADMIN_EMAIL}
+        Protocol: email
+      - Endpoint: ${self:custom.ADMIN_EMAIL2}
+        Protocol: "email"

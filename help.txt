@@ -92,3 +92,5 @@ Data Analytics: The API could provide reporting and analytics features to help a
 Customization: An auction API should allow customization of the auction experience to meet the specific needs of the platform or client using it.
 
 Overall, a well-designed auction API can provide a powerful tool for managing online auctions and delivering a seamless user experience for buyers and sellers alike.
+
+https://github.com/mjzone/large-payload-handling/tree/master
