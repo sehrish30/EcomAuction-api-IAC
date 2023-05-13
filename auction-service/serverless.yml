@@ -16,7 +16,7 @@ provider:
   region: us-east-2
   environment:
     AUCTIONS_TABLE_NAME: ${self:custom.AuctionsTable.name}
-    # MAIL_QUEUE_URL: ${self:custom.MailQueue.url}
+    MAIL_QUEUE_URL: ${self:custom.MailQueue.url}
     AUCTIONS_BUCKET_NAME: ${self:custom.AuctionsBucket.name}
     LISTING_AGREEMENT_BUCKET_NAME: ${self:custom.ListingAgreement.name}
     AUCTION_DETAIL_TYPE: auctionDetail
@@ -119,7 +119,7 @@ functions:
     iamRoleStatements:
       - ${file(./iam/EventBridgeIAM.yml):EventBridgeIAM}
 
-  # lambda function that will process messages in sqs queue
+  # lambda function that will process messages in sqs queue as lambda worker function
   processQRCodeEvents:
     handler: src/handlers/processQRCodeEvents.handler
     events:

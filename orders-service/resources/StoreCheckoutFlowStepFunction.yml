@@ -1,4 +1,5 @@
 StoreCheckoutFlowStepFunction:
+  # standard workflow because we have asynchronous exectuion
   id: StoreCheckoutFlowStateMachine
   name: storeCheckoutFlow-${sls:stage}
   # definition means tell starting state

@@ -88,11 +88,11 @@ custom:
   AuctionsTable:
     # recheck all names properly from aws cloudformation as well
     # arn: ${cf:auction-service-${sls:stage}.AuctionsTableArn}
-    arn: ${cf(us-east-2):auction-service-${sls:stage}.AuctionsTableArn}
-    name: ${cf(us-east-2):auction-service-${sls:stage}.AuctionsTableName}
+    arn: ${cf(${self:custom.RegionOfOtherServices.value}):auction-service-${sls:stage}.AuctionsTableArn}
+    name: ${cf(${self:custom.RegionOfOtherServices.value}):auction-service-${sls:stage}.AuctionsTableName}
   AuthenticationTable:
-    name: ${cf(us-east-2):authentication-service-${sls:stage}.AuthenticationTableName}
-    arn: ${cf(us-east-2):authentication-service-${sls:stage}.AuthenticationTableArn}
+    name: ${cf(${self:custom.RegionOfOtherServices.value}):authentication-service-${sls:stage}.AuthenticationTableName}
+    arn: ${cf(${self:custom.RegionOfOtherServices.value}):authentication-service-${sls:stage}.AuthenticationTableArn}
   AuctionsBucket:
     name: auctions-bucket-sdsjj32kjds-${self:provider.stage}
   OrdersQueue:
@@ -103,3 +103,5 @@ custom:
     # !Ref StoreCheckoutFlowStateMachine comes from id = StoreCheckoutFlowStateMachine in step functions
     arn: !Ref StoreCheckoutFlowStateMachine
     name: ${self:stepFunctions.stateMachines.storeCheckoutFlow.name}
+  RegionOfOtherServices:
+    value: us-east-2
