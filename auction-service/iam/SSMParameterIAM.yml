@@ -1,0 +1,43 @@
+SSMParameterIAM:
+  Effect: Allow
+  Action:
+    - ssm:PutParameter
+    - ssm:AddTagsToResource
+  Resource:
+    - !Join [
+        ":",
+        [
+          "arn:aws:ssm:",
+          "${self:provider.region}",
+          "${aws:accountId}",
+          ":parameter/",
+          "${self:custom.SuccessSnsParam.name}",
+        ],
+      ]
+    - !Join [
+        ":",
+        [
+          "arn:aws:ssm:",
+          "${self:provider.region}",
+          "${aws:accountId}",
+          ":parameter/",
+          "${self:custom.FailureSnsParam.name}",
+        ],
+      ]
+  # Resource:
+  #   - !Join
+  #   - ""
+  #   - - "arn:aws:ssm:"
+  #     - ${self:provider.region}
+  #     - ":"
+  #     - ${aws:accountId}
+  #     - ":parameter/"
+  #     - ${self:custom.SuccessSnsParam.name}
+  #   - !Join
+  #   - ""
+  #   - - "arn:aws:ssm:"
+  #     - ${self:provider.region}
+  #     - ":"
+  #     - ${aws:accountId}
+  #     - ":parameter/"
+  #     - ${self:custom.FailureSnsParam.name}

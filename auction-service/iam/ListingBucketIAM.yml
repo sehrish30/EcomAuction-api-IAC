@@ -1,0 +1,19 @@
+ListingBucketGetObjectBucketIAM:
+  Effect: Allow
+  Action:
+    - s3:GetObject
+  Resource: arn:aws:s3:::${self:custom.ListingAgreement.name}/*
+
+ListingBucketPutIAM:
+  Effect: Allow
+  Action:
+    - s3:PutObject
+  Resource: arn:aws:s3:::${self:custom.ListingAgreement.name}/*
+
+ListingBucketPutBucketPolicy:
+  Effect: Allow
+  Action: s3:PutBucketPolicy
+  Resource: arn:aws:s3:::${self:custom.ListingAgreement.name}/*
+  Condition:
+    ArnEquals:
+      aws:SourceArn: arn:aws:iam::${aws:accountId}:user/*

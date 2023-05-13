@@ -1,0 +1,13 @@
+ListingBucket:
+  Type: AWS::S3::Bucket
+  Properties:
+    BucketName: ${self:custom.ListingAgreement.name}
+    CorsConfiguration:
+      CorsRules:
+        - AllowedOrigins:
+            - "*"
+          AllowedHeaders:
+            - "*"
+          AllowedMethods:
+            - PUT
+          MaxAge: 3000

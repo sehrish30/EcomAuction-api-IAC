@@ -1,0 +1,15 @@
+SuccessSnsParam:
+  Type: AWS::SSM::Parameter
+  Properties:
+    # recommended to create parameter name as path
+    Name: ${self:custom.SuccessSnsParam.name}
+    Type: String
+    Value: ${self:custom.ExecutePayloadSuccessSNS.arn}
+
+FailureSnsParam:
+  Type: AWS::SSM::Parameter
+  Properties:
+    # recommended to create parameter name as path
+    Name: ${self:custom.FailureSnsParam.name}
+    Type: String
+    Value: ${self:custom.ExecutePayloadFailureSNS.arn}
