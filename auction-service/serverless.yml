@@ -85,14 +85,14 @@ functions:
           authorizer: ${self:custom.authorizer}
     iamRoleStatements:
       - ${file(./iam/AuctionsTableIAM.yml):AuctionsTableUpdateAuctionIAM}
-  # processAuctions:
-  #   handler: src/handlers/processAuctions.handler
-  #   events:
-  #     - schedule: rate(300 minutes)
-  #   iamRoleStatements:
-  #     - ${file(./iam/AuctionsTableIAM.yml):AuctionsTableProcessAuctionsIAM}
-  #     # allow lambda functions to send messages to this queue
-  #     - ${file(./iam/MailQueueIAM.yml):MailQueueIAM}
+  processAuctions:
+    handler: src/handlers/processAuctions.handler
+    events:
+      - schedule: rate(300 minutes)
+    iamRoleStatements:
+      - ${file(./iam/AuctionsTableIAM.yml):AuctionsTableProcessAuctionsIAM}
+      # allow lambda functions to send messages to this queue
+      - ${file(./iam/MailQueueIAM.yml):MailQueueIAM}
 
   uploadAuctionPicture:
     handler: src/handlers/uploadAuctionPicture.handler
@@ -157,6 +157,7 @@ functions:
     destinations:
       # put message to sns topic to report to admins
       # resource must be existing
+      # onSuccess: arn:aws:sns:<region>:<accountId>:<topicName>
       # first these params should exist so will comment it and create them before
       # when deploying the service for the first time and then deploy with these
       onSuccess: ${ssm:${self:custom.SuccessSnsParam.name}}
@@ -182,8 +183,8 @@ resources:
     TargetSQSRule: ${file(./resources/EventBridge.yml):TargetSQSRule}
     TargetSQSPolicy: ${file(./resources/EventBridge.yml):TargetSQSPolicy}
     TargetDLQ: ${file(./resources/EventBridge.yml):TargetDLQ}
-    # WebACL: ${file(./resources/CloudFront.yml):WebACL}
-    # CloudFrontDistribution: ${file(./resources/CloudFront.yml):CloudFrontDistribution}
+    WebACL: ${file(./resources/CloudFront.yml):WebACL}
+    CloudFrontDistribution: ${file(./resources/CloudFront.yml):CloudFrontDistribution}
     CloudFrontCachePolicy: ${file(./resources/CloudFront.yml):CloudFrontCachePolicy}
     ExecutePayloadSuccessSNS: ${file(./resources/SNS.yml):ExecutePayloadSuccessSNS}
     ExecutePayloadFailureSNS: ${file(./resources/SNS.yml):ExecutePayloadFailureSNS}
@@ -209,10 +210,10 @@ custom:
   TargetSQS:
     arn: !GetAtt TargetSQS.Arn
   # also put it in environment variable because will be accessed by lambda
-  # MailQueue:
-  #   # access cloudformation outputs from notification service
-  #   arn: ${cf:notifications-service-${self:provider.stage}.MailQueueArn}
-  #   url: ${cf:notifications-service-${self:provider.stage}.MailQueueUrl}
+  MailQueue:
+    # access cloudformation outputs from notification service
+    arn: ${cf:notifications-service-${self:provider.stage}.MailQueueArn}
+    url: ${cf:notifications-service-${self:provider.stage}.MailQueueUrl}
   AuctionsBucket:
     name: auctions-bucket-sdsjj32kjds-${self:provider.stage}
   ListingAgreement:
