@@ -8,7 +8,7 @@ provider:
   name: aws
   runtime: nodejs18.x
   region: us-east-1
-  stage: dev
+  stage: ${opt:stage, 'dev'}
   iam:
     role:
       statements:

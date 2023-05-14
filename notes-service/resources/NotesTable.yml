@@ -1,0 +1,12 @@
+NotesTable:
+  Type: AWS::DynamoDB::Table
+  Properties:
+    TableName: NotesTable-${sls:stage}
+    BillingMode: PAY_PER_REQUEST
+    AttributeDefinitions:
+      # list of attrbutes that describe the key schema for the table and indexes
+      - AttributeName: NotesId
+        AttributeType: S
+    KeySchema:
+      - AttributeName: NotesId
+        KeyType: HASH
