@@ -45,3 +45,8 @@ When implementing an auction service, it is important to ensure that the service
 The use case for this implementation is uploading a listing agreement, which is a document with heavy payload that outlines the terms and conditions of a real estate transaction.<br/>
 
 <img src="readmeimages/largePayload.png" height=400 width=1000>
+
+## 👉Architecture of implementing Notes Service for Sellers
+
+Note-taking system for sellers in the admin panel
+<img src="readmeimages/notes.png" height=400 width=1000>
