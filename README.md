@@ -48,5 +48,5 @@ The use case for this implementation is uploading a listing agreement, which is 
 
 ## 👉Architecture of implementing Notes Service for Sellers
 
-Note-taking system for sellers in the admin panel
-<img src="readmeimages/notes.png" height=400 width=700>
+Note-taking system for sellers in the admin panel using Cognito authentication
+<img src="readmeimages/notes.png" height=400 width=1000>

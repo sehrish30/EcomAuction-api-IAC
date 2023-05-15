@@ -8,9 +8,12 @@ provider:
   stage: ${opt:stage, 'dev'}
   region: us-east-2
 
+useDotenv: true
+
 plugins:
   - serverless-plugin-typescript
   - serverless-iam-roles-per-function
+  - serverless-dotenv-plugin
 
 # you can add packaging information here
 #package:
@@ -21,6 +24,14 @@ plugins:
 #    - include-me-dir/**
 
 functions:
+  authorizer:
+    # authorizer are either in token mode which is default or default mode
+    # token mode pass token in authorizer header
+    handler: src/handlers/cognitoUserPoolAuthorizer.handler
+    environment:
+      COGNITO_USERPOOL_ID: !Ref CognitoUserPool
+      COGNITO_WEB_CLIENT_ID: !Ref CognitoUserPoolClient
+
   createNote:
     handler: src/handlers/createNote.handler
     iamRoleStatements:
@@ -31,6 +42,7 @@ functions:
       - http:
           method: post
           path: notes
+          authorizer: authorizer
   updateNote:
     handler: src/handlers/updateNote.handler
     iamRoleStatements:
@@ -41,6 +53,7 @@ functions:
       - http:
           method: put
           path: notes/{noteId}
+          authorizer: authorizer
   deleteNote:
     handler: src/handlers/deleteNote.handler
     iamRoleStatements:
@@ -51,6 +64,7 @@ functions:
       - http:
           method: delete
           path: notes/{noteId}
+          authorizer: authorizer
   getAllNotes:
     handler: src/handlers/getAllNotes.handler
     iamRoleStatements:
@@ -61,52 +75,53 @@ functions:
       - http:
           method: get
           path: notes
-#    The following are a few example events you can configure
-#    NOTE: Please make sure to change your handler code to work with those events
-#    Check the event documentation for details
-#    events:
-#      - httpApi:
-#          path: /users/create
-#          method: get
-#      - websocket: $connect
-#      - s3: ${env:BUCKET}
-#      - schedule: rate(10 minutes)
-#      - sns: greeter-topic
-#      - stream: arn:aws:dynamodb:region:XXXXXX:table/foo/stream/1970-01-01T00:00:00.000
-#      - alexaSkill: amzn1.ask.skill.xx-xx-xx-xx
-#      - alexaSmartHome: amzn1.ask.skill.xx-xx-xx-xx
-#      - iot:
-#          sql: "SELECT * FROM 'some_topic'"
-#      - cloudwatchEvent:
-#          event:
-#            source:
-#              - "aws.ec2"
-#            detail-type:
-#              - "EC2 Instance State-change Notification"
-#            detail:
-#              state:
-#                - pending
-#      - cloudwatchLog: '/aws/lambda/hello'
-#      - cognitoUserPool:
-#          pool: MyUserPool
-#          trigger: PreSignUp
-#      - alb:
-#          listenerArn: arn:aws:elasticloadbalancing:us-east-1:XXXXXX:listener/app/my-load-balancer/50dc6c495c0c9188/
-#          priority: 1
-#          conditions:
-#            host: example.com
-#            path: /hello
-
-#    Define function environment variables here
-#    environment:
-#      variable2: value2
+          # this is cognito user pool that only checks
+          # if user is in the user pool or not
+          # if you want to check actual credentials
+          # you have to use iam authorizer or lambda authorizer
+          # so u can check if user belongs to "no access" user pool group
+          # if so return unauthorized access
+          authorizer:
+            name: userpool_authorizer
+            # without type it will treat this as regular lambda authorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
+  oldNoteDeleter:
+    handler: src/handlers/oldNoteDeleter.handler
+    environment:
+      NOTES_TABLE: !Ref NotesTable # get TableName
+    iamRoleStatements:
+      - ${file(./iam/NotesTableIAM.yml):DeleteItemNotesTableIAM}
+      - ${file(./iam/NotesTableIAM.yml):ScanItemNotesTableIAM}
+    events:
+      # Invoke lambda function every 2 minutes
+      - schedule: cron(0/2 * ? * MON-FRI *)
 
 # custom:
 
 resources:
   Resources:
     NotesTable: ${file(./resources/NotesTable.yml):NotesTable}
-#  Outputs:
-#     NewOutput:
-#       Description: "Description for the output"
-#       Value: "Some output value"
+    CognitoUserPool: ${file(./resources/CognitoUserPool.yml):CognitoUserPool}
+    CognitoUserPoolClient: ${file(./resources/CognitoUserPool.yml):CognitoUserPoolClient}
+    CognitoUserPoolDomain: ${file(./resources/CognitoUserPool.yml):CognitoUserPoolDomain}
+    CognitoFacebookUserPoolIdentityProvider: ${file(./resources/CognitoUserPool.yml):CognitoFacebookUserPoolIdentityProvider}
+    CognitoGoogleUserPoolIdentityProvider: ${file(./resources/CognitoUserPool.yml):CognitoGoogleUserPoolIdentityProvider}
+
+Outputs:
+  UserPoolId:
+    Value: !Ref CognitoUserPool
+    Export:
+      Name: "UserPool::Id"
+  UserPoolClientId:
+    Value: !Ref CognitoUserPoolClient
+    Export:
+      Name: "UserPoolClient::Id"
+  FacebookIdentityPoolId:
+    Value: !Ref CognitoFacebookUserPoolIdentityProvider
+    Export:
+      Name: "FacebookIdentityPool::Id"
+  GoogleIdentityPoolId:
+    Value: !Ref CognitoGoogleUserPoolIdentityProvider
+    Export:
+      Name: "FacebookIdentityPool::Id"
