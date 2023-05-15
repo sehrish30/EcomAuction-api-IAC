@@ -1,5 +1,5 @@
 import createError from "http-errors";
-import { APIGatewayEvent, Context } from "aws-lambda";
+import { ScheduledEvent, Context } from "aws-lambda";
 
 import { closeAuction } from "../lib/closeAuction";
 import { getEndedAuctions } from "../lib/getEndedAuctions";
@@ -9,7 +9,7 @@ import { getEndedAuctions } from "../lib/getEndedAuctions";
  * and end date is in the past
  * so we will use GSI (Status, EndingAt)
  */
-async function processAuctions(event: APIGatewayEvent, context: Context) {
+async function processAuctions(event: ScheduledEvent, context: Context) {
   try {
     // first get all ended auctions
     const auctionsToClose = await getEndedAuctions();

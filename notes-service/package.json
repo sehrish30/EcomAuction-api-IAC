@@ -12,6 +12,7 @@
   "devDependencies": {
     "@types/aws-lambda": "^8.10.115",
     "@types/http-errors": "^2.0.1",
+    "serverless-dotenv-plugin": "^6.0.0",
     "serverless-iam-roles-per-function": "^3.2.0",
     "serverless-plugin-typescript": "^2.1.4",
     "typescript": "^5.0.4"
@@ -25,6 +26,7 @@
     "@middy/http-event-normalizer": "^4.4.1",
     "@middy/http-json-body-parser": "^4.4.1",
     "@middy/validator": "^4.4.1",
+    "aws-jwt-verify": "^4.0.0",
     "http-errors": "^2.0.0"
   }
 }

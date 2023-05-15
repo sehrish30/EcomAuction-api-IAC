@@ -40,6 +40,7 @@ const getAllNotes = async (event: APIGatewayEvent, ctx: Context) => {
       pageSize: string;
       LastEvaluatedKey: Record<string, AttributeValue> | undefined;
     };
+  console.log(event.requestContext.authorizer);
   console.log({ pageSize, LastEvaluatedKey });
   const numPageSize = +pageSize;
   try {

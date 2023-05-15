@@ -1,0 +1,69 @@
+# createUserPool, UserPoolClient , HostedUIDomain
+CognitoUserPool:
+  Type: AWS::Cognito::UserPool
+  Properties:
+    UserPoolName: AuctionNotesUp-${self:provider.stage}
+
+CognitoFacebookUserPoolIdentityProvider:
+  Type: AWS::Cognito::UserPoolIdentityProvider
+  Properties:
+    ProviderName: Facebook
+    AttributeMapping:
+      email: email
+    ProviderDetails:
+      client_id: ${env:FACEBOOK_CLIENT_ID}
+      client_secret: ${env:FACEBOOK_SECRET_KEY}
+      authorize_scopes: public_profile email
+    ProviderType: Facebook
+    UserPoolId: !Ref CognitoUserPool
+
+CognitoGoogleUserPoolIdentityProvider:
+  Type: AWS::Cognito::UserPoolIdentityProvider
+  Properties:
+    ProviderName: Google
+    AttributeMapping:
+      email: email
+    ProviderDetails:
+      client_id: ${env:GOOGLE_APP_ID}
+      client_secret: ${env:GOOGLE_SECRET}
+      authorize_scopes: profile email openid
+    ProviderType: Google
+    UserPoolId: !Ref CognitoUserPool
+
+CognitoUserPoolClient:
+  Type: AWS::Cognito::UserPoolClient
+  DependsOn:
+    - CognitoFacebookUserPoolIdentityProvider
+  Properties:
+    # connect client with the user pool
+    UserPoolId: !Ref CognitoUserPool
+    ClientName: NotesClient-${self:provider.stage}
+    # add implicit grant type to this web client
+    AllowedOAuthFlows:
+      - implicit # Issue the access token (and, optionally, ID token, based on scopes) directly to your user in the url itself
+    CallbackURLs: # A list of allowed redirect (callback) URLs for the IdPs.
+      - http://localhost:3000/callback
+    LogoutURLs:
+      - http://localhost:3000/logout
+    # when u setup AllowedOAuthFlowsUserPoolClient u have to setup allowed scopes as well
+    AllowedOAuthFlowsUserPoolClient: true # Set to true if the client is allowed to follow the OAuth protocol when interacting with Amazon Cognito user pools.
+    AllowedOAuthScopes:
+      - phone
+      - email
+      - profile
+      - openid
+    # enable identity provider supported on this client
+    SupportedIdentityProviders:
+      - COGNITO
+      - Facebook
+
+CognitoUserPoolDomain:
+  Type: AWS::Cognito::UserPoolDomain
+  Properties:
+    # custom domain provide ssl certificate for the domain
+    # i will select congito provided domain for simplicity
+    Domain: auction-notes-${self:provider.stage} # before .auth.[region].amazoncognito.com (should be unique)
+    UserPoolId: !Ref CognitoUserPool
+# https://gist.github.com/singledigit/2c4d7232fa96d9e98a3de89cf6ebe7a5
+# https://github.com/qalshakhoori/sls-custom-cognito
+# https://forum.serverless.com/t/creation-of-user-pool-client-fails-saying-provider-google-does-not-exist/10050/4

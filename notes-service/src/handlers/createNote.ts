@@ -37,6 +37,7 @@ const createNote = async (event: APIGatewayEvent, ctx: Context) => {
         NotesId: id,
         Title: title,
         Body: body,
+        CreationDate: new Date().toISOString(),
       },
       // check if there is already note with this id to check idempotency
       ConditionExpression: "attribute_not_exists(NotesId)",

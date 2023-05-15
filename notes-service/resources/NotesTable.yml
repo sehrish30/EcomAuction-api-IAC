@@ -1,6 +1,11 @@
 NotesTable:
   Type: AWS::DynamoDB::Table
+  # when you want to keep resources running incase of accidental stack remove
+  # usually used for tables and s3
+  DeletionPolicy: Retain
+  UpdateReplacePolicy: Retain
   Properties:
+    # if no name serverless framework will name
     TableName: NotesTable-${sls:stage}
     BillingMode: PAY_PER_REQUEST
     AttributeDefinitions:
