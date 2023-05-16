@@ -8,14 +8,13 @@ on:
     branches:
       - main
 
-defaults:
-  run:
-    working-directory: ./notes-service
-
 jobs:
   productionDeployment:
     name: production-deployment
     runs-on: ubuntu-latest #OS it will run
+    defaults:
+      run:
+        working-directory: ./notes-service
     environment:
       # to add environment variables
       name: Production
