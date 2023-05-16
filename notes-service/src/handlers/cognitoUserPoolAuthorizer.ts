@@ -112,7 +112,8 @@ export const handler = async (
   try {
     // Validate the token from user pool
     payload = await jwtVerifier.verify(token);
-    console.log("BYEE BASIT", { payload }, event.methodArn);
+
+    // arn:aws:execute-api:us-east-2:275102385991:tb68pdfq86/dev/POST/notes
     console.log({
       ...generatePolicy(payload.sub, "Allow", event.methodArn, payload),
     });
@@ -120,7 +121,12 @@ export const handler = async (
     console.log(err);
     throw err;
   }
+  console.log(
+    "BYEE BASIT generate",
+    generatePolicy(payload?.sub || "User", "Allow", event.methodArn, payload)
+  );
   return {
+    isAuthorized: true,
     ...generatePolicy(
       payload?.sub || "User",
       "Allow",
