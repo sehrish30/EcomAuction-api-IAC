@@ -37,7 +37,8 @@ jobs:
         uses: serverless/github-action@v3.1
         with:
           # install serverless plugins
-          args: -c "serverless plugin install --name serverless-iam-roles-per-function && serverless plugin install --name serverless-plugin-typescript && serverless deploy --stage production"
+          # args: -c "serverless plugin install --name serverless-iam-roles-per-function && serverless plugin install --name serverless-plugin-typescript && serverless deploy --stage production"
+          args: -c "npm install --save-dev serverless-iam-roles-per-function && npm install -D serverless-plugin-typescript typescript && serverless deploy --stage production"
           entrypoint: /bin/sh
         env:
           # refer the environment in our github actions configuration
@@ -45,5 +46,5 @@ jobs:
           # in our case from production environment
           # SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
           # or if using AWS credentials directly
-          AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
-          AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
