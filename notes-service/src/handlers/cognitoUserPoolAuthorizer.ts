@@ -186,3 +186,38 @@ export const handler = async (
     email: 'xyz@gmail.com'
   }
  */
+
+// context: {
+//   principalId: '0d144625-1ef3-46a3-8190-62eb1f3ba6d8',
+//   policyDocument: { Version: '2012-10-17', Statement: [ [Object] ] },
+//   context: {
+//     at_hash: 'JBFgTXR6ohGPUs-cvim43Q',
+//     sub: '0d144625-1ef3-46a3-8190-62eb1f3ba6d8',
+//     'cognito:groups': [ 'us-east-2_hbF5JLILA_Google' ],
+//     email_verified: false,
+//     iss: 'https://cognito-idp.us-east-2.amazonaws.com/us-east-2_hbF5JLILA',
+//     'cognito:username': 'Google_114447427349094333382',
+//     nonce: 'KF7PwjsUbdIfKe4-tDc2II6dFBeaRsGp0IgpOgj_JyNTUaMzA1RmJYowFhgYKdXvmL-WCbeLaPHzBH3abfGFWuWhSB1E68sHGRjppgAe1UngS-e1nRbcN8_LP93p2r8QggfsWmhtUDyJhjwrP9tpaUU2RU7hJ0rWLdt_8yjn1S0',
+//     aud: '4j5p8adgkqvjtjtpqrbv865t15',
+//     identities: [ [Object] ],
+//     token_use: 'id',
+//     auth_time: 1684222480,
+//     exp: 1684226080,
+//     iat: 1684222480,
+//     jti: '0a7aff4b-0789-4bb3-836d-19911f0fff24',
+//     email: 'sehrishwaheed98@gmail.com'
+// }
+
+// {
+//   at_hash: 'wSREbE3XA-aOTkarmZUwpQ',
+//   sub: '85e9d40a-fdff-4fa1-bc0a-a6a1542e9eec',
+//   aud: '4j5p8adgkqvjtjtpqrbv865t15',
+//   event_id: 'd7ef2fe7-8c9f-4877-ac1e-a70005d5d118',
+//   token_use: 'id',
+//   auth_time: 1684221402,
+//   iss: 'https://cognito-idp.us-east-2.amazonaws.com/us-east-2_hbF5JLILA',
+//   'cognito:username': 'sehrishh',
+//   exp: 1684225002,
+//   iat: 1684221402,
+//   jti: 'ef09d166-ce92-4d3b-b199-14b15b9628d3'
+// }
