@@ -70,11 +70,11 @@ const generatePolicy = (
     tmp[4] +
     ":" +
     apiGatewayArnTmp[0] + // {apiId}
-    "/*/*";
+    "/*/*"; // arn:aws:execute-api:us-east-2:<accountId>:tb68pdfq86/*/*
 
   let authResponse = {} as AuthResponse;
   if (effect && globalresource) {
-    let policyDocument = {
+    let policyDocument: PolicyDocument = {
       Version: "2012-10-17",
       Statement: [
         {
@@ -108,18 +108,32 @@ export const handler = async (
   if (!token) {
     throw new Error("No token found!");
   }
+  let payload;
   try {
     // Validate the token from user pool
-    const payload = await jwtVerifier.verify(token);
-
-    return {
-      ...generatePolicy("user", "Allow", event.methodArn, payload),
-    };
+    payload = await jwtVerifier.verify(token);
+    console.log("BYEE BASIT", { payload }, event.methodArn);
+    console.log({
+      ...generatePolicy(payload.sub, "Allow", event.methodArn, payload),
+    });
   } catch (err) {
     console.log(err);
     throw err;
   }
+  return {
+    ...generatePolicy(
+      payload?.sub || "User",
+      "Allow",
+      event.methodArn,
+      payload
+    ),
+  };
 };
+
+/**
+ * https://auction-notes.auth.us-east-2.amazoncognito.com/login?response_type=token&client_id=xyz&redirect_uri=http://localhost:3000
+ *
+ */
 
 /**
  * Cognito user pool are user directories
@@ -133,4 +147,36 @@ export const handler = async (
  * Integrate your identity provider with your identity pool
  * Guest access for restrictive authorization
  *
+ */
+
+/**
+ * Wheneever there is a pull request we will get the latest code and deploy it to the environment
+ * when the code is merged by the peer, anyone in the team will initiate another deployment workflow in production environment
+ * which will be in production aws account
+ * Serverless lambda related workflow
+ */
+
+/**
+ * serverless logs -f authorizer
+ * serverless deploy function --function authorizer
+ */
+
+/**
+ *  payload: {
+    at_hash: 'xyz',
+    sub: 'xyz',
+    'cognito:groups': [ 'us-east-2_hbF5JLILA_Facebook' ],
+    email_verified: false,
+    iss: 'https://cognito-idp.us-east-2.amazonaws.com/us-east-2_xyz',
+    'cognito:username': 'Facebook_xyz',
+    nonce: 'xyz',
+    aud: 'xyz',
+    identities: [ [Object] ],
+    token_use: 'id',
+    auth_time: 1684217014,
+    exp: 1684220614,
+    iat: 1684217014,
+    jti: 'xyz',
+    email: 'xyz@gmail.com'
+  }
  */

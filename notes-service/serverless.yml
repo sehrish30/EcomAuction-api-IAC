@@ -108,20 +108,20 @@ resources:
     CognitoFacebookUserPoolIdentityProvider: ${file(./resources/CognitoUserPool.yml):CognitoFacebookUserPoolIdentityProvider}
     CognitoGoogleUserPoolIdentityProvider: ${file(./resources/CognitoUserPool.yml):CognitoGoogleUserPoolIdentityProvider}
 
-Outputs:
-  UserPoolId:
-    Value: !Ref CognitoUserPool
-    Export:
-      Name: "UserPool::Id"
-  UserPoolClientId:
-    Value: !Ref CognitoUserPoolClient
-    Export:
-      Name: "UserPoolClient::Id"
-  FacebookIdentityPoolId:
-    Value: !Ref CognitoFacebookUserPoolIdentityProvider
-    Export:
-      Name: "FacebookIdentityPool::Id"
-  GoogleIdentityPoolId:
-    Value: !Ref CognitoGoogleUserPoolIdentityProvider
-    Export:
-      Name: "FacebookIdentityPool::Id"
+  Outputs:
+    UserPoolId:
+      Value: !Ref CognitoUserPool
+      Export:
+        Name: "UserPool::Id"
+    UserPoolClientId:
+      Value: !Ref CognitoUserPoolClient
+      Export:
+        Name: "UserPoolClient::Id"
+    FacebookIdentityPoolId:
+      Value: !Ref CognitoFacebookUserPoolIdentityProvider
+      Export:
+        Name: "FacebookIdentityPool::Id"
+    GoogleIdentityPoolId:
+      Value: !Ref CognitoGoogleUserPoolIdentityProvider
+      Export:
+        Name: "GoogleIdentityPool::Id"

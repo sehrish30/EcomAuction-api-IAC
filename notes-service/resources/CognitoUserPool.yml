@@ -3,7 +3,15 @@ CognitoUserPool:
   Type: AWS::Cognito::UserPool
   Properties:
     UserPoolName: AuctionNotesUp-${self:provider.stage}
+    AutoVerifiedAttributes:
+      # require email validation
+      - email
+      # requires MFA and validates the phone number to use as MFA
+      # - phone_number
+    UserNameAttributes:
+      - email
 
+# https://aws.plainenglish.io/enable-social-login-on-aws-cognito-login-with-facebook-d4535c8847df for facebook app setup
 CognitoFacebookUserPoolIdentityProvider:
   Type: AWS::Cognito::UserPoolIdentityProvider
   Properties:
@@ -56,6 +64,7 @@ CognitoUserPoolClient:
     SupportedIdentityProviders:
       - COGNITO
       - Facebook
+      - Google
 
 CognitoUserPoolDomain:
   Type: AWS::Cognito::UserPoolDomain
