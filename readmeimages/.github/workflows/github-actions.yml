@@ -1,0 +1,49 @@
+name: Deploy auction-notes-API
+
+# serverless workflow
+# https://github.com/serverless/github-action
+on:
+  # which event will execute workflow
+  push:
+    branches:
+      - main
+
+defaults:
+  run:
+    working-directory: ./notes-service
+
+jobs:
+  productionDeployment:
+    name: production-deployment
+    runs-on: ubuntu-latest #OS it will run
+    environment:
+      # to add environment variables
+      name: Production
+      # production application endpoint
+      url: https://test.com
+    strategy:
+      matrix:
+        node-version: [18.x]
+    steps:
+      # github actions checkout the code
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      # npm ci is npm i but wont change ur packagelock.json
+      - run: npm ci
+      - name: Install Plugin and Deploy
+        uses: serverless/github-action@v3.1
+        with:
+          # install serverless plugins
+          args: -c "serverless plugin install --name serverless-iam-roles-per-function && serverless plugin install --name serverless-plugin-typescript && serverless deploy --stage production"
+          entrypoint: /bin/sh
+        env:
+          # refer the environment in our github actions configuration
+          # defined enviroment variable on top it will always get it from environment we have defined
+          # in our case from production environment
+          # SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
+          # or if using AWS credentials directly
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
