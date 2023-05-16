@@ -50,6 +50,7 @@ CognitoUserPoolClient:
   Properties:
     # connect client with the user pool
     UserPoolId: !Ref CognitoUserPool
+    GenerateSecret: true # Boolean to specify whether you want to generate a secret for the user pool client being created
     ClientName: NotesClient-${self:provider.stage}
     # add implicit grant type to this web client
     AllowedOAuthFlows:
