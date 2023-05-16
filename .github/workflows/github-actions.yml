@@ -8,11 +8,11 @@ on:
     branches:
       - main
 
-env:
-  # FACEBOOK_CLIENT_ID: sdasd
-  # FACEBOOK_SECRET_KEY: sada
-  # GOOGLE_APP_ID: dsads-kjjkh.apps.googleusercontent.com
-  # GOOGLE_SECRET: GOCSPX-sdsd
+# env:
+#   # FACEBOOK_CLIENT_ID: sdasd
+#   # FACEBOOK_SECRET_KEY: sada
+#   # GOOGLE_APP_ID: dsads-kjjkh.apps.googleusercontent.com
+#   # GOOGLE_SECRET: GOCSPX-sdsd
 
 jobs:
   productionDeployment:

@@ -91,6 +91,9 @@ const generatePolicy = (
       policyDocument,
       context: {
         ...payload,
+        // arrays are not allowed in context only strings and this is array
+        "cognito:groups": null,
+        identities: null,
       },
     };
   }
@@ -114,25 +117,22 @@ export const handler = async (
     payload = await jwtVerifier.verify(token);
 
     // arn:aws:execute-api:us-east-2:275102385991:tb68pdfq86/dev/POST/notes
-    console.log({
-      ...generatePolicy(payload.sub, "Allow", event.methodArn, payload),
-    });
+    console.log({});
   } catch (err) {
     console.log(err);
     throw err;
   }
-  console.log(
-    "BYEE BASIT generate",
-    generatePolicy(payload?.sub || "User", "Allow", event.methodArn, payload)
-  );
-  return {
-    isAuthorized: true,
+
+  const result = {
     ...generatePolicy(
       payload?.sub || "User",
       "Allow",
       event.methodArn,
       payload
     ),
+  };
+  return {
+    ...result,
   };
 };
 
