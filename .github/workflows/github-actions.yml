@@ -9,10 +9,10 @@ on:
       - main
 
 env:
-  FACEBOOK_CLIENT_ID: 577897166984054
-  FACEBOOK_SECRET_KEY: 6b3d5f6e43abc87d4a26d25c255a78a2
-  GOOGLE_APP_ID: 567562781843-7vcbos7s504iueh0f32hq8ohn8bdaobo.apps.googleusercontent.com
-  GOOGLE_SECRET: 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
+  # FACEBOOK_CLIENT_ID: sdasd
+  # FACEBOOK_SECRET_KEY: sada
+  # GOOGLE_APP_ID: dsads-kjjkh.apps.googleusercontent.com
+  # GOOGLE_SECRET: GOCSPX-sdsd
 
 jobs:
   productionDeployment:
@@ -54,3 +54,6 @@ jobs:
           # or if using AWS credentials directly
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#  go to your repository settings page, navigate to the
+# "Secrets" tab, and click "New repository secret".
+#  Give your secret a name and value, then reference it in your workflow using $\{{ secrets.<secret_name> }}.

@@ -209,15 +209,43 @@ export const handler = async (
 // }
 
 // {
-//   at_hash: 'wSREbE3XA-aOTkarmZUwpQ',
-//   sub: '85e9d40a-fdff-4fa1-bc0a-a6a1542e9eec',
-//   aud: '4j5p8adgkqvjtjtpqrbv865t15',
-//   event_id: 'd7ef2fe7-8c9f-4877-ac1e-a70005d5d118',
-//   token_use: 'id',
-//   auth_time: 1684221402,
-//   iss: 'https://cognito-idp.us-east-2.amazonaws.com/us-east-2_hbF5JLILA',
-//   'cognito:username': 'sehrishh',
-//   exp: 1684225002,
-//   iat: 1684221402,
-//   jti: 'ef09d166-ce92-4d3b-b199-14b15b9628d3'
+//   principalId: 'ab26c80d-2c38-4513-b3fc-0c0722cb3e39',
+//   policyDocument: { Version: '2012-10-17', Statement: [ [Object] ] },
+//   context: {
+//     at_hash: 'hkdFrNatfIyyHq1coEotnQ',
+//     sub: 'ab26c80d-2c38-4513-b3fc-0c0722cb3e39',
+//     'cognito:groups': [ 'us-east-2_7aJP5VFoi_Google' ],
+//     email_verified: false,
+//     iss: 'https://cognito-idp.us-east-2.amazonaws.com/us-east-2_7aJP5VFoi',
+//     'cognito:username': 'Google_114447427349094333382',
+//     nonce: 'LZvLVxeAXwzmxCsES3MGY_XZYJ9kSB-xRpkfscHPuralT2VHmq6xdTPZEte3D8wjKIdhxyJ3XV8PFRQ8MxEpZ9lZh0QBPkesFe56GxxwI-82zWulGgctFiiHN-C2n-T6htoyB4PH8cFeSh8e7BYwgk0Ewm44gB7bD-tD3wnzFT4',
+//     aud: '1ds0a0jvbgu0ij27sceonjidb5',
+//     identities: [ [Object] ],
+//     token_use: 'id',
+//     auth_time: 1684239471,
+//     exp: 1684243071,
+//     iat: 1684239471,
+//     jti: '2ae8e3f4-428c-4b00-9215-a471fbeb10c9',
+//     email: 'sehrishwaheed98@gmail.com'
+//   }
+// }
+
+// {
+//   principalId: '056a3bce-bed9-4b1f-9d44-bee685f47a73',
+//   policyDocument: { Version: '2012-10-17', Statement: [ [Object] ] },
+//   context: {
+//     at_hash: 'Bs4R3ErIi2For-gOOJAcLw',
+//     sub: '056a3bce-bed9-4b1f-9d44-bee685f47a73',
+//     email_verified: true,
+//     iss: 'https://cognito-idp.us-east-2.amazonaws.com/us-east-2_7aJP5VFoi',
+//     'cognito:username': 'sehrishh',
+//     aud: '1ds0a0jvbgu0ij27sceonjidb5',
+//     event_id: '164ea095-fff7-4ba8-ad95-a74b4de93f7f',
+//     token_use: 'id',
+//     auth_time: 1684240244,
+//     exp: 1684243844,
+//     iat: 1684240244,
+//     jti: 'd87b9bdf-5363-4f9c-84e2-14db154553ba',
+//     email: 'sehrishwaheed98@gmail.com'
+//   }
 // }

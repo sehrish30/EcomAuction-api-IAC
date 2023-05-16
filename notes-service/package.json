@@ -12,6 +12,7 @@
   "devDependencies": {
     "@types/aws-lambda": "^8.10.115",
     "@types/http-errors": "^2.0.1",
+    "jest": "^29.5.0",
     "serverless-dotenv-plugin": "^6.0.0",
     "serverless-iam-roles-per-function": "^3.2.0",
     "serverless-plugin-typescript": "^2.1.4",
