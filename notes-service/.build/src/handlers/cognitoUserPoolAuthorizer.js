@@ -202,33 +202,4 @@ exports.handler = handler;
     email: 'xyz@gmail.com'
   }
  */
-// context: {
-//   at_hash: 'MzpUWuPidSVi2puP1wedPA',
-//   sub: 'f7d46a9d-eb8c-4e82-a4e4-84e688adbdcb',
-//   'cognito:groups': [ 'us-east-2_hbF5JLILA_Facebook' ],
-//   email_verified: false,
-//   iss: 'https://cognito-idp.us-east-2.amazonaws.com/us-east-2_hbF5JLILA',
-//   'cognito:username': 'Facebook_1662898277376663',
-//   aud: '4j5p8adgkqvjtjtpqrbv865t15',
-//   identities: [ [Object] ],
-//   token_use: 'id',
-//   auth_time: 1684220619,
-//   exp: 1684224219,
-//   iat: 1684220619,
-//   jti: 'cb8061ca-15bb-4ed8-8cf9-1344df3f2e79',
-//   email: 'sehrishwaheed98@gmail.com'
-// }
-// {
-//   at_hash: 'wSREbE3XA-aOTkarmZUwpQ',
-//   sub: '85e9d40a-fdff-4fa1-bc0a-a6a1542e9eec',
-//   aud: '4j5p8adgkqvjtjtpqrbv865t15',
-//   event_id: 'd7ef2fe7-8c9f-4877-ac1e-a70005d5d118',
-//   token_use: 'id',
-//   auth_time: 1684221402,
-//   iss: 'https://cognito-idp.us-east-2.amazonaws.com/us-east-2_hbF5JLILA',
-//   'cognito:username': 'sehrishh',
-//   exp: 1684225002,
-//   iat: 1684221402,
-//   jti: 'ef09d166-ce92-4d3b-b199-14b15b9628d3'
-// }
 //# sourceMappingURL=cognitoUserPoolAuthorizer.js.map
