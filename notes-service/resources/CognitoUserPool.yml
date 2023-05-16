@@ -8,8 +8,13 @@ CognitoUserPool:
       - email
       # requires MFA and validates the phone number to use as MFA
       # - phone_number
-    UserNameAttributes:
-      - email
+    Schema: # Contains information about the schema attribute.
+      - AttributeDataType: "String"
+        Name: "email"
+        Required: true
+      - AttributeDataType: "String"
+        Name: "phone_number"
+        Required: false
 
 # https://aws.plainenglish.io/enable-social-login-on-aws-cognito-login-with-facebook-d4535c8847df for facebook app setup
 CognitoFacebookUserPoolIdentityProvider:
