@@ -9,10 +9,10 @@ on:
       - main
 
 env:
-  FACEBOOK_CLIENT_ID: 577897166984054
-  FACEBOOK_SECRET_KEY: 6b3d5f6e43abc87d4a26d25c255a78a2
-  GOOGLE_APP_ID: 567562781843-7vcbos7s504iueh0f32hq8ohn8bdaobo.apps.googleusercontent.com
-  GOOGLE_SECRET: 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
+  FACEBOOK_CLIENT_ID: ${{ secrets.FACEBOOK_CLIENT_ID }}
+  FACEBOOK_SECRET_KEY: ${{ secrets.FACEBOOK_SECRET_KEY }}
+  GOOGLE_APP_ID: ${{ secrets.GOOGLE_APP_ID }}
+  GOOGLE_SECRET: ${{ secrets.GOOGLE_SECRET }}
 
 jobs:
   productionDeployment:
