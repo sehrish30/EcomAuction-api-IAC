@@ -51,3 +51,8 @@ The use case for this implementation is uploading a listing agreement, which is 
 Note-taking system for sellers in the admin panel using Cognito authentication, CI/CD with github actions and tested with jest
 <img src="readmeimages/notes.png" height=400 width=1000>
 <img src="readmeimages/authentication.png" height=400 width=1000>
+
+## 👉Architecture of Decoupling with SQS to imrpove usability
+
+Tight coupling between our resources and dependency on external API can cause bottleneck. To avoid delays I have introduced decoupling with queue and later send socket event to client. Edge cases messages that cannot be processed will be send to DLQ.
+<img src="readmeimages/decoupling.png" height=400 width=1000>

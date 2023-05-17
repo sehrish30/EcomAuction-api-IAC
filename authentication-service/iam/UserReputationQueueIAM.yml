@@ -1,0 +1,15 @@
+UserReputationQueueIAM:
+  Effect: Allow
+  Action:
+    - sqs:SendMessage
+  Resource:
+    - !GetAtt UserReputationQueue.Arn
+
+UserReputationReceiveQueueIAM:
+  Effect: Allow
+  Action:
+    - sqs:ReceiveMessage
+    - sqs:DeleteMessage
+    - sqs:GetQueueAttributes
+  Resource:
+    - !GetAtt UserReputationQueue.Arn

@@ -30,8 +30,9 @@ functions:
           cors: true
           path: login-or-register
           method: POST
+          authorizer: auth
           # use auth.handler auth function to authorize itself
-          authorizer: ${self:custom.authorizer}
+          # authorizer: ${self:custom.authorizer}
 
   publicEndpoint:
     handler: src/handlers/public.handler
@@ -48,38 +49,97 @@ functions:
           method: POST
           cors: true
 
+  addToUserRatingQueue:
+    handler: src/handlers/addToUserRatingQueue.handler
+    iamRoleStatements:
+      - ${file(./iam/UserReputationQueueIAM.yml):UserReputationQueueIAM}
+    events:
+      - http:
+          path: rating
+          method: POST
+    environment:
+      QUEUE_URL: !GetAtt UserReputationQueue.QueueUrl
+
+  disconnectHandler:
+    handler: src/handlers/disconnectHandler.handler
+    iamRoleStatements:
+      - ${file(./iam/SocketsTableIAM.yml):SocketsTableDeleteIAM}
+    events:
+      - websocket:
+          route: $disconnect
+    environment:
+      CONNECTIONS_WEBSOCKET_TABLE: !Ref SocketsTable
+
+  connectSocket:
+    handler: src/handlers/connectSocket.handler
+    iamRoleStatements:
+      - ${file(./iam/SocketsTableIAM.yml):SocketsTablePutIAM}
+    events:
+      - websocket:
+          route: $connect
+    environment:
+      CONNECTIONS_WEBSOCKET_TABLE: !Ref SocketsTable
+
+  sendMessage:
+    handler: src/handlers/sendMessage.handler
+    iamRoleStatements:
+      - ${file(./iam/SocketsTableIAM.yml):SocketsTableQueryIAM}
+    events:
+      - websocket:
+          route: onMessage
+
+  sendSocketToClient:
+    handler: src/handlers/sendSocketToClient.handler
+    environment:
+      APIG_ENDPOINT: ${self:custom.socketServiceEndpoint}
+
+  listenToQueue:
+    handler: src/handlers/listenToQueue.handler
+    environment:
+      AUTHENTICATION_TABLE_NAME: !Ref AuthenticationTable
+    destinations:
+      onSuccess: sendSocketToClient
+      onFailure: sendSocketToClient
+    events:
+      - sqs:
+          arn: !GetAtt UserReputationQueue.Arn
+          # batchSize 1 means sqs will only send one message to the lambda
+          batchSize: 1
+    iamRoleStatements:
+      - ${file(./iam/UserReputationQueueIAM.yml):UserReputationReceiveQueueIAM}
+      - ${file(./iam/AuthenticationTableIAM.yml):UpdateAuthenticationTableIAM}
+      - ${file(./iam/InvokeSendSocketEventLambdaFunctionIAM.yml):InvokeSendSocketEventLambdaFunctionIAM}
+
 resources:
   # these resources are needed in order to properly handle 401 and unauthrizued 403 cases
   Resources:
     AuthenticationTable: ${file(./resources/AuthenticationTable.yml):AuthenticationTable}
+    SocketsTable: ${file(./resources/SocketsTable.yml):SocketsTable}
     # This response is needed for custom authorizer failures cors support ¯\_(ツ)_/¯
-    GatewayResponse:
-      Type: "AWS::ApiGateway::GatewayResponse"
-      Properties:
-        ResponseParameters:
-          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
-          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
-        ResponseType: EXPIRED_TOKEN
-        RestApiId:
-          Ref: "ApiGatewayRestApi"
-        StatusCode: "401"
-    AuthFailureGatewayResponse:
-      Type: "AWS::ApiGateway::GatewayResponse"
-      Properties:
-        ResponseParameters:
-          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
-          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
-        ResponseType: UNAUTHORIZED
-        RestApiId:
-          Ref: "ApiGatewayRestApi"
-        StatusCode: "401"
+    GatewayResponse: ${file(./resources/APIGatewayAuthentication.yml):GatewayResponse}
+    AuthFailureGatewayResponse: ${file(./resources/APIGatewayAuthentication.yml):AuthFailureGatewayResponse}
+    UserReputationQueue: ${file(./resources/UserReputationQueue.yml):UserReputationQueue}
+    UserReputationDLQ: ${file(./resources/UserReputationQueue.yml):UserReputationDLQ}
+
   Outputs:
     AuthenticationTableName: ${file(./resources/AuthenticationTable.yml):Outputs.AuthenticationTableName}
     AuthenticationTableArn: ${file(./resources/AuthenticationTable.yml):Outputs.AuthenticationTableArn}
 custom:
+  service:
+    name: authentication-service
   AuthenticationTable:
     name: !Ref AuthenticationTable
     arn: !GetAtt AuthenticationTable.Arn
-  authorizer: arn:aws:lambda:${self:provider.region}:${aws:accountId}:function:authentication-service-${self:provider.stage}-auth
+  # authorizer: arn:aws:lambda:${self:provider.region}:${aws:accountId}:function:authentication-service-${self:provider.stage}-auth
   bundle:
     linting: true
+
+  socketServiceEndpoint:
+    Fn::Join:
+      - ""
+      - - "wss://"
+        - Ref: ApiGatewayRestApi
+        - ".execute-api."
+        - Ref: AWS::Region
+        - ".amazonaws.com/"
+        - ${self:provider.stage}

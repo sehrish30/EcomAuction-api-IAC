@@ -1,0 +1,34 @@
+SocketsTableQueryIAM:
+  Effect: Allow
+  Action:
+    - dynamodb:Query
+  Resource:
+    - Fn::GetAtt: [SocketsTable, Arn]
+
+SocketsTableDeleteIAM:
+  Effect: Allow
+  Action:
+    - dynamodb:DeleteItem
+  Resource:
+    - Fn::GetAtt: [SocketsTable, Arn]
+
+SocketsTablePutIAM:
+  Effect: Allow
+  Action:
+    - dynamodb:PutItem
+  Resource:
+    - Fn::GetAtt: [SocketsTable, Arn]
+
+SocketsInvokeFunction:
+  Effect: Allow
+  Action:
+    - execute-api:Invoke
+    - execute-api:ManageConnections
+  Resource:
+    Fn::Sub:
+      - "arn:aws:execute-api:${Region}:${AccountId}:${WebSocketId}/*"
+      - {
+          Region: !Ref AWS::Region,
+          AccountId: !Ref AWS::AccountId,
+          WebSocketId: !Ref WebsocketsApi,
+        }

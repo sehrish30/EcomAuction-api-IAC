@@ -12,3 +12,10 @@ CreateAuthenticationTableIAM:
     - dynamodb:PutItem
   Resource:
     - ${self:custom.AuthenticationTable.arn}
+
+UpdateAuthenticationTableIAM:
+  Effect: Allow
+  Action:
+    - dynamodb:UpdateItem
+  Resource:
+    - ${self:custom.AuthenticationTable.arn}
