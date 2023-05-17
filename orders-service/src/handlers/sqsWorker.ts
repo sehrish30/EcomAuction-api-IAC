@@ -8,11 +8,11 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { UpdateCommand, DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
 const sfnsClient = new SFNClient({
-  region: process.env.REGION,
+  region: process.env.AWS_REGION,
 });
 
 const client = new DynamoDBClient({
-  region: process.env.REGION,
+  region: process.env.AWS_REGION,
   apiVersion: "2012-08-10",
 });
 

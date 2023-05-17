@@ -1,0 +1,16 @@
+UserReputationQueue:
+  Type: AWS::SQS::Queue
+  Properties:
+    # if this is standard queue DLQ must also be standard queue
+    QueueName: USER_REPUTATION-${self:provider.stage}
+    VisibilityTimeout: 30 # 30s greater than lambda timeout
+    MessageRetentionPeriod: 345600 # 345600 4 days max only 14 days
+    RedrivePolicy:
+      # automatically get all permissions necessary to handle DLQ
+      deadLetterTargetArn: !GetAtt UserReputationDLQ.Arn
+      maxReceiveCount: 2
+
+UserReputationDLQ:
+  Type: AWS::SQS::Queue
+  Properties:
+    QueueName: USER_REPUTATION_DLQ-${self:provider.stage}

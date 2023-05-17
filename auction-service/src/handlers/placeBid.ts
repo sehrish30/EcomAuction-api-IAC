@@ -10,7 +10,7 @@ import { getAuctionById } from "./getAuction";
 import commonMiddleware from "../lib/commonMiddleware";
 
 const client = new DynamoDBClient({
-  region: "us-east-2",
+  region: process.env.AWS_REGION,
   apiVersion: "2012-08-10",
 });
 

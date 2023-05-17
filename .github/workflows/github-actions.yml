@@ -8,6 +8,7 @@ on:
     branches:
       - main
 
+# this as a replacement where u used .env file in ur service
 env:
   FACEBOOK_CLIENT_ID: ${{ secrets.FACEBOOK_CLIENT_ID }}
   FACEBOOK_SECRET_KEY: ${{ secrets.FACEBOOK_SECRET_KEY }}
