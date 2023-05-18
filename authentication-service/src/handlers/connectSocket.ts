@@ -10,6 +10,9 @@ const client = new DynamoDBClient({
 const ddbDocClient = DynamoDBDocumentClient.from(client);
 
 const connectSocket = async (event: APIGatewayProxyWebsocketEventV2) => {
+  // https://www.serverless.com/framework/docs/providers/aws/events/websocket/#send-a-message-to-a-ws-client
+  // https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-websocket-api-mapping-template-reference.html
+  const domain = event.requestContext.domainName;
   console.log({
     event: event.requestContext.connectionId,
     tableName: process.env.CONNECTIONS_WEBSOCKET_TABLE,
@@ -42,10 +45,6 @@ const connectSocket = async (event: APIGatewayProxyWebsocketEventV2) => {
   }
   return {
     statusCode: 200,
-    body: JSON.stringify({
-      ConnectionId: event.requestContext.connectionId,
-      response,
-    }),
   };
 };
 

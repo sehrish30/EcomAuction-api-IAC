@@ -1,0 +1,13 @@
+InvokeAPIGatewayIAM:
+  Effect: Allow
+  Action: execute-api:Invoke
+  Resource:
+    Fn::Join:
+      - ""
+      - - "arn:aws:execute-api:"
+        - "${self:provider.region}:"
+        - "${aws:accountId}:"
+        - Ref: WebsocketsApi
+        - "/dev"
+        - "/*/*/*/*"
+  # https://forum.serverless.com/t/fixed-how-do-i-get-reference-api-gateway-restapi-id-in-serverless-yml/3397/5
