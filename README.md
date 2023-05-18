@@ -56,3 +56,9 @@ Note-taking system for sellers in the admin panel using Cognito authentication, 
 
 Tight coupling between our resources and dependency on external API can cause bottleneck. To avoid delays I have introduced decoupling with queue and later send socket event to client. Edge cases messages that cannot be processed will be send to DLQ.
 <img src="readmeimages/decoupling.png" height=400 width=1000>
+<img src="readmeimages/websockets.png" height=200 width=300>
+
+## 👉Architecture of Serverless Log Archive
+
+Through cloudwatch we can retain log data indefinitely but with a cost. So we will expire data in cloudwatch and stream
+that logs into s3 bucket. So in s3 bucket we have lifecycle policy to move data to low cost destination like Glacier. Other services can catalog the data and query it from s3.

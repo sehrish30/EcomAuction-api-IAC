@@ -154,6 +154,7 @@ functions:
     iamRoleStatements:
       - ${file(./iam/SNSPublishIAM.yml):SNSPublishIAM}
       - ${file(./iam/ListingBucketIAM.yml):ListingBucketGetObjectBucketIAM}
+    # destinations only work with asynchronous events like s3 and sns not sqs and api gateway
     destinations:
       # put message to sns topic to report to admins
       # resource must be existing

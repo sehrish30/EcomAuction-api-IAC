@@ -67,6 +67,7 @@ functions:
     events:
       - websocket:
           route: $disconnect
+          routeResponseSelectionExpression: $default
     environment:
       CONNECTIONS_WEBSOCKET_TABLE: !Ref SocketsTable
 
@@ -77,29 +78,24 @@ functions:
     events:
       - websocket:
           route: $connect
+          # respond to a websocket message using the body parameter
+          routeResponseSelectionExpression: $default
+
     environment:
       CONNECTIONS_WEBSOCKET_TABLE: !Ref SocketsTable
 
-  sendMessage:
-    handler: src/handlers/sendMessage.handler
-    iamRoleStatements:
-      - ${file(./iam/SocketsTableIAM.yml):SocketsTableQueryIAM}
+  onMessage:
+    handler: src/handlers/onMessage.handler
     events:
       - websocket:
           route: onMessage
-
-  sendSocketToClient:
-    handler: src/handlers/sendSocketToClient.handler
-    environment:
-      APIG_ENDPOINT: ${self:custom.socketServiceEndpoint}
+          routeResponseSelectionExpression: $default
 
   listenToQueue:
     handler: src/handlers/listenToQueue.handler
     environment:
       AUTHENTICATION_TABLE_NAME: !Ref AuthenticationTable
-    destinations:
-      onSuccess: sendSocketToClient
-      onFailure: sendSocketToClient
+      APIG_ENDPOINT: ${self:custom.socketServiceEndpoint}
     events:
       - sqs:
           arn: !GetAtt UserReputationQueue.Arn
@@ -108,7 +104,7 @@ functions:
     iamRoleStatements:
       - ${file(./iam/UserReputationQueueIAM.yml):UserReputationReceiveQueueIAM}
       - ${file(./iam/AuthenticationTableIAM.yml):UpdateAuthenticationTableIAM}
-      - ${file(./iam/InvokeSendSocketEventLambdaFunctionIAM.yml):InvokeSendSocketEventLambdaFunctionIAM}
+      - ${file(./iam/InvokeAPIGatewayIAM.yml):InvokeAPIGatewayIAM}
 
 resources:
   # these resources are needed in order to properly handle 401 and unauthrizued 403 cases
@@ -137,8 +133,8 @@ custom:
   socketServiceEndpoint:
     Fn::Join:
       - ""
-      - - "wss://"
-        - Ref: ApiGatewayRestApi
+      - - "https://"
+        - Ref: WebsocketsApi # ApiGatewayRestApi
         - ".execute-api."
         - Ref: AWS::Region
         - ".amazonaws.com/"
