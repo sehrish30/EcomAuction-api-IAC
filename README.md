@@ -63,7 +63,7 @@ Tight coupling between our resources and dependency on external API can cause bo
 Through cloudwatch we can retain log data indefinitely but with a cost. So we will expire data in cloudwatch and stream
 that logs into s3 bucket. So in s3 bucket we have lifecycle policy to move data to low cost destination like Glacier. Other services can catalog the data and query it from s3.
 
-<img src="readmeimages/log-archive.png" height=400 width=1000>
+<img src="readmeimages/log-archive.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
 ## 👉Architecture of RealTime Reporting Error
 

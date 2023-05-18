@@ -7,6 +7,10 @@ provider:
   runtime: nodejs18.x
   stage: ${opt:stage, 'dev'}
   region: us-east-2
+  environment:
+    APP_NAME: Auction Notes App
+    APP_STAGE: ${opt:stage,self:provider.stage}
+    SERVICE_NAME: Notes Service
 
 useDotenv: true
 
@@ -54,6 +58,7 @@ functions:
           method: put
           path: notes/{noteId}
           authorizer: authorizer
+
   deleteNote:
     handler: src/handlers/deleteNote.handler
     iamRoleStatements:
@@ -65,6 +70,7 @@ functions:
           method: delete
           path: notes/{noteId}
           authorizer: authorizer
+
   getAllNotes:
     handler: src/handlers/getAllNotes.handler
     iamRoleStatements:
@@ -86,6 +92,7 @@ functions:
             # without type it will treat this as regular lambda authorizer
             type: COGNITO_USER_POOLS
             arn: !GetAtt CognitoUserPool.Arn
+
   oldNoteDeleter:
     handler: src/handlers/oldNoteDeleter.handler
     environment:
@@ -97,7 +104,18 @@ functions:
       # Invoke lambda function every 2 minutes
       - schedule: cron(0/2 * ? * MON-FRI *)
 
-# custom:
+  reportingError:
+    handler: src/handlers/reportingError.handler
+    events:
+      - http:
+          method: post
+          path: error-handling
+  getReportingError:
+    handler: src/handlers/getReportingError.handler
+    events:
+      - http:
+          method: get
+          path: error-handling
 
 resources:
   Resources:
