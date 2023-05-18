@@ -1,0 +1,30 @@
+#  role that grants Kinesis Data Firehose access to your Amazon S3 bucket and AWS KMS (if you enable data encryption).
+
+KinesisIAM:
+  Type: AWS::IAM::Role
+  Properties:
+    RoleName: KinesisSubscriptionRole
+    AssumeRolePolicyDocument:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+              - firehose.amazonaws.com
+          Action:
+            - "sts:AssumeRole"
+    Policies:
+      - PolicyName: root
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+                - s3:PutObject
+                - s3:PutObjectAcl
+                - s3:GetBucketLocation
+              Resource: arn:aws:s3:::${self:custom.logBucketName.name}/*
+# and create a policy on s3 so data can be moved to glacier
+# or glacier deep archive
+# !GetAtt S3Bucket.Arn

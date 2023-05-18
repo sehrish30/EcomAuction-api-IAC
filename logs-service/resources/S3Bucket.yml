@@ -1,0 +1,15 @@
+S3Bucket:
+  Type: AWS::S3::Bucket
+  Properties:
+    BucketName: ${self:custom.logBucketName.name}
+    LifecycleConfiguration:
+      Rules:
+        # call this id whatever u want
+        - Id: LoggingArchiveLifecycleRule
+          # to enable this rule
+          Status: Enabled
+          Prefix: glacier # applied to all objects
+          # move all objects to different s3 storage
+          Transitions:
+            - TransitionInDays: 30
+              StorageClass: GLACIER
