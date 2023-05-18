@@ -1,0 +1,42 @@
+DeliveryStream:
+  Type: AWS::KinesisFirehose::DeliveryStream
+  Properties:
+    DeliveryStreamName: logs-${self:provider.stage}
+    DeliveryStreamType: DirectPut # because cloudwatch will write directly to firehouse stream
+    S3DestinationConfiguration:
+      BucketARN: !GetAtt S3Bucket.Arn
+      CompressionFormat: GZIP
+      RoleARN: !GetAtt KinesisIAM.Arn
+      # Prefix: logs/
+      BufferingHints:
+        IntervalInSeconds: 60
+        SizeInMBs: 5
+        # whenever lambda function create a log in the cloudwatch
+        # and then log will be streamed to Kinesis firehouse
+        # and after one minute time = 60s it will be added to s3 bucket
+
+# when firehouse is sending data to destination it always creates a buffer and then only send it to the destination
+# this is not realtime
+
+# buffer size and buffer interval
+# if buffer size is greater than specified it will push it to destination
+# if buffer interval is greater than 300s, then again it will send it to the destination
+# so whichever of these values meet first, it will send it to destination
+# in this case Im going to change buffer interval to the minimum value
+
+# filters to apply on log streams
+# we want to send it to s3 bucket we will send it from firehouse subscription filter
+# streamed data is ingested in firehouse
+# we can transform it with lambda function
+# and then load it to destination
+FirehouseSubscriptionFilter:
+  Type: AWS::Logs::SubscriptionFilter
+  Properties:
+    FilterName: criticalLoggroupFilter-${self:provider.stage}
+    DestinationArn: !GetAtt DeliveryStream.Arn
+    FilterPattern: '{ $.type = "CRITICAL" }' # vtl language, CloudWatch Logs filter pattern
+    LogGroupName: "/aws/lambda/logs-service-${self:provider.stage}-logs" # The log group to associate with the subscription filter. All log events that are uploaded to this log group are filtered and delivered to the specified AWS resource if the filter pattern matches the log events.
+    RoleArn: !GetAtt CloudWatchIAM.Arn # grant permission so our cloudwatch can put the data into firehost delivery stream
+#
+# AWS::KinesisFirehose::DeliveryStream log format?
+

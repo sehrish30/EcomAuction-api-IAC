@@ -7,7 +7,7 @@
  touch .gitignore
 
 npm i --save-dev @types/aws-lambda
- https://www.serverless.com/plugins/serverless-plugin-typescript
+https://www.serverless.com/plugins/serverless-plugin-typescript
 
  npm i @types/aws-lambda
 
