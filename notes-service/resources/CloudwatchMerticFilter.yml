@@ -1,0 +1,25 @@
+# this metric filter filter out critical errors
+# I need this alarm to be triggered as soon as there is one critical error
+# I need this alarm to be triggered as soon as there is one critical error
+CloudwatchMerticFilter:
+  Type: AWS::Logs::MetricFilter
+  Properties:
+    FilterPattern: '{ $.type = "CRITICAL" && $.app_stage = "dev" }'
+    LogGroupName: "/aws/lambda/notes-service-${self:provider.stage}-reportingError"
+    FilterName: ${self:custom.MetricFilter.name}
+    MetricTransformations:
+      - MetricValue: "1" # if there is a match count is 1
+        MetricNamespace: "notes/${self:provider.stage}"
+        MetricName: ${self:custom.MetricFilter.name}
+
+# i can create another metric filter which filters logging
+CloudwatchMerticFilterForGet:
+  Type: AWS::Logs::MetricFilter
+  Properties:
+    FilterPattern: '{ $.type = "CRITICAL" && $.app_stage = "dev" }'
+    LogGroupName: "/aws/lambda/notes-service-${self:provider.stage}-getReportingError"
+    FilterName: ${self:custom.MetricFilter.name}
+    MetricTransformations:
+      - MetricValue: "1" # if there is a match count is 1
+        MetricNamespace: "notes/${self:provider.stage}"
+        MetricName: "NotesServiceErrors"

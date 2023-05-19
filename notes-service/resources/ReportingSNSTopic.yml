@@ -1,0 +1,5 @@
+ReportingSNSTopic:
+  Type: AWS::SNS::Topic
+  Properties:
+    DisplayName: reporting-sns-topic--for-errors-${self:provider.stage}
+    TopicName: ${self:custom.ReportingSNSSopic.name}

@@ -116,6 +116,7 @@ resources:
     AuthFailureGatewayResponse: ${file(./resources/APIGatewayAuthentication.yml):AuthFailureGatewayResponse}
     UserReputationQueue: ${file(./resources/UserReputationQueue.yml):UserReputationQueue}
     UserReputationDLQ: ${file(./resources/UserReputationQueue.yml):UserReputationDLQ}
+    SESUserEmail: ${file(./resources/SESUserEmail.yml):SESUserEmail}
 
   Outputs:
     AuthenticationTableName: ${file(./resources/AuthenticationTable.yml):Outputs.AuthenticationTableName}

@@ -19,7 +19,10 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
+    "@aws-sdk/client-cloudwatch": "^3.332.0",
+    "@aws-sdk/client-cloudwatch-logs": "^3.332.0",
     "@aws-sdk/client-dynamodb": "^3.332.0",
+    "@aws-sdk/client-ses": "^3.332.0",
     "@aws-sdk/lib-dynamodb": "^3.332.0",
     "@middy/core": "^4.4.1",
     "@middy/http-cors": "^4.4.1",

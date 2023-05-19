@@ -1,0 +1,18 @@
+# alarm on cloudwatch metric
+CloudWatchAlarm:
+  Type: AWS::CloudWatch::Alarm
+  Properties:
+    ActionsEnabled: true # alarm will perform its actions when it is triggered
+    AlarmName: ${self:custom.AlarmName.name}
+    AlarmDescription: "Filter data"
+    Namespace: "notes/${self:provider.stage}"
+    MetricName: ${self:custom.MetricFilter.name}
+    Statistic: Sum # The statistic for the metric associated with the alarm, create alarm as soon as there is one critical error
+    Period: 30 # 30s
+    Threshold: 0
+    EvaluationPeriods: 1 # number of periods over which data is compared to the specified threshold
+    ComparisonOperator: GreaterThanThreshold # > 0, means if there will be one error this alarm will be triggered
+    # when this alarm triggers, it will send a notification to the ReportingSNSTopic SNS topic
+    AlarmActions:
+      - !Ref ReportingSNSTopic
+    # OkActions when alarm is in Ok state
