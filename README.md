@@ -51,6 +51,7 @@ The use case for this implementation is uploading a listing agreement, which is 
 Note-taking system for sellers in the admin panel using Cognito authentication, CI/CD with github actions and tested with jest
 <img src="readmeimages/notes.png" style="max-width: 100%; height: auto; object-fit: contain;">
 <img src="readmeimages/authentication.png" style="max-width: 100%; height: auto; object-fit: contain;">
+<img src="readmeimages/github-action-workflows.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
 ## 👉Architecture of Decoupling with SQS to imrpove usability
 

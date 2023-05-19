@@ -7,10 +7,26 @@ provider:
   runtime: nodejs18.x
   stage: ${opt:stage, 'dev'}
   region: us-east-2
+  deploymentBucket:
+    name: notes-dev
   environment:
     APP_NAME: Auction Notes App
     APP_STAGE: ${opt:stage,self:provider.stage}
     SERVICE_NAME: Notes Service
+
+# package:
+#   patterns:
+#     - "!layerSourceTarball.tar.gz"
+
+# can also be specified for each lambda function
+# https://www.serverless.com/framework/docs/providers/aws/guide/layers
+# only work with serverless-jetpack plugin when you use typescript plugin
+# not compiling my typescript file
+layers:
+  logging:
+    path: src/layers/logging
+    name: "reporting-${self:provider.stage}"
+    description: "logging for reporting urgent issues to production team"
 
 useDotenv: true
 
@@ -18,14 +34,8 @@ plugins:
   - serverless-plugin-typescript
   - serverless-iam-roles-per-function
   - serverless-dotenv-plugin
-
-# you can add packaging information here
-#package:
-#  patterns:
-#    - '!exclude-me.js'
-#    - '!exclude-me-dir/**'
-#    - include-me.js
-#    - include-me-dir/**
+  - serverless-jetpack
+  - serverless-layers
 
 functions:
   authorizer:
@@ -106,6 +116,8 @@ functions:
 
   reportingError:
     handler: src/handlers/reportingError.handler
+    layers:
+      - !Ref LoggingLambdaLayer
     events:
       - http:
           method: post
@@ -122,7 +134,6 @@ functions:
     handler: src/handlers/dispatchErrorsSNSTopicSubscription.handler
     environment:
       SESarn:
-        # "arn:aws:ses:${self:provider.region}:${aws:accountId}:identity/${self:custom.SESEmail}"
         !Join [
           ":",
           [
@@ -157,6 +168,7 @@ resources:
     CloudWatchAlarm: ${file(./resources/CloudWatchAlarm.yml):CloudWatchAlarm}
 
 custom:
+  layersDeploymentBucket: notes-service-dev-serverlessdeploymentbucket-1fvto0n6ho805
   MetricFilter:
     name: Notes-errors-${self:provider.stage}
   GetMetricFilter:
@@ -186,4 +198,18 @@ custom:
       Value: !Ref CognitoGoogleUserPoolIdentityProvider
       Export:
         Name: "GoogleIdentityPool::Id"
-# !Join ['', ['my-bucket-', !ToString ${AWS::AccountId}]]
+    LoggingLambdaLayer:
+      Value:
+        # lambda layer name in title case with suffix LambdaLayer
+        # reference to lambda layer to be used in other cloudformation stacks or services
+        Ref: LoggingLambdaLayer
+      Export:
+        Name: LoggingLambdaLayer
+# can be referenced in other services like
+# can be referenced in lambda function like
+# layers
+#  - ${self:custom.logging.arn}
+# custom:
+#   logging:
+#      arn: ${cf:notes-service-${self:provider.stage}.LoggingLambdaLayer}
+#      arn: !ImportValue LoggingLambdaLayer

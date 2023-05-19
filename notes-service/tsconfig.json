@@ -6,10 +6,12 @@
     "allowJs": true,
     "target": "es5",
     "outDir": ".build",
+    // "outDir": "src/layers/logging/nodejs/node_modules/logging/dist/.",
     "moduleResolution": "node",
     "lib": ["es2015"],
     "rootDir": "./",
     "esModuleInterop": true
   },
-  "exclude": ["**/*.spec.ts", "**/*.test.ts", "node_modules"]
+  "exclude": ["**/*.spec.ts", "**/*.test.ts"],
+  "include": ["src/**/*.ts", "src/layers/**/node_modules/**/*"]
 }

@@ -96,3 +96,30 @@ Customization: An auction API should allow customization of the auction experien
 Overall, a well-designed auction API can provide a powerful tool for managing online auctions and delivering a seamless user experience for buyers and sellers alike.
 
 https://github.com/mjzone/large-payload-handling/tree/master
+
+
+1) serverless-jetpack (For Lambda Functions packaging with typescript)
+2) Create a layer folder in src or outside
+3) Create a layer lambda according to serverless framework
+4) Go to layer folder example: src/layers/logging/nodejs/node_modules/logging
+5) run tsc index.ts
+6) It will generate index.js
+7) Go to tsconfig.json
+8) Add line => "include": ["src/**/*.ts", "src/layers/**/node_modules/**/*"]
+9) It will include those node_modules while compiling
+10) Create a folder @types
+11) Make a file logging.d.ts 
+12) logging refers to your module name here my module name is logging so I used it
+13) declare your module
+14) declare module "logging" {
+      export default function log<T>(event: T): Promise<{
+          statusCode: number;
+          body: string;
+      }>;
+    }
+15) Use the plugin - serverless-layers, It attaches automatically layers to the provider and for each function
+16) And add 
+    provider:
+      deploymentBucket:
+        name: notes-service-dev-serverlessdeploymentbucket-1fvto0n6ho805
+    in the provider of your serverless.yml
