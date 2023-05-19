@@ -68,7 +68,7 @@ that logs into s3 bucket. So in s3 bucket we have lifecycle policy to move data 
 ## 👉Architecture of RealTime Reporting Error
 
 <img src="readmeimages/error-reporting.png" style="max-width: 100%; height: auto; object-fit: contain;">
-<img src="reported-log-email.png" style="max-width: 100%; height: auto; object-fit: contain;">
+<img src="readmeimages/reported-log-email.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
 Send logs to cloudwatch with context. Cloudwatch metric will have a filter pattern by looking
 at the attrbiutes of that JSON payload. Trigger an alarm on specific type of error. Alarm will trigger an SNS topic.
