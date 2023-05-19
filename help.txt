@@ -75,6 +75,8 @@ serverless logs -f putEvents
 serverless logs -f checkInventory
 serverless logs -f sqsWorker
 
+https://github.com/mjzone/lambda-error-emails/blob/master/logging/handler.js
+
 serverless package --package my-artifact --stage dev
 
 An auction API is typically used as part of an online auction website or platform to support buying and selling of goods, services or products through an auction process. Here are some of the key features that an auction API could include:

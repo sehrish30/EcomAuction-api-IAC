@@ -14,6 +14,7 @@ env:
   FACEBOOK_SECRET_KEY: ${{ secrets.FACEBOOK_SECRET_KEY }}
   GOOGLE_APP_ID: ${{ secrets.GOOGLE_APP_ID }}
   GOOGLE_SECRET: ${{ secrets.GOOGLE_SECRET }}
+  ADMIN_EMAIL: ${{secrets.ADMIN_EMAIL }}
 
 jobs:
   productionDeployment:

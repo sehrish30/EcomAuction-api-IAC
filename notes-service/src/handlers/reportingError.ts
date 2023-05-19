@@ -16,6 +16,7 @@ const reportingError = async (event: APIGatewayEvent) => {
     log({
       type: "CRITICAL",
       message: err.message,
+      // at which line this error occured
       callstack: err.stack,
       payload: data,
     });

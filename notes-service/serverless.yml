@@ -117,6 +117,31 @@ functions:
           method: get
           path: error-handling
 
+  # sns subscription lambda function
+  dispatchErrorsSNSTopicSubscription:
+    handler: src/handlers/dispatchErrorsSNSTopicSubscription.handler
+    environment:
+      SESarn:
+        # "arn:aws:ses:${self:provider.region}:${aws:accountId}:identity/${self:custom.SESEmail}"
+        !Join [
+          ":",
+          [
+            "arn:aws:ses",
+            "${self:provider.region}",
+            "${aws:accountId}",
+            !Join ["/", ["identity", "${self:custom.SESEmail.name}"]],
+          ],
+        ]
+      SESEmail: ${self:custom.SESEmail.name}
+
+    iamRoleStatements:
+      - ${file(./iam/CloudWatchIAM.yml):CloudWatchIAM}
+      - ${file(./iam/SendMailIAM.yml):SendMailIAM}
+    events:
+      - sns:
+          arn: !Ref ReportingSNSTopic
+          topicName: ${self:custom.ReportingSNSSopic.name}
+
 resources:
   Resources:
     NotesTable: ${file(./resources/NotesTable.yml):NotesTable}
@@ -125,6 +150,24 @@ resources:
     CognitoUserPoolDomain: ${file(./resources/CognitoUserPool.yml):CognitoUserPoolDomain}
     CognitoFacebookUserPoolIdentityProvider: ${file(./resources/CognitoUserPool.yml):CognitoFacebookUserPoolIdentityProvider}
     CognitoGoogleUserPoolIdentityProvider: ${file(./resources/CognitoUserPool.yml):CognitoGoogleUserPoolIdentityProvider}
+    ReportingSNSTopic: ${file(./resources/ReportingSNSTopic.yml):ReportingSNSTopic}
+    # create this only after lambda function is created so comment it down
+    CloudwatchMerticFilter: ${file(./resources/CloudwatchMerticFilter.yml):CloudwatchMerticFilter}
+    SESUserEmail: ${file(./resources/SESUserEmail.yml):SESUserEmail}
+    CloudWatchAlarm: ${file(./resources/CloudWatchAlarm.yml):CloudWatchAlarm}
+
+custom:
+  MetricFilter:
+    name: Notes-errors-${self:provider.stage}
+  GetMetricFilter:
+    name: Notes-errors-get-${self:provider.stage}
+  ReportingSNSSopic:
+    name: reporting-sns-topic-${self:provider.stage}
+  AlarmName:
+    name: notes-${self:provider.stage}
+  SESEmail:
+    name: !Ref SESUserEmail
+    value: !Ref SESUserEmail
 
   Outputs:
     UserPoolId:
@@ -143,3 +186,4 @@ resources:
       Value: !Ref CognitoGoogleUserPoolIdentityProvider
       Export:
         Name: "GoogleIdentityPool::Id"
+# !Join ['', ['my-bucket-', !ToString ${AWS::AccountId}]]

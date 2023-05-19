@@ -1,0 +1,4 @@
+SESUserEmail:
+  Type: AWS::SES::EmailIdentity
+  Properties:
+    EmailIdentity: ${env:ADMIN_EMAIL}
