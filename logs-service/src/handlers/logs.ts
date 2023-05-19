@@ -1,7 +1,6 @@
 import { APIGatewayEvent } from "aws-lambda";
 
 const logs = async (event: APIGatewayEvent) => {
-  console.log("SEHRISHHHH");
   const error = {
     type: "CRITICAL",
     message: "Too many connections",
