@@ -44,3 +44,12 @@ export const handler = reportingError;
  * serverless deploy function --function reportingError
  * tsc index.ts
  */
+
+/**
+ * Challenges in Active/Active
+  Race Condition(Due to concurrent request)
+  Dynamo db uses (Last writer wins) for conflict resolution in DynamoDb
+  Cap theorem (Consistency Or availability, Partition tolerance)
+  Partition tolerance, we need this for data replication.
+  stale data will be available if the data replication is not complete.
+ */

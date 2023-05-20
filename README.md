@@ -74,3 +74,9 @@ that logs into s3 bucket. So in s3 bucket we have lifecycle policy to move data 
 Send logs to cloudwatch with context. Cloudwatch metric will have a filter pattern by looking
 at the attrbiutes of that JSON payload. Trigger an alarm on specific type of error. Alarm will trigger an SNS topic.
 SNS will have lambda subscription that will create a meaningful message and email to admin.
+
+## 👉Architecture of Disaster Recovery(DR) Strategy
+
+<img src="readmeimages/routing.png" style="max-width: 100%; height: auto; object-fit: contain;">
+
+To avoid downtime and improve performance for a notes service, I have used multi-site active or active architecture with a global DynamoDB table, Route 53 latency routing policies, and an SSL/TLS certificate for the domain using cloudformation.

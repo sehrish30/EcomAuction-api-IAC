@@ -33,6 +33,7 @@
     "@middy/http-json-body-parser": "^4.4.1",
     "@middy/validator": "^4.4.1",
     "aws-jwt-verify": "^4.0.0",
-    "http-errors": "^2.0.0"
+    "http-errors": "^2.0.0",
+    "serverless-domain-manager": "^7.0.4"
   }
 }

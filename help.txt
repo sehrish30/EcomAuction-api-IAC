@@ -107,7 +107,7 @@ https://github.com/mjzone/large-payload-handling/tree/master
 7) Go to tsconfig.json
 8) Add line => "include": ["src/**/*.ts", "src/layers/**/node_modules/**/*"]
 9) It will include those node_modules while compiling
-10) Create a folder @types
+10) Create a folder src/@types
 11) Make a file logging.d.ts 
 12) logging refers to your module name here my module name is logging so I used it
 13) declare your module
@@ -123,3 +123,13 @@ https://github.com/mjzone/large-payload-handling/tree/master
       deploymentBucket:
         name: notes-service-dev-serverlessdeploymentbucket-1fvto0n6ho805
     in the provider of your serverless.yml
+
+
+1) serverless-domain-manager for domain for api gateway
+example in notes service
+2) and then customDomain in custom variables
+3) Create health check 
+4) healthCheckId from AWS::Route53::HealthCheck
+5) and infra service has certificate manager for this domain
+
+Serverless caching using momentum
