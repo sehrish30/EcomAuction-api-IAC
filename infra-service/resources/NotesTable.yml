@@ -1,8 +1,7 @@
 # dynamo db table in different regions will have their own arn
 # global table doesnot return Table name through ref
-# no more using just table we are using global table
 NotesTable:
-  Type: AWS::DynamoDB::Table
+  Type: AWS::DynamoDB::GlobalTable
   # when you want to keep resources running incase of accidental stack remove
   # usually used for tables and s3
   DeletionPolicy: Retain
@@ -18,3 +17,13 @@ NotesTable:
     KeySchema:
       - AttributeName: NotesId
         KeyType: HASH
+    Replicas: # must include service default region in replica as well
+      - Region: us-east-1
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+      - Region: us-east-2
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+    # must enable dynamo stream for replicas to work
+    StreamSpecification:
+      StreamViewType: NEW_AND_OLD_IMAGES # Old/ updated new records
