@@ -9,7 +9,7 @@ import {
 import { getSignedUrl as getSignedUrlFromS3 } from "@aws-sdk/s3-request-presigner";
 
 const client = new S3Client({
-  region: process.env.REGION,
+  region: process.env.AWS_REGION,
 });
 
 const getSignedUrl = async (event: APIGatewayEvent) => {

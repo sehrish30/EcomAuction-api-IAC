@@ -6,14 +6,14 @@ import {
 import { APIGatewayEvent } from "aws-lambda";
 
 let eventBridgeClient = new EventBridgeClient({
-  region:  process.env.REGION,
+  region: process.env.AWS_REGION,
 });
 
 const EVENT_BUS_NAME = process.env.EventBusName;
 const EVENT_BRIDGE_SOURCE = process.env.EVENT_BRIDGE_SOURCE;
 const AUCTION_DETAIL_TYPE = process.env.AUCTION_DETAIL_TYPE;
 
-const addQRCodeEvent = async (event:APIGatewayEvent) => {
+const addQRCodeEvent = async (event: APIGatewayEvent) => {
   let body = JSON.parse(event.body as string);
   // put event to event bridge
   let data;

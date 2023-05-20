@@ -8,7 +8,7 @@ import { APIGatewayEvent, Context } from "aws-lambda";
 import commonMiddleware from "../lib/commonMiddleware";
 
 const client = new DynamoDBClient({
-  region: process.env.REGION,
+  region: process.env.AWS_REGION,
   maxAttempts: 3,
 });
 

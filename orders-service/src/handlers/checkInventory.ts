@@ -6,7 +6,7 @@ import { DynamoDBDocumentClient, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { AuctionType } from "../../types/auction.table";
 
 const client = new DynamoDBClient({
-  region: process.env.REGION,
+  region: process.env.AWS_REGION,
   maxAttempts: 3,
 });
 

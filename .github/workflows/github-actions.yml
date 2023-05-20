@@ -45,7 +45,7 @@ jobs:
         uses: serverless/github-action@v3.1
         with:
           # install serverless plugins
-          args: -c "cd ./notes-service && serverless plugin install --name serverless-dotenv-plugin && serverless plugin install --name serverless-iam-roles-per-function && serverless plugin install --name serverless-plugin-typescript && serverless deploy --stage dev"
+          args: -c "cd ./notes-service && serverless plugin install --name serverless-dotenv-plugin && serverless plugin install --name serverless-iam-roles-per-function && serverless plugin install --name serverless-plugin-typescript && serverless plugin install --name serverless-jetpack && serverless plugin install --name serverless-layers && serverless plugin install --name serverless-domain-manager && serverless deploy --stage dev"
           # args: -c "npm install --save-dev serverless-iam-roles-per-function && npm install -D serverless-plugin-typescript typescript && serverless deploy --stage production"
           entrypoint: /bin/sh
         env:

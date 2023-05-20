@@ -9,7 +9,7 @@ import {
 import { AuthenticationType } from "../../types/authtentication.table";
 
 const client = new DynamoDBClient({
-  region: process.env.REGION,
+  region: process.env.AWS_REGION,
   apiVersion: "2012-08-10",
 });
 
