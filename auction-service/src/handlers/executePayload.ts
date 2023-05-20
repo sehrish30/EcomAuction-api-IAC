@@ -2,7 +2,7 @@ import { S3Event } from "aws-lambda";
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 
 const client = new S3Client({
-  region: process.env.REGION,
+  region: process.env.AWS_REGION,
 });
 
 // query information of uploaded data

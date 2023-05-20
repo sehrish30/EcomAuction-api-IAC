@@ -6,7 +6,7 @@ import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 const pipeline = util.promisify(stream.pipeline);
 
 const s3Client = new S3Client({
-  region: process.env.REGION,
+  region: process.env.AWS_REGION,
 });
 
 /**
@@ -40,7 +40,7 @@ const orderReceiptPDF = async (
   console.log({ basit: process.env.TRY });
   console.log({
     bucketName: process.env.AUCTIONS_BUCKET_NAME,
-    region: process.env.REGION,
+    region: process.env.AWS_REGION,
   });
 
   const s3Command = {
