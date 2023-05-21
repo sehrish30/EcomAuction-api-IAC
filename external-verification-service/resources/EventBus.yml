@@ -1,0 +1,22 @@
+EventBus:
+  Type: AWS::Events::EventBus
+  Properties:
+    Name: ExternalServiceEventBus-${self:provider.stage}
+
+# add permission to eventbridge to add messages to sqs queue
+TargetVerfiticationQueueEventBusRule:
+  Type: AWS::Events::Rule
+  Properties:
+    EventBusName: !GetAtt EventBus.Arn
+    # to filter message based on attributes
+    # only the events that matches with this event pattern will be forwarded to the target
+    EventPattern:
+      # event name
+      detail-type:
+        - ${self:custom.eventName.name}
+      # event source
+      source:
+        - ${self:custom.eventSource.name}
+    Targets:
+      - Arn: !GetAtt TargetVerificationQueue.Arn
+        Id: event-bus-verification-queue-${self:provider.stage}

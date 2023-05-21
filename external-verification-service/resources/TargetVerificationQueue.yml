@@ -1,0 +1,31 @@
+TargetVerificationQueue:
+  Type: AWS::SQS::Queue
+  Properties:
+    QueueName: VerificationQueue-${self:provider.stage}
+    # set connection with DLQ
+    RedrivePolicy:
+      deadLetterTargetArn: !GetAtt TargetVerificationDLQ.Arn
+      # how many times sqs should retry getting it processed by lambda function
+      maxReceiveCount: 1
+
+TargetVerificationDLQ:
+  Type: AWS::SQS::Queue
+  Properties:
+    QueueName: VerificationDLQ-${self:provider.stage}
+
+# resource based policy allowed to resource event bridge
+
+TargetVerificationQueuePolicy:
+  Type: AWS::SQS::QueuePolicy
+  Properties:
+    Queues:
+      - !Ref TargetVerificationQueue
+    PolicyDocument:
+      Statement:
+        - Action:
+            - "SQS:SendMessage"
+          Effect: "Allow"
+          Resource: !GetAtt TargetVerificationQueue.Arn
+          Principal:
+            Service:
+              - "events.amazonaws.com"
