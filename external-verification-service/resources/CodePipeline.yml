@@ -1,17 +1,94 @@
 CodePipeline:
   Type: AWS::CodePipeline::Pipeline
   Properties:
-    Name: infra-pipeline-${self:provider.stage}
+    Name: infra-pipeline-e-${self:provider.stage}
     # allow code pipeline to create a service role so it can be used with new pipeline
-    RoleArn: !Ref CodePipelineServiceRole
+    RoleArn: !GetAtt CodePipelineServiceRole.Arn
+    ArtifactStore:
+      Type: S3
+      Location: !Ref CodePipelineArtifactStore
     Stages:
       - Name: Source
         Actions:
-          - Name: SourceAction
+          - Name: Source
             ActionTypeId:
               Category: Source
               Owner: ThirdParty
               Provider: GitHub
+              Version: "1"
+            Configuration:
+              Owner: ${env:GithubOwner}
+              Repo: ${env:GithubRepository}
+              Branch: ${env:GithubBranch}
+              PollForSourceChanges: false
+              OAuthToken: ${env:GITHUB_TOKEN}
+            OutputArtifacts:
+              - Name: SourceCode
+      - Name: Build
+        Actions:
+          - Name: Build
+            ActionTypeId:
+              Category: Build
+              Owner: AWS
+              Provider: CodeBuild
+              Version: "1"
+            Configuration:
+              ProjectName: !Ref CodeBuildProject
+            OutputArtifacts:
+              - Name: BuildOutput
+            InputArtifacts:
+              - Name: SourceCode
+      - Name: Dev
+        Actions:
+          - Name: Deploy
+            ActionTypeId:
+              Category: Build
+              Owner: AWS
+              Provider: CodeBuild
+              Version: "1"
+            Configuration:
+              ProjectName: !Ref CodeBuildDevProject
+            InputArtifacts:
+              - Name: SourceCode
+      - Name: QA
+        Actions:
+          - Name: Deploy
+            # approval runs once completed
+            RunOrder: 1
+            ActionTypeId:
+              Category: Build
+              Owner: AWS
+              Provider: CodeBuild
+              Version: "1"
+            Configuration:
+              ProjectName: !Ref CodeBuildQAProject
+            InputArtifacts:
+              - Name: SourceCode
+
+          - Name:
+              Approval
+              # approval runs once completed else they will run parallel
+            RunOrder: 2
+            ActionTypeId:
+              Category: Approval
+              Owner: AWS
+              Provider: Manual
+              Version: "1"
+            Configuration:
+              CustomData: Approve or Reject this change after running tests
+
+      - Name: Prod
+        Actions:
+          - Name: Deploy
+            ActionTypeId:
+              Category: Build
+              Owner: AWS
+              Provider: CodeBuild
+              Version: "1"
+            Configuration:
+              ProjectName: !Ref CodeBuildProdProject
+            InputArtifacts:
+              - Name: SourceCode
 
 CodeBuildSourceCredentials:
   Type: AWS::CodeBuild::SourceCredential
@@ -20,7 +97,7 @@ CodeBuildSourceCredentials:
     ServerType: GITHUB
     Token: ${env:GITHUB_TOKEN}
 
-Codebuild:
+CodeBuildProject:
   Type: AWS::CodeBuild::Project
   Properties:
     ServiceRole: !GetAtt CodePipelineServiceRole.Arn
@@ -55,7 +132,64 @@ Codebuild:
     Environment:
       Type: LINUX_CONTAINER
       ComputeType: BUILD_GENERAL1_SMALL
-      Image: aws/codebuild/standard:4.0
+      Image: !Ref CodeBuildEnvironmentImage
+
+CodeBuildDevProject:
+  Type: AWS::CodeBuild::Project
+  Properties:
+    Name: !Sub Dev-${self:provider.stage}
+    ServiceRole: !GetAtt CodePipelineServiceRole.Arn
+    Source:
+      Type: CODEPIPELINE
+      BuildSpec: deployspec.yml
+    # output setting of the artifact build by code build
+    Artifacts:
+      Type: CODEPIPELINE # The build project does not produce any build output.
+    Environment:
+      Type: LINUX_CONTAINER
+      ComputeType: BUILD_GENERAL1_SMALL
+      Image: !Ref CodeBuildEnvironmentImage
+      EnvironmentVariables:
+        - Name: ENV_NAME
+          Value: dev
+
+CodeBuildQAProject:
+  Type: AWS::CodeBuild::Project
+  Properties:
+    Name: !Sub QA-${self:provider.stage}
+    ServiceRole: !GetAtt CodePipelineServiceRole.Arn
+    Source:
+      Type: CODEPIPELINE
+      BuildSpec: deployspec.yml
+    # output setting of the artifact build by code build
+    Artifacts:
+      Type: CODEPIPELINE # The build project does not produce any build output.
+    Environment:
+      Type: LINUX_CONTAINER
+      ComputeType: BUILD_GENERAL1_SMALL
+      Image: !Ref CodeBuildEnvironmentImage
+      EnvironmentVariables:
+        - Name: ENV_NAME
+          Value: qa
+
+CodeBuildProdProject:
+  Type: AWS::CodeBuild::Project
+  Properties:
+    Name: !Sub prod-${self:provider.stage}
+    ServiceRole: !GetAtt CodePipelineServiceRole.Arn
+    Source:
+      Type: CODEPIPELINE
+      BuildSpec: deployspec.yml
+    # output setting of the artifact build by code build
+    Artifacts:
+      Type: CODEPIPELINE # The build project does not produce any build output.
+    Environment:
+      Type: LINUX_CONTAINER
+      ComputeType: BUILD_GENERAL1_SMALL
+      Image: !Ref CodeBuildEnvironmentImage
+      EnvironmentVariables:
+        - Name: ENV_NAME
+          Value: prod
 
 CodePipelineServiceRole:
   Type: AWS::IAM::Role
@@ -117,3 +251,36 @@ CodePipelineServiceRole:
                 - s3:GetBucketAcl
                 - s3:GetBucketLocation
               Resource: "*"
+            - Sid: CodeBuildPolicy
+              Effect: Allow
+              Action:
+                - codebuild:BatchGetBuilds
+                - codebuild:StartBuild
+              Resource: "*"
+
+CodePipelineArtifactStore:
+  Type: AWS::S3::Bucket
+  Properties:
+    VersioningConfiguration:
+      Status: Enabled
+
+# code pipeline webhook
+# which will create webhook in github
+# which will trigger this pipeline
+# whenever merge or push to main branch
+CodePipelineWebHook:
+  Type: AWS::CodePipeline::Webhook
+  Properties:
+    Authentication: GITHUB_HMAC
+    AuthenticationConfiguration:
+      SecretToken: ${env:GITHUB_TOKEN}
+    RegisterWithThirdParty: true
+    Filters:
+      - JsonPath: "$.ref"
+        # MatchEquals: "refs/heads/{Branch}"
+        MatchEquals: "main"
+      - JsonPath: "$.repository.name"
+        MatchEquals: "{Repo}"
+    TargetPipeline: !Ref CodePipeline
+    TargetAction: Source
+    TargetPipelineVersion: !GetAtt CodePipeline.Version

@@ -4,3 +4,8 @@ phases:
   build:
     commands:
       - echo infra
+
+# files u wanted to include in the package created after build
+artificats:
+  files:
+    - "**/*"
