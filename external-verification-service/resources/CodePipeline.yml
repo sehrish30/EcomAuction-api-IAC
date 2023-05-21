@@ -1,0 +1,119 @@
+CodePipeline:
+  Type: AWS::CodePipeline::Pipeline
+  Properties:
+    Name: infra-pipeline-${self:provider.stage}
+    # allow code pipeline to create a service role so it can be used with new pipeline
+    RoleArn: !Ref CodePipelineServiceRole
+    Stages:
+      - Name: Source
+        Actions:
+          - Name: SourceAction
+            ActionTypeId:
+              Category: Source
+              Owner: ThirdParty
+              Provider: GitHub
+
+CodeBuildSourceCredentials:
+  Type: AWS::CodeBuild::SourceCredential
+  Properties:
+    AuthType: PERSONAL_ACCESS_TOKEN
+    ServerType: GITHUB
+    Token: ${env:GITHUB_TOKEN}
+
+Codebuild:
+  Type: AWS::CodeBuild::Project
+  Properties:
+    ServiceRole: !GetAtt CodePipelineServiceRole.Arn
+    Source:
+      Type: GITHUB
+      Location: !Sub https://github.com/${env:GithubOwner}/${env:GithubRepository}.git
+      BuildSpec: buildspec.yml
+      Auth:
+        Type: OAUTH
+        Resource: !Ref CodeBuildSourceCredentials
+    # output setting of the artifact build by code build
+    Artifacts:
+      Type: "NO_ARTIFACTS" # The build project does not produce any build output.
+    # triggers that will trigger web hook project
+    # Triggers:
+    #   Webhook: true
+    #   # FilterGroups:
+    #   #   - - Type: EVENT
+    #   #       Pattern: PUSH, PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED
+    #   #         # Filters GitHub push events Type: BASE_REF,!Sub ^refs/heads/${env:GithubBranch}$
+    #   #       - Type: HEAD_REF
+    #   #         Pattern: "main"
+    # Filters push events to the 'master' branch
+    Triggers:
+      Webhook: true
+      FilterGroups:
+        # both should match before code build project is triggered
+        - - Type: EVENT
+            Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED, PUSH
+          - Type: HEAD_REF
+            Pattern: "main"
+    Environment:
+      Type: LINUX_CONTAINER
+      ComputeType: BUILD_GENERAL1_SMALL
+      Image: aws/codebuild/standard:4.0
+
+CodePipelineServiceRole:
+  Type: AWS::IAM::Role
+  Properties:
+    RoleName: CodePipelineServiceRole
+    AssumeRolePolicyDocument:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+              - codepipeline.amazonaws.com
+              - codebuild.amazonaws.com
+          Action:
+            - "sts:AssumeRole"
+    Policies:
+      - PolicyName: root
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Sid: CloudWatchLogsPolicy
+              Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: "*"
+            - Sid: CodeCommitPolicy
+              Effect: Allow
+              Action:
+                - codecommit:GitPull
+              Resource: "*"
+            - Sid: S3GetObjectPolicy
+              Effect: Allow
+              Action:
+                - s3:GetObject
+                - s3:GetObjectVersion
+              Resource: "*"
+            - Sid: S3PutObjectPolicy
+              Effect: Allow
+              Action:
+                - s3:PutObject
+              Resource: "*"
+            - Sid: ECRPullPolicy
+              Effect: Allow
+              Action:
+                - ecr:BatchCheckLayerAvailability
+                - ecr:GetDownloadUrlForLayer
+                - ecr:BatchGetImage
+              Resource: "*"
+            - Sid: ECRAuthPolicy
+              Effect: Allow
+              Action:
+                - ecr:GetAuthorizationToken
+              Resource: "*"
+            - Sid: S3BucketIdentity
+              Effect: Allow
+              Action:
+                - s3:GetBucketAcl
+                - s3:GetBucketLocation
+              Resource: "*"

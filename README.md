@@ -86,3 +86,9 @@ To avoid downtime and improve performance for a notes service, I have used multi
 <img src="readmeimages/external.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
 Utilized EventBridge's content-based filtering feature to facilitate seamless integration between our API and external APIs through an event-driven architecture and asynchronous communication. Additionally, configured a Dead Letter Queue (DLQ) to prevent the loss of events as event bridge loses events after 24 hrs.
+
+## 👉Architecture of CI/CD
+
+<img src="readmeimages/cicd.png" style="max-width: 100%; height: auto; object-fit: contain;">
+
+Utilized AWS CodePipeline to automate my deployment process, combining continuous integration and continuous deployment. The pipeline is initiated by GitHub webhooks whenever new commits are pushed to the connected GitHub repository. The pipeline then packages the new code and moves it to an approval stage after running continuous integration tests. An approver then reviews the changes within the approval stage and approves the deployment. After approval, the pipeline deploys the new code, thereby achieving continuous deployment.

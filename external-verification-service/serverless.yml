@@ -59,6 +59,10 @@ resources:
     HeartBeatDynamoTable: ${file(./resources/HeartBeatDynamoTable.yml):HeartBeatDynamoTable}
     TargetVerfiticationQueueEventBusRule: ${file(./resources/EventBus.yml):TargetVerfiticationQueueEventBusRule}
 
+    CodeBuildSourceCredentials: ${file(./resources/CodePipeline.yml):CodeBuildSourceCredentials}
+    CodePipelineServiceRole: ${file(./resources/CodePipeline.yml):CodePipelineServiceRole}
+    Codebuild: ${file(./resources/CodePipeline.yml):Codebuild}
+
   Outputs:
     VerificationEventBus:
       Description: "VerificationEventBus for output"
@@ -80,12 +84,4 @@ custom:
         detailType: ${self:custom.eventName.name}
         eventBusName: { Ref: EventBus }
         cors: true
-
-    # - eventbridge: # source and detailType are hardcoded; detail defaults to POST body
-    #     path: /verified-eventbridge
-    #     method: post # automatically pass body to event bridge
-    #     source: ${self:custom.eventSource.name}
-    #     detailType: ${self:custom.verifiedEventName.name}
-    #     eventBusName: { Ref: EventBus }
-    #     cors: true
 # we need to add EventBusName, Source, DetailType and Detail(JSON payload)
