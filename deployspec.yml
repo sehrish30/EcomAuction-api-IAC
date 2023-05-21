@@ -1,0 +1,11 @@
+version: 0.2
+
+env:
+  variables:
+    ENV_NAME: dev
+
+phases:
+  build:
+    commands:
+      - echo deployment phase
+      - echo $ENV_NAME
