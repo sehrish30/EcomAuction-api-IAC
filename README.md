@@ -80,3 +80,9 @@ SNS will have lambda subscription that will create a meaningful message and emai
 <img src="readmeimages/routing.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
 To avoid downtime and improve performance for a notes service, I have used multi-site active or active architecture with a global DynamoDB table, Route 53 latency routing policies, and an SSL/TLS certificate for the domain using cloudformation.
+
+## 👉Architecture of api calls to External API
+
+<img src="readmeimages/external.png" style="max-width: 100%; height: auto; object-fit: contain;">
+
+Utilized EventBridge's content-based filtering feature to facilitate seamless integration between our API and external APIs through an event-driven architecture and asynchronous communication. Additionally, configured a Dead Letter Queue (DLQ) to prevent the loss of events as event bridge loses events after 24 hrs.

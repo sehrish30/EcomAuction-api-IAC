@@ -17,21 +17,27 @@ provider:
     APP_NAME: Auction Notes App
     APP_STAGE: ${opt:stage,self:provider.stage}
     SERVICE_NAME: Notes Service
-    NOTES_TABLE: ${self:custom.NOTES_TABLE.name}
+    NOTES_TABLE:
+      ${self:custom.NOTES_TABLE.name}
 
-# package:
-#   patterns:
-#     - "!layerSourceTarball.tar.gz"
+      # can also be specified for each lambda function
+      # https://www.serverless.com/framework/docs/providers/aws/guide/layers
+      # only work with serverless-jetpack plugin when you use typescript plugin
+      # not compiling my typescript file
 
-# can also be specified for each lambda function
-# https://www.serverless.com/framework/docs/providers/aws/guide/layers
-# only work with serverless-jetpack plugin when you use typescript plugin
-# not compiling my typescript file
 layers:
   logging:
-    path: src/layers/logging
+    path: ./src/layers/logging
     name: "reporting-${self:provider.stage}"
     description: "logging for reporting urgent issues to production team"
+    compatibleRuntimes:
+      - nodejs18.x
+  logger:
+    path: ./src/layers/logger
+    name: "loggers-${self:provider.stage}"
+    description: "loggers for reporting urgent issues to production team"
+    compatibleRuntimes:
+      - nodejs18.x
 
 useDotenv: true
 
@@ -173,6 +179,8 @@ resources:
 
 custom:
   layersDeploymentBucket: notes-service-dev-serverlessdeploymentbucket-1fvto0n6ho805
+  serverless-layers:
+    arn: !Ref LoggingLambdaLayer
   healthCheckId:
     name: !Ref Route53HealthCheck
   MetricFilter:

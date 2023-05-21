@@ -1,0 +1,91 @@
+service: external-verification-service
+
+frameworkVersion: "3"
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: dev
+  region: us-east-2
+  deploymentBucket:
+    name: ${env:BUCKET_NAME}
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-apigateway-service-proxy
+  - serverless-iam-roles-per-function
+
+functions:
+  # LambdaWorker
+  contactExternalAPI:
+    handler: src/handlers/contactExternalAPI.handler
+    # reservedConcurrency: 1
+    iamRoleStatements:
+      - ${file(./iam/HeartBeatTableIAM.yml):HeartBeatTableIAM}
+      - ${file(./iam/EventBridge.yml):EventBridgeIAM}
+    environment:
+      HEARTBEAT_TABLE_NAME: !Ref HeartBeatDynamoTable
+      EVENTNAME: ${self:custom.verifiedEventName.name}
+      EVENTSOURCE: ${self:custom.eventSource.name}
+      EventBusName: !Ref EventBus
+    events:
+      - sqs:
+          arn: !GetAtt TargetVerificationQueue.Arn
+          # no of messages to be processed by a lambda
+          batchSize: 10
+          # failure response in ReportBatchItemFailures
+          # ReportBatchItemFailures Will be sent back to sqs queue these are failed messages
+          functionResponseType: "ReportBatchItemFailures"
+
+  verifiedVehicles:
+    handler: src/handlers/verifiedVehicles.handler
+    events:
+      - eventBridge:
+          eventBus: !GetAtt EventBus.Name
+          pattern:
+            source:
+              - ${self:custom.eventSource.name}
+            detail-type:
+              - ${self:custom.verifiedEventName.name}
+
+resources:
+  Resources:
+    EventBus: ${file(./resources/EventBus.yml):EventBus}
+    TargetVerificationDLQ: ${file(./resources/TargetVerificationQueue.yml):TargetVerificationDLQ}
+    TargetVerificationQueue: ${file(./resources/TargetVerificationQueue.yml):TargetVerificationQueue}
+    TargetVerificationQueuePolicy: ${file(./resources/TargetVerificationQueue.yml):TargetVerificationQueuePolicy}
+    HeartBeatDynamoTable: ${file(./resources/HeartBeatDynamoTable.yml):HeartBeatDynamoTable}
+    TargetVerfiticationQueueEventBusRule: ${file(./resources/EventBus.yml):TargetVerfiticationQueueEventBusRule}
+
+  Outputs:
+    VerificationEventBus:
+      Description: "VerificationEventBus for output"
+      Value: !Ref EventBus
+
+custom:
+  eventName:
+    name: "vehicle_verification"
+  verifiedEventName:
+    name: "vehicle_verification"
+  eventSource:
+    name: "vehicle_verification_app"
+  # permission added by default
+  apiGatewayServiceProxies:
+    - eventbridge: # source and detailType are hardcoded; detail defaults to POST body
+        path: /eventbridge
+        method: post # automatically pass body to event bridge
+        source: ${self:custom.eventSource.name}
+        detailType: ${self:custom.eventName.name}
+        eventBusName: { Ref: EventBus }
+        cors: true
+
+    # - eventbridge: # source and detailType are hardcoded; detail defaults to POST body
+    #     path: /verified-eventbridge
+    #     method: post # automatically pass body to event bridge
+    #     source: ${self:custom.eventSource.name}
+    #     detailType: ${self:custom.verifiedEventName.name}
+    #     eventBusName: { Ref: EventBus }
+    #     cors: true
+# we need to add EventBusName, Source, DetailType and Detail(JSON payload)

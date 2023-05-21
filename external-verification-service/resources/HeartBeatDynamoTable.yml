@@ -1,0 +1,14 @@
+HeartBeatDynamoTable:
+  Type: AWS::DynamoDB::Table
+  Properties:
+    TableName: HeartBeatExternalAPI-${self:provider.stage}
+    BillingMode: PAY_PER_REQUEST
+    AttributeDefinitions:
+      - AttributeName: ApiId
+        AttributeType: S
+    KeySchema:
+      - AttributeName: ApiId
+        KeyType: HASH
+    TimeToLiveSpecification:
+      AttributeName: TTL
+      Enabled: true
