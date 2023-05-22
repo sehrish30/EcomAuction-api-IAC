@@ -3,7 +3,7 @@ CodePipeline:
   Properties:
     Name: external-verification-service-pipeline-${self:provider.stage}
     # allow code pipeline to create a service role so it can be used with new pipeline
-    RoleArn: !GetAtt CodePipelineServiceRole.Arn
+    RoleArn: !GetAtt CodeDeployServiceRole.Arn
     ArtifactStore:
       Type: S3
       Location: !Ref CodePipelineArtifactStore
@@ -38,18 +38,18 @@ CodePipeline:
               - Name: BuildOutput
             InputArtifacts:
               - Name: SourceCode
-      # - Name: Dev
-      #   Actions:
-      #     - Name: Deploy
-      #       ActionTypeId:
-      #         Category: Build
-      #         Owner: AWS
-      #         Provider: CodeBuild
-      #         Version: "1"
-      #       Configuration:
-      #         ProjectName: !Ref CodeBuildDevProject
-      #       InputArtifacts:
-      #         - Name: SourceCode
+      - Name: Deploy
+        Actions:
+          - Name: Deploy
+            ActionTypeId:
+              Category: Build
+              Owner: AWS
+              Provider: CodeBuild
+              Version: "1"
+            Configuration:
+              ProjectName: !Ref CodeBuildDeployDevProject
+            InputArtifacts:
+              - Name: SourceCode
       # - Name: QA
       #   Actions:
       #     - Name: Deploy
@@ -201,6 +201,30 @@ CodeBuildProdProject:
       EnvironmentVariables:
         - Name: ENV_NAME
           Value: prod
+
+# because we need to deploy it serverless deploy which will deploy to many resoirces
+CodeDeployServiceRole:
+  Type: "AWS::IAM::Role"
+  Properties:
+    AssumeRolePolicyDocument:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: "Allow"
+          Principal:
+            Service:
+              - codepipeline.amazonaws.com
+              - codedeploy.amazonaws.com
+              - codebuild.amazonaws.com
+          Action: "sts:AssumeRole"
+    Path: "/"
+    Policies:
+      - PolicyName: "AdministratorAccess"
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Action: "*"
+              Resource: "*"
 
 CodePipelineServiceRole:
   Type: AWS::IAM::Role
