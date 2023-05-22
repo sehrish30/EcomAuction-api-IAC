@@ -54,7 +54,7 @@ resources:
   Parameters:
     CodeBuildEnvironmentImage:
       Type: String
-      Default: "aws/codebuild/standard:4.0"
+      Default: "aws/codebuild/standard:6.0"
     GithubOwner:
       Type: String
       Default: "sehrish30"
