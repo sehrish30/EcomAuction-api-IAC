@@ -11,6 +11,7 @@ CodePipeline:
       - Name: Source
         Actions:
           - Name: Source
+            RunOrder: 1
             ActionTypeId:
               Category: Source
               Owner: ThirdParty
@@ -27,6 +28,7 @@ CodePipeline:
       - Name: Build
         Actions:
           - Name: Build
+            RunOrder: 2
             ActionTypeId:
               Category: Build
               Owner: AWS
@@ -42,7 +44,7 @@ CodePipeline:
       - Name: QA
         Actions:
           - Name: ManualApproval
-            RunOrder: 2
+            RunOrder: 3
             ActionTypeId:
               Category: Approval
               Owner: AWS
@@ -55,6 +57,7 @@ CodePipeline:
       - Name: Deploy
         Actions:
           - Name: Deploy
+            RunOrder: 4
             ActionTypeId:
               Category: Build
               Owner: AWS
