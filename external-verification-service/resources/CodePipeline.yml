@@ -1,7 +1,7 @@
 CodePipeline:
   Type: AWS::CodePipeline::Pipeline
   Properties:
-    Name: infra-pipeline-${self:provider.stage}
+    Name: external-verification-service-pipeline-${self:provider.stage}
     # allow code pipeline to create a service role so it can be used with new pipeline
     RoleArn: !GetAtt CodePipelineServiceRole.Arn
     ArtifactStore:
