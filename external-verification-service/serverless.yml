@@ -55,6 +55,19 @@ resources:
     CodeBuildEnvironmentImage:
       Type: String
       Default: "aws/codebuild/standard:4.0"
+    GithubOwner:
+      Type: String
+      Default: "sehrish30"
+    GithubRepository:
+      Type: String
+      Default: "auction-api-IAC"
+    GithubBranch:
+      Type: String
+      Default: "main"
+    GithubRepositoryLink:
+      Type: String
+      Default: "https://github.com/sehrish30/auction-api-IAC.git"
+
   Resources:
     EventBus: ${file(./resources/EventBus.yml):EventBus}
     TargetVerificationDLQ: ${file(./resources/TargetVerificationQueue.yml):TargetVerificationDLQ}
@@ -68,9 +81,9 @@ resources:
     CodeBuildSourceCredentials: ${file(./resources/CodePipeline.yml):CodeBuildSourceCredentials}
     CodePipelineServiceRole: ${file(./resources/CodePipeline.yml):CodePipelineServiceRole}
     CodeBuildProject: ${file(./resources/CodePipeline.yml):CodeBuildProject}
-    CodeBuildDevProject: ${file(./resources/CodePipeline.yml):CodeBuildDevProject}
-    CodeBuildQAProject: ${file(./resources/CodePipeline.yml):CodeBuildQAProject}
-    CodeBuildProdProject: ${file(./resources/CodePipeline.yml):CodeBuildProdProject}
+    # CodeBuildDevProject: ${file(./resources/CodePipeline.yml):CodeBuildDevProject}
+    # CodeBuildQAProject: ${file(./resources/CodePipeline.yml):CodeBuildQAProject}
+    # CodeBuildProdProject: ${file(./resources/CodePipeline.yml):CodeBuildProdProject}
     CodePipelineWebHook: ${file(./resources/CodePipeline.yml):CodePipelineWebHook}
 
   Outputs:
@@ -95,3 +108,5 @@ custom:
         eventBusName: { Ref: EventBus }
         cors: true
 # we need to add EventBusName, Source, DetailType and Detail(JSON payload)
+
+# { { resolve:ssm:/secret/dev } }
