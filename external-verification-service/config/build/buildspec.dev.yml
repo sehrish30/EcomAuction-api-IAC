@@ -19,10 +19,9 @@ phases:
     on-failure: ABORT
     commands:
       - echo Building
-      - cd external-verification-service
       - echo Running tests
       - npm test
-      - echo Pakakging the service
+      - echo Packaging the service
       # create my-artifact folder
       - serverless package --package my-artifact --stage dev
 
