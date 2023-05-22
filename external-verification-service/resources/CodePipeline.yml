@@ -21,7 +21,7 @@ CodePipeline:
               Repo: !Ref GithubRepository
               Branch: !Ref GithubBranch
               PollForSourceChanges: false
-              OAuthToken: ${env:GITHUB_TOKEN} # ${ssm:/secret/dev}
+              OAuthToken: ${ssm:/secret/dev} # ${ssm:/secret/dev}
             OutputArtifacts:
               - Name: SourceCode
       - Name: Build
