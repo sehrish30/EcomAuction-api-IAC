@@ -15,7 +15,7 @@ CodePipeline:
               Category: Source
               Owner: ThirdParty
               Provider: GitHub
-              Version: "1"
+              Version: "1" # 2 isnot available in my region
             Configuration:
               Owner: !Ref GithubOwner
               Repo: !Ref GithubRepository
@@ -141,14 +141,14 @@ CodeBuildProject:
         - Name: GITHUB_TOKEN
           Value: ${env:GITHUB_TOKEN}
 
-CodeBuildDevProject:
+CodeBuildDeployDevProject:
   Type: AWS::CodeBuild::Project
   Properties:
     Name: !Sub Dev-${self:provider.stage}
     ServiceRole: !GetAtt CodePipelineServiceRole.Arn
     Source:
       Type: CODEPIPELINE
-      BuildSpec: external-verification-service/config/deploy/deployspec.dev.yml
+      BuildSpec: external-verification-service/config/deploy/buildspec.dev.yml
     # output setting of the artifact build by code build
     Artifacts:
       Type: CODEPIPELINE # The build project does not produce any build output.
@@ -156,9 +156,11 @@ CodeBuildDevProject:
       Type: LINUX_CONTAINER
       ComputeType: BUILD_GENERAL1_SMALL
       Image: !Ref CodeBuildEnvironmentImage
-      EnvironmentVariables:
-        - Name: ENV_NAME
-          Value: dev
+      # EnvironmentVariables:
+      #   - Name: BUCKET_NAME
+      #     Value: ${env:BUCKET_NAME}
+      #   - Name: GITHUB_TOKEN
+      #     Value: ${env:GITHUB_TOKEN}
 
 CodeBuildQAProject:
   Type: AWS::CodeBuild::Project
@@ -269,7 +271,14 @@ CodePipelineServiceRole:
             - Sid: SSM
               Effect: Allow
               Action:
-                - ssm:*
+                - ssm:Describe
+                - ssm:Get*
+                - ssm:List*
+              Resource: "*"
+            - Sid: Cloudformation
+              Effect: Allow
+              Action:
+                - cloudformation:DescribeStacks
               Resource: "*"
 
 CodePipelineArtifactStore:
