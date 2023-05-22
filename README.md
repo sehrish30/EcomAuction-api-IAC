@@ -90,5 +90,6 @@ Utilized EventBridge's content-based filtering feature to facilitate seamless in
 ## 👉Architecture of CI/CD
 
 <img src="readmeimages/cicd.png" style="max-width: 100%; height: auto; object-fit: contain;">
+<img src="readmeimages/cicd-dev.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
 Utilized AWS CodePipeline to automate my deployment process, combining continuous integration and continuous deployment. The pipeline is initiated by GitHub webhooks whenever new commits are pushed to the connected GitHub repository. The pipeline then packages the new code and moves it to an approval stage after running continuous integration tests. An approver then reviews the changes within the approval stage and approves the deployment. After approval, the pipeline deploys the new code, thereby achieving continuous deployment.
