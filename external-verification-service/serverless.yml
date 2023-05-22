@@ -81,6 +81,7 @@ resources:
     CodeBuildSourceCredentials: ${file(./resources/CodePipeline.yml):CodeBuildSourceCredentials}
     CodePipelineServiceRole: ${file(./resources/CodePipeline.yml):CodePipelineServiceRole}
     CodeBuildProject: ${file(./resources/CodePipeline.yml):CodeBuildProject}
+    CodeBuildDeployDevProject: ${file(./resources/CodePipeline.yml):CodeBuildDeployDevProject}
     # CodeBuildDevProject: ${file(./resources/CodePipeline.yml):CodeBuildDevProject}
     # CodeBuildQAProject: ${file(./resources/CodePipeline.yml):CodeBuildQAProject}
     # CodeBuildProdProject: ${file(./resources/CodePipeline.yml):CodeBuildProdProject}
