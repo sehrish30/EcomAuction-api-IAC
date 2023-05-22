@@ -135,6 +135,9 @@ CodeBuildProject:
       Type: LINUX_CONTAINER
       ComputeType: BUILD_GENERAL1_SMALL
       Image: !Ref CodeBuildEnvironmentImage
+      EnvironmentVariables:
+        - Name: BUCKET_NAME
+          Value: qloudnet-dev
 
 CodeBuildDevProject:
   Type: AWS::CodeBuild::Project
