@@ -11,9 +11,9 @@ phases:
       - cd external-verification-service
       - echo installing npm dependecies of infra service
       - npm install
-      - serverless plugin install serverless-plugin-typescript
-      - serverless plugin install serverless-apigateway-service-proxy
-      - serverless plugin install serverless-iam-roles-per-function
+      - serverless plugin install --name serverless-plugin-typescript
+      - serverless plugin install --name serverless-apigateway-service-proxy
+      - serverless plugin install --name serverless-iam-roles-per-function
 
   build:
     on-failure: ABORT
