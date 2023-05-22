@@ -211,10 +211,8 @@ CodeDeployServiceRole:
       Statement:
         - Effect: "Allow"
           Principal:
-            Service:
-              - codepipeline.amazonaws.com
-              - codedeploy.amazonaws.com
-              - codebuild.amazonaws.com
+            AWS:
+              - ${aws:accountId}
           Action: "sts:AssumeRole"
     Path: "/"
     Policies:
