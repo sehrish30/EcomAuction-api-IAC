@@ -21,7 +21,7 @@ CodePipeline:
               Repo: !Ref GithubRepository
               Branch: !Ref GithubBranch
               PollForSourceChanges: false
-              OAuthToken: ${ssm:/secret/dev} # ${ssm:/secret/dev}
+              OAuthToken: ${env:GITHUB_TOKEN} # ${ssm:/secret/dev}
             OutputArtifacts:
               - Name: SourceCode
       - Name: Build
@@ -137,7 +137,9 @@ CodeBuildProject:
       Image: !Ref CodeBuildEnvironmentImage
       EnvironmentVariables:
         - Name: BUCKET_NAME
-          Value: qloudnet-dev
+          Value: ${env:BUCKET_NAME}
+        - Name: GITHUB_TOKEN
+          Value: ${env:GITHUB_TOKEN}
 
 CodeBuildDevProject:
   Type: AWS::CodeBuild::Project
