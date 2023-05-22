@@ -1,0 +1,38 @@
+version: 0.2
+
+phases:
+  install:
+    on-failure: ABORT
+    runtime-versions:
+      nodejs: 18
+    commands:
+      - echo installing serverless cli
+      - npm i -g serverless
+      - cd external-verification-service
+      - echo installing npm dependecies of infra service
+      - npm install
+      - serverless install serverless-plugin-typescript
+      - serverless-apigateway-service-proxy
+      - serverless-iam-roles-per-function
+
+  build:
+    on-failure: ABORT
+    commands:
+      - echo Building
+      - cd external-verification-service
+      - echo Running tests
+      - npm test
+      - echo Pakakging the service
+      # create my-artifact folder
+      - serverless package --package my-artifact --stage dev
+
+# the file codebuild should deploy to s3
+artifacts:
+  files:
+    - external-verification-service/my-artifact/*
+  name: myProjectArtifacts
+
+cache:
+  paths:
+    - "external-verification-service/node_modules/**/*"
+# ${env:GITHUB_TOKEN}
