@@ -38,6 +38,20 @@ CodePipeline:
               - Name: BuildOutput
             InputArtifacts:
               - Name: SourceCode
+
+      - Name: QA
+        Actions:
+          - Name: ManualApproval
+            RunOrder: 2
+            ActionTypeId:
+              Category: Approval
+              Owner: AWS
+              Provider: Manual
+              Version: "1"
+            Configuration:
+              NotificationArn: !Ref AdminTopic
+              CustomData: "Comments on the manual approval"
+
       - Name: Deploy
         Actions:
           - Name: Deploy
@@ -50,6 +64,7 @@ CodePipeline:
               ProjectName: !Ref CodeBuildDeployDevProject
             InputArtifacts:
               - Name: SourceCode
+
       # - Name: QA
       #   Actions:
       #     - Name: Deploy
@@ -145,7 +160,7 @@ CodeBuildDeployDevProject:
   Type: AWS::CodeBuild::Project
   Properties:
     Name: !Sub Dev-${self:provider.stage}
-    ServiceRole: !GetAtt CodePipelineServiceRole.Arn
+    ServiceRole: !GetAtt CodeDeployServiceRole.Arn
     Source:
       Type: CODEPIPELINE
       BuildSpec: external-verification-service/config/deploy/buildspec.dev.yml
@@ -211,8 +226,10 @@ CodeDeployServiceRole:
       Statement:
         - Effect: "Allow"
           Principal:
-            AWS:
-              - ${aws:accountId}
+            Service:
+              - codepipeline.amazonaws.com
+              - codedeploy.${aws:region}.amazonaws.com
+              - codebuild.amazonaws.com
           Action: "sts:AssumeRole"
     Path: "/"
     Policies:
@@ -330,3 +347,11 @@ CodePipelineWebHook:
     TargetPipeline: !Ref CodePipeline
     TargetAction: Source
     TargetPipelineVersion: !GetAtt CodePipeline.Version
+
+AdminTopic:
+  Type: AWS::SNS::Topic
+  Properties:
+    TopicName: Approvaltopic-${self:provider.stage}
+    Subscription:
+      - Endpoint: sehrishwaheed98@gmail.com
+        Protocol: email

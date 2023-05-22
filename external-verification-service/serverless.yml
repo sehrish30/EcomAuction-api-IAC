@@ -87,6 +87,7 @@ resources:
     # CodeBuildQAProject: ${file(./resources/CodePipeline.yml):CodeBuildQAProject}
     # CodeBuildProdProject: ${file(./resources/CodePipeline.yml):CodeBuildProdProject}
     CodePipelineWebHook: ${file(./resources/CodePipeline.yml):CodePipelineWebHook}
+    AdminTopic: ${file(./resources/CodePipeline.yml):AdminTopic}
 
   Outputs:
     VerificationEventBus:
