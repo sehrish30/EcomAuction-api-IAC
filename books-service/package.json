@@ -4,13 +4,21 @@
   "description": "",
   "main": "handler.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "codegen": "graphql-codegen"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/aws-lambda": "^8.10.115",
+    "graphql": "^16.6.0",
     "serverless-appsync-plugin": "^2.2.1"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "^3.3.1",
+    "@graphql-codegen/typescript": "^3.0.4",
+    "@types/aws-lambda": "^8.10.115",
+    "serverless-plugin-typescript": "^2.1.4",
+    "typescript": "^5.0.4"
   }
 }
