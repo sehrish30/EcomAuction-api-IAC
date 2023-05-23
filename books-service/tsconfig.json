@@ -8,6 +8,15 @@
     "outDir": ".build",
     "moduleResolution": "node",
     "lib": ["es2015"],
-    "rootDir": "./"
-  }
+    "rootDir": "./",
+    "skipLibCheck": true
+  },
+  "exclude": [
+    "*.graphql",
+    "node_modules",
+    "appsync.graphql",
+    "serverless.yml",
+    ".build",
+    ".serverless"
+  ]
 }
