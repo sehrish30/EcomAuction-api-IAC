@@ -1,0 +1,44 @@
+BooksTable:
+  Type: AWS::DynamoDB::Table
+  Properties:
+    AttributeDefinitions:
+      - AttributeName: BookId
+        AttributeType: S
+    BillingMode: PAY_PER_REQUEST
+    KeySchema:
+      - AttributeName: BookId
+        KeyType: HASH
+    Tags:
+      - Key: Name
+        Value: feedback.table
+
+OrdersTable:
+  Type: AWS::DynamoDB::Table
+  Properties:
+    AttributeDefinitions:
+      - AttributeName: UserId
+        AttributeType: S
+      - AttributeName: OrderId
+        AttributeType: S
+      - AttributeName: BookId
+        AttributeType: S
+      # - AttributeName: CreatedAt
+      #   AttributeType: S
+    BillingMode: PAY_PER_REQUEST
+    KeySchema:
+      - AttributeName: UserId
+        KeyType: HASH
+      - AttributeName: OrderId
+        KeyType: RANGE
+    GlobalSecondaryIndexes:
+      - IndexName: ByOrderIndex
+        KeySchema:
+          - AttributeName: BookId
+            KeyType: "HASH"
+          - AttributeName: OrderId
+            KeyType: "RANGE"
+        Projection:
+          ProjectionType: ALL
+    Tags:
+      - Key: Name
+        Value: orders.table

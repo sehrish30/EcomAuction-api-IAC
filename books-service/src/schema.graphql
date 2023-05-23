@@ -1,0 +1,61 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type Query {
+  getBookById(bookId: ID!): Book!
+  listBooks(limit: Int!, nextToken: String): BooksPage!
+  myOrders(limit: Int!, nextToken: String): OrderItemsPage!
+}
+
+type OrderItemsPage {
+  OrderItems: [OrderItem]
+  nextToken: String
+}
+
+type OrderItem {
+  userId: ID! # get this userId from cognito token
+  orderId: ID!
+  book: Book!
+  quantity: Int!
+}
+
+type BooksPage {
+  books: [Book]
+  nextToken: String
+}
+
+type Book {
+  bookId: ID!
+  title: String!
+  description: String
+  imageUrl: AWSURL
+  author: String!
+  price: FLoat!
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+input BookInput {
+  title: String!
+  description: String
+  imageUrl: AWSURL
+  author: String!
+  price: Float!
+}
+
+input OrderInput {
+  items: [OrderItemInput]
+}
+
+type OrderItemInput {
+  bookId: ID!
+  quantity: Int!
+}
+
+type Mutation {
+  # can only be called by admin, my groupName is Admin
+  createBook(newBook: BookInput): Book! @aws_auth(cognito_groups: ["Admin"])
+  createOrder(newOrder: OrderInput): Boolean!
+}
