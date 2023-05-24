@@ -25,12 +25,12 @@ export type Book = {
   __typename?: 'Book';
   author: Scalars['String'];
   bookId: Scalars['ID'];
-  createdAt: Scalars['AWSDateTime'];
+  createdAt?: Maybe<Scalars['AWSDateTime']>;
   description?: Maybe<Scalars['String']>;
   imageUrl?: Maybe<Scalars['AWSURL']>;
   price: Scalars['Float'];
   title: Scalars['String'];
-  updatedAt: Scalars['AWSDateTime'];
+  updatedAt?: Maybe<Scalars['AWSDateTime']>;
 };
 
 export type BookInput = {
@@ -44,7 +44,7 @@ export type BookInput = {
 export type BooksPage = {
   __typename?: 'BooksPage';
   books?: Maybe<Array<Maybe<Book>>>;
-  nextToken?: Maybe<Scalars['String']>;
+  nextToken?: Maybe<NextToken>;
 };
 
 export type Mutation = {
@@ -61,6 +61,13 @@ export type MutationCreateBookArgs = {
 
 export type MutationCreateOrderArgs = {
   newOrder?: InputMaybe<OrderInput>;
+};
+
+export type NextToken = {
+  __typename?: 'NextToken';
+  bookId?: Maybe<Scalars['String']>;
+  createdAt?: Maybe<Scalars['String']>;
+  price?: Maybe<Scalars['Float']>;
 };
 
 export type OrderInput = {
@@ -101,11 +108,18 @@ export type QueryGetBookByIdArgs = {
 
 export type QueryListBooksArgs = {
   limit: Scalars['Int'];
-  nextToken?: InputMaybe<Scalars['String']>;
+  nextBookId?: InputMaybe<Scalars['String']>;
+  nextCreatedAt?: InputMaybe<Scalars['String']>;
+  nextPrice?: InputMaybe<Scalars['Float']>;
 };
 
 
 export type QueryMyOrdersArgs = {
   limit: Scalars['Int'];
   nextToken?: InputMaybe<Scalars['String']>;
+};
+
+export type Subscription = {
+  __typename?: 'Subscription';
+  onCreateBook?: Maybe<Book>;
 };

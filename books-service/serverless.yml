@@ -11,6 +11,16 @@ provider:
   region: us-east-2
   deploymentBucket:
     name: ${env:BUCKET_NAME}
+  environment:
+    BOOKES_TABLE: !Ref BooksTable
+    APPSYNC_ID: ${appsync:id}
+    APPSYNC_ARN: ${appsync:arn}
+    APPSYNC_URL: ${appsync:url}
+
+  iam:
+    role:
+      statements:
+        - ${file(./iam/BooksTableIAM.yml):BooksTableIAM}
 
 plugins:
   - serverless-plugin-typescript
@@ -31,46 +41,20 @@ resources:
     CongitoCustomGroup: ${file(./resources/Cognito.yml):CongitoCustomGroup}
     CongitoAdminIAMRole: ${file(./resources/Cognito.yml):CongitoAdminIAMRole}
     CongitoCustomersIAMRole: ${file(./resources/Cognito.yml):CongitoCustomersIAMRole}
-#  Outputs:
-#     NewOutput:
-#       Description: "Description for the output"
-#       Value: "Some output value"
-
-# custom:
-#   appSync:
-#     name: books
-#     authenticationType: AMAZON_COGNITO_USER_POOLS
-#     additionalAuthenticationProviders:
-#       - authenticationType: AWS_IAM
-#     userPoolConfig:
-#       awsRegion: us-east-1
-#       defaultAction: ALLOW
-#       userPoolId: !Ref cognitoUserPool
-#     mappingTemplatesLocation: mapping-templates
-#     mappingTemplates:
-#       - type: Query
-#         field: getBookById
-#         dataSource: booksTable
-#       - type: Query
-#         field: listBooks
-#         dataSource: booksTable
-#       - type: Mutation
-#         field: createBook
-#         dataSource: booksTable
-#     dataSources:
-#       - type: AMAZON_DYNAMODB
-#         name: booksTable
-#         config:
-#           tableName: !Ref BooksTable
+    CognitoIdentityPool: ${file(./resources/Cognito.yml):CognitoIdentityPool}
+    CognitoUnAuthenticatedIAMRole: ${file(./resources/Cognito.yml):CognitoUnAuthenticatedIAMRole}
+    CognitoIdentityPoolRoleAttachement: ${file(./resources/Cognito.yml):CognitoIdentityPoolRoleAttachement}
 
 appSync:
-  name: books-${self:provider.stage}
+  name: ${self:custom.appSyncName.name}
   authentication:
     type: "AMAZON_COGNITO_USER_POOLS"
     config:
       awsRegion: us-east-2
       defaultAction: ALLOW
       userPoolId: !Ref CognitoUserPool
+  additionalAuthentications:
+    - type: AWS_IAM # to provide roles for guest users and authenticated user
   # schema:
   #   - "schema.graphql"
   pipelineFunctions:
@@ -111,19 +95,20 @@ appSync:
       field: createBook
       functions:
         - createBook
-    # getBook:
-    #   type: Query
-    #   field: getBookById
-    #   functions:
-    #     - getBookById
   dataSources:
-    booksTable:
+    booksTable: # database resource used by lambdas
       type: AMAZON_DYNAMODB
       description: "dynamo db table"
       config:
         tableName: !Ref BooksTable
+
+custom:
+  appSyncName:
+    name: books-${self:provider.stage}
+  bookTableName:
+    name: Books-table-${self:provider.stage}
 # {type}.{field}.request.vtl , {type}.{field}.response.vtl
 # https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html
 # request helps appsync make a request to dynamo db
 # https://github.com/sid88in/serverless-appsync-plugin
-# https://github.com/sid88in/serverless-appsync-plugin
+# https://benoitboure.com/how-to-use-typescript-with-appsync-lambda-resolvers

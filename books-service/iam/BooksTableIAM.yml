@@ -1,0 +1,28 @@
+BooksTableIAM:
+  Effect: Allow
+  Action:
+    - "dynamodb:PutItem"
+    - "dynamodb:Query"
+    - "dynamodb:ListItem"
+    - "dynamodb:Scan"
+    - "dynamodb:GetItem"
+    - "dynamodb:BatchGetItem"
+  Resource:
+    - Fn::GetAtt: [BooksTable, Arn]
+    - !Join [
+        ":",
+        [
+          "arn:aws:dynamodb",
+          "${aws:region}",
+          "${aws:accountId}",
+          !Join [
+            "/",
+            [
+              "table",
+              "${self:custom.bookTableName.name}",
+              "index",
+              "ByPriceAndCreatedAtIndex",
+            ],
+          ],
+        ],
+      ]
