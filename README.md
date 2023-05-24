@@ -1,21 +1,24 @@
-**Auction Serverless & Microservices REST API**
+**Auction Serverless & Microservices API**
+
+The following are all the usecases covered in the api.
 
 <br/>
 
 ## 👉Architecture of the Auction API
 
-The use case for this implementation is uploading a listing agreement, which is a document with heavy payload that outlines the terms and conditions of a real estate transaction.<br/>
+Implemented a comprehensive auction service that enables Create, Read, Update, and Delete (CRUD) operations on auctions. Additionally, leveraged AWS EventBridge schedulers to process expired auctions and automatically trigger notifications to the notifications service. This approach ensures that expired auctions are handled efficiently and that notifications are sent to sellers and buyers in a timely manner. The system was designed with scalability and fault tolerance in mind, ensuring that it can handle large volumes of auctions and events without compromising performance or reliability.
+
 <img src="readmeimages/serverless.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
 ## 👉Architecture of Message Queue
 
-Decoupled sending emails to users improving fault tolerance. <br/>
+Decoupled sending emails and other notifications to users improves fault tolerance. By having a notification service that handles all notifications separately, we can ensure that the process of sending notifications doesn't affect the rest of the application. This separation of concerns also allows for better scalability and maintainability of the system, as each service can be developed, tested, and deployed independently.
 
 <img src="readmeimages/SQS.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
 ## 👉Architecture of Streaming Order Receipts
 
-Improved customer experiences using lambda streaming technique. <br/>
+Used Lambda streaming technique to improve customer experiences by reducing application latency and providing partial results in real-time during long-running tasks or queries. <br/>
 
 <img src="readmeimages/getReceipt.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
@@ -48,7 +51,8 @@ The use case for this implementation is uploading a listing agreement, which is 
 
 ## 👉Architecture of implementing Notes Service for Sellers
 
-Note-taking system for sellers in the admin panel using Cognito authentication, CI/CD with github actions and tested with jest
+Developed a note-taking system for sellers in the admin panel, with Cognito authentication for secure access control. The system was integrated with CI/CD using Github Actions, and tested extensively with Jest. Additionally, implemented federated identities for Facebook and Google with Cognito, providing a seamless sign-in experience for users.
+
 <img src="readmeimages/notes.png" style="max-width: 100%; height: auto; object-fit: contain;">
 <img src="readmeimages/authentication.png" style="max-width: 100%; height: auto; object-fit: contain;">
 <img src="readmeimages/github-action-workflows.png" style="max-width: 100%; height: auto; object-fit: contain;">
@@ -56,6 +60,7 @@ Note-taking system for sellers in the admin panel using Cognito authentication, 
 ## 👉Architecture of Decoupling with SQS to imrpove usability
 
 Tight coupling between our resources and dependency on external API can cause bottleneck. To avoid delays I have introduced decoupling with queue and later send socket event to client. Edge cases messages that cannot be processed will be send to DLQ.
+
 <img src="readmeimages/decoupling.png" style="max-width: 100%; height: auto; object-fit: contain;">
 <img src="readmeimages/websockets.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
@@ -68,34 +73,34 @@ that logs into s3 bucket. So in s3 bucket we have lifecycle policy to move data 
 
 ## 👉Architecture of RealTime Reporting Error
 
-<img src="readmeimages/error-reporting.png" style="max-width: 100%; height: auto; object-fit: contain;">
-<img src="readmeimages/reported-log-email.png" style="max-width: 100%; height: auto; object-fit: contain;">
-
 Send logs to cloudwatch with context. Cloudwatch metric will have a filter pattern by looking
 at the attrbiutes of that JSON payload. Trigger an alarm on specific type of error. Alarm will trigger an SNS topic.
 SNS will have lambda subscription that will create a meaningful message and email to admin.
 
-## 👉Architecture of Disaster Recovery(DR) Strategy
+<img src="readmeimages/error-reporting.png" style="max-width: 100%; height: auto; object-fit: contain;">
+<img src="readmeimages/reported-log-email.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
-<img src="readmeimages/routing.png" style="max-width: 100%; height: auto; object-fit: contain;">
+## 👉Architecture of Disaster Recovery(DR) Strategy
 
 To avoid downtime and improve performance for a notes service, I have used multi-site active or active architecture with a global DynamoDB table, Route 53 latency routing policies, and an SSL/TLS certificate for the domain using cloudformation.
 
-## 👉Architecture of api calls to External API
+<img src="readmeimages/routing.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
-<img src="readmeimages/external.png" style="max-width: 100%; height: auto; object-fit: contain;">
+## 👉Architecture of api calls to External API
 
 Utilized EventBridge's content-based filtering feature to facilitate seamless integration between our API and external APIs through an event-driven architecture and asynchronous communication. Additionally, configured a Dead Letter Queue (DLQ) to prevent the loss of events as event bridge loses events after 24 hrs.
 
+<img src="readmeimages/external.png" style="max-width: 100%; height: auto; object-fit: contain;">
+
 ## 👉Architecture of CI/CD
+
+Utilized AWS CodePipeline to automate my deployment process, combining continuous integration and continuous deployment. The pipeline is initiated by GitHub webhooks whenever new commits are pushed to the connected GitHub repository. The pipeline then packages the new code and moves it to an approval stage after running continuous integration tests. An approver then reviews the changes within the approval stage and approves the deployment. After approval, the pipeline deploys the new code, thereby achieving continuous deployment.
 
 <img src="readmeimages/cicd.png" style="max-width: 100%; height: auto; object-fit: contain;">
 <img src="readmeimages/cicd-dev.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
-Utilized AWS CodePipeline to automate my deployment process, combining continuous integration and continuous deployment. The pipeline is initiated by GitHub webhooks whenever new commits are pushed to the connected GitHub repository. The pipeline then packages the new code and moves it to an approval stage after running continuous integration tests. An approver then reviews the changes within the approval stage and approves the deployment. After approval, the pipeline deploys the new code, thereby achieving continuous deployment.
-
 ## 👉Architecture of Books Service
 
-<img src="readmeimages/book-service.png" style="max-width: 100%; height: auto; object-fit: contain;">
+Create an AWS AppSync GraphQL API with subscriptions and use AWS Lambda functions as resolvers, using the Serverless Framework to deploy and manage the resources. Specifically, I enabled real-time data updates through subscriptions and leverage the scalability and cost-effectiveness of AWS Lambda to handle the API's business logic.
 
-Appsync graphql api
+<img src="readmeimages/appsync.png" style="max-width: 100%; height: auto; object-fit: contain;">

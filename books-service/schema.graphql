@@ -1,7 +1,18 @@
 type Query {
-  getBookById(bookId: ID!): Book!
-  listBooks(limit: Int!, nextToken: String): BooksPage!
+  getBookById(bookId: ID!): Book! @aws_iam # this will use iam role rest of these will use standarad authentication which is user pool
+  listBooks(
+    limit: Int!
+    nextPrice: Float
+    nextBookId: String
+    nextCreatedAt: String
+  ): BooksPage!
   myOrders(limit: Int!, nextToken: String): OrderItemsPage!
+}
+
+type NextToken {
+  price: Float
+  bookId: String
+  createdAt: String
 }
 
 type OrderItemsPage {
@@ -18,18 +29,22 @@ type OrderItem {
 
 type BooksPage {
   books: [Book]
-  nextToken: String
+  nextToken: NextToken
 }
 
-type Book {
+# can specify which properties to return if user only has iam role
+# ex: bookId: ID! @aws_iam
+# but if u want to show all attrbites to user u can either add @aws_iam to all properties
+# or at the type level
+type Book @aws_iam @aws_cognito_user_pools {
   bookId: ID!
   title: String!
   description: String
   imageUrl: AWSURL
   author: String!
   price: Float!
-  createdAt: AWSDateTime!
-  updatedAt: AWSDateTime!
+  createdAt: AWSDateTime
+  updatedAt: AWSDateTime
 }
 
 input BookInput {
@@ -58,4 +73,13 @@ type Mutation {
 schema {
   query: Query
   mutation: Mutation
+  subscription: Subscription
 }
+
+type Subscription {
+  # every connected client will be notified when book is created
+  # because book is @aws_iam @aws_cognito_user_pools where @aws_iam is for public users
+  onCreateBook: Book @aws_subscribe(mutations: ["createBook"])
+}
+
+# npx graphql-codegen

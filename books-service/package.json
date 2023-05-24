@@ -11,13 +11,17 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.338.0",
+    "@aws-sdk/lib-dynamodb": "^3.338.0",
     "graphql": "^16.6.0",
-    "serverless-appsync-plugin": "^2.2.1"
+    "serverless-appsync-plugin": "^2.2.1",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^3.3.1",
     "@graphql-codegen/typescript": "^3.0.4",
     "@types/aws-lambda": "^8.10.115",
+    "@types/uuid": "^9.0.1",
     "serverless-plugin-typescript": "^2.1.4",
     "typescript": "^5.0.4"
   }
