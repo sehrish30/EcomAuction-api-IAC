@@ -119,4 +119,12 @@ Create an AWS AppSync GraphQL API with subscriptions and use AWS Lambda function
 
 <img src="readmeimages/appsync.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
-## 👉
+## 👉 Architecture of Ecommerce
+
+An ecommerce API with 3 microservices for Product, Basket, and Order can be implemented using three different patterns: synchronous, asynchronous, and event sourcing.
+
+The synchronous approach involves REST APIs where each microservice waits for a response before proceeding. The asynchronous approach uses message brokers to decouple the microservices and improve scalability.
+
+Event sourcing to record all the events and transactions that occur in the system, polling from sqs to retrieve records and invoke functions.
+
+<img src="readmeimages/ecommerce.png" style="max-width: 100%; height: auto; object-fit: contain;">
