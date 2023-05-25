@@ -1,6 +1,6 @@
 # ECOMAUCTION API
 
-The ECOMAUCTION API is a web-based interface that enables users to buy and sell products through an online auction system. It allows users to create auctions for their products, set starting prices, and receive bids from potential buyers. The API provides endpoints for users to manage their auctions, including creating, updating, and deleting auctions, as well as placing bids on existing auctions. With this API, users can easily buy and sell products online through an auction-style marketplace.<br/>
+The ECOMAUCTION is an API that enables users to buy and sell products through an online auction system. It allows users to create auctions for their products, set starting prices, and receive bids from potential buyers. The API provides endpoints for users to manage their auctions, including creating, updating, and deleting auctions, as well as placing bids on existing auctions. With this API, users can easily buy and sell products online through an auction-style marketplace.<br/>
 
 1. Serverless Infrastructure development <br/>
    IaC with serverless framework and AWS cdk using typescript.<br/>
