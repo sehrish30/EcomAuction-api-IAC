@@ -1,4 +1,18 @@
-**Auction Serverless & Microservices API**
+# ECOMAUCTION API
+
+The ECOMAUCTION API is a web-based interface that enables users to buy and sell products through an online auction system. It allows users to create auctions for their products, set starting prices, and receive bids from potential buyers. The API provides endpoints for users to manage their auctions, including creating, updating, and deleting auctions, as well as placing bids on existing auctions. With this API, users can easily buy and sell products online through an auction-style marketplace.<br/>
+
+1. Serverless Infrastructure development <br/>
+   IaC with serverless framework and AWS cdk using typescript.<br/>
+
+2. Microservices Lambda function development <br/>
+   Nodejs Lambda functions using aws sdk with javascript v3.<br/>
+
+**Architecture of EcomAuction serverless microservices**
+
+_Synchronous communication with API Gateway. Amazon eventbridge as event bus and SQS as custom queue service using asynchronous communications. Event source mapping to process messages in another service as messages appear in the queue.
+Using Queue Chaining, Publish-Subscribe, Fan-out design patterns
+._
 
 The following are all the usecases covered in the api.
 
@@ -104,3 +118,5 @@ Utilized AWS CodePipeline to automate my deployment process, combining continuou
 Create an AWS AppSync GraphQL API with subscriptions and use AWS Lambda functions as resolvers, using the Serverless Framework to deploy and manage the resources. Specifically, I enabled real-time data updates through subscriptions and leverage the scalability and cost-effectiveness of AWS Lambda to handle the API's business logic.
 
 <img src="readmeimages/appsync.png" style="max-width: 100%; height: auto; object-fit: contain;">
+
+## 👉

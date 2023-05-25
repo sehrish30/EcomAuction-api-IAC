@@ -116,7 +116,6 @@ export const handler = async (
     // Validate the token from user pool
     payload = await jwtVerifier.verify(token);
 
-    // arn:aws:execute-api:us-east-2:275102385991:tb68pdfq86/dev/POST/notes
     console.log({});
   } catch (err) {
     console.log(err);
