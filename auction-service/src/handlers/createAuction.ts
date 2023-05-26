@@ -74,3 +74,33 @@ export const handler = commonMiddleware(createAuction).use(
  * serverless logs -f createAuction
  * serverless deploy function --function createAuction
  */
+
+/**
+ * Lambda function: features
+
+Runtime
+
+handler
+
+function
+
+trigger
+
+event
+
+execution environment or execution context
+
+Layer
+
+Concurrency
+
+Destination( from asynchronous invocation like, s3, sns )
+
+environment reuse
+
+database connection pooling
+
+Resource-based policy
+
+Environment variables
+ */

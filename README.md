@@ -14,6 +14,19 @@ _Synchronous communication with API Gateway. Amazon eventbridge as event bus and
 Using Queue Chaining, Publish-Subscribe, Fan-out design patterns
 ._
 
+**Services used**
+
+<img src="readmeimages/layers.png" style="max-width: 100%; height: auto; object-fit: contain;">
+
+| Pattern           | Service              |
+| ----------------- | -------------------- |
+| Queue             | SQS                  |
+| Event Bus         | Event Bridge         |
+| Pub/sub (fan-out) | SNS                  |
+| Orchestration     | Step Functions       |
+| API               | AppSync/ API Gateway |
+| Event Streams     | Kinesis              |
+
 The following are all the usecases covered in the api.
 
 <br/>
@@ -119,7 +132,7 @@ Create an AWS AppSync GraphQL API with subscriptions and use AWS Lambda function
 
 <img src="readmeimages/appsync.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
-## 👉 Architecture of Ecommerce
+## 👉 Architecture of Ecommerce API
 
 An ecommerce API with 3 microservices for Product, Basket, and Order can be implemented using three different patterns: synchronous, asynchronous, and event sourcing.
 
