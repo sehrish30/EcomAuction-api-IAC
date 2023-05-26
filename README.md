@@ -14,13 +14,11 @@ _Synchronous communication with API Gateway. Amazon eventbridge as event bus and
 Using Queue Chaining, Publish-Subscribe, Fan-out design patterns
 ._
 
-**Services used**
-
 <img src="readmeimages/layers.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
 | Pattern           | Service              |
 | ----------------- | -------------------- |
-| Queue             | SQS                  |
+| Queue Chaining    | SQS                  |
 | Event Bus         | Event Bridge         |
 | Pub/sub (fan-out) | SNS                  |
 | Orchestration     | Step Functions       |
@@ -86,7 +84,7 @@ Developed a note-taking system for sellers in the admin panel, with Cognito auth
 
 ## 👉Architecture of Decoupling with SQS to imrpove usability
 
-Tight coupling between our resources and dependency on external API can cause bottleneck. To avoid delays I have introduced decoupling with queue and later send socket event to client. Edge cases messages that cannot be processed will be send to DLQ.
+Tight coupling between our resources and dependency on external API can cause bottleneck. To avoid delays I have introduced decoupling with queue and later send websocket event using APIGateway websockets to client. Edge cases messages that cannot be processed will be send to DLQ.
 
 <img src="readmeimages/decoupling.png" style="max-width: 100%; height: auto; object-fit: contain;">
 <img src="readmeimages/websockets.png" style="max-width: 100%; height: auto; object-fit: contain;">
