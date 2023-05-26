@@ -22,6 +22,7 @@ functions:
   contactExternalAPI:
     handler: src/handlers/contactExternalAPI.handler
     # reservedConcurrency: 1
+    # provisionedConcurrency: 5
     iamRoleStatements:
       - ${file(./iam/HeartBeatTableIAM.yml):HeartBeatTableIAM}
       - ${file(./iam/EventBridge.yml):EventBridgeIAM}

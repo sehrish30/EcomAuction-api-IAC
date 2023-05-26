@@ -154,7 +154,7 @@ functions:
     iamRoleStatements:
       - ${file(./iam/SNSPublishIAM.yml):SNSPublishIAM}
       - ${file(./iam/ListingBucketIAM.yml):ListingBucketGetObjectBucketIAM}
-    # destinations only work with asynchronous events like s3 and sns not sqs and api gateway
+    # destinations only work with asynchronous events like s3 and sns not sqs
     destinations:
       # put message to sns topic to report to admins
       # resource must be existing
@@ -269,4 +269,9 @@ custom:
 # Drop bad traffic at the edge
 # No need to enable CORS
 # Ability to use Cloudfront cache to cache GET requests
+
+# sunchronous lambda invocation - > Push model -> Api gateway -> Lambda
+# asynchronous invocation -> event model ->Amazon SNS + S3 -> Lambda function
+# Stream (Poll based) ->  DynamoDB OR  Kinesis OR SQS -> Lambda
+# event source mapping is a resource in lambda that reads items from a stream or queue and invokes a lambda function
 
