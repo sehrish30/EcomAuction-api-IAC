@@ -17,13 +17,12 @@ provider:
     APP_NAME: Auction Notes App
     APP_STAGE: ${opt:stage,self:provider.stage}
     SERVICE_NAME: Notes Service
-    NOTES_TABLE:
-      ${self:custom.NOTES_TABLE.name}
+    NOTES_TABLE: ${self:custom.NOTES_TABLE.name}
 
-      # can also be specified for each lambda function
-      # https://www.serverless.com/framework/docs/providers/aws/guide/layers
-      # only work with serverless-jetpack plugin when you use typescript plugin
-      # not compiling my typescript file
+# can also be specified for each lambda function
+# https://www.serverless.com/framework/docs/providers/aws/guide/layers
+# only work with serverless-jetpack plugin when you use typescript plugin
+# not compiling my typescript file
 
 layers:
   logging:
@@ -32,12 +31,20 @@ layers:
     description: "logging for reporting urgent issues to production team"
     compatibleRuntimes:
       - nodejs18.x
-  logger:
-    path: ./src/layers/logger
-    name: "loggers-${self:provider.stage}"
-    description: "loggers for reporting urgent issues to production team"
-    compatibleRuntimes:
-      - nodejs18.x
+    package:
+      patterns:
+        - node_modules/**
+
+  # logger:
+  #   path: logger
+  #   # path: logger
+  #   name: "loggers-${self:provider.stage}"
+  #   description: "loggers for reporting urgent issues to production team"
+  #   compatibleRuntimes:
+  #     - nodejs18.x
+  #   package:
+  #     patterns:
+  #       - node_modules/**
 
 useDotenv: true
 
@@ -47,7 +54,7 @@ plugins:
   - serverless-dotenv-plugin
   - serverless-jetpack
   - serverless-layers
-  - serverless-domain-manager
+  # - serverless-domain-manager BASIT
 
 functions:
   authorizer:
@@ -119,18 +126,26 @@ functions:
     iamRoleStatements:
       - ${file(./iam/NotesTableIAM.yml):DeleteItemNotesTableIAM}
       - ${file(./iam/NotesTableIAM.yml):ScanItemNotesTableIAM}
-    events:
-      # Invoke lambda function every 2 minutes
-      - schedule: cron(0/2 * ? * MON-FRI *)
+    # events:
+    #   # Invoke lambda function every 2 minutes
+    #   - schedule: cron(0/2 * ? * MON-FRI *)
 
   reportingError:
     handler: src/handlers/reportingError.handler
+    environment:
+      NODE_PATH: "./:/opt/nodejs/node_modules"
     layers:
+      # - !Ref LoggerLambdaLayer
       - !Ref LoggingLambdaLayer
     events:
       - http:
           method: post
           path: error-handling
+    package:
+      patterns:
+        - ./:/opt/nodejs/node_modules/**
+        - node_modules/**
+
   getReportingError:
     handler: src/handlers/getReportingError.handler
     events:
@@ -166,10 +181,10 @@ resources:
   Resources:
     # NotesTable: ${file(./resources/NotesTable.yml):NotesTable}
     CognitoUserPool: ${file(./resources/CognitoUserPool.yml):CognitoUserPool}
-    CognitoUserPoolClient: ${file(./resources/CognitoUserPool.yml):CognitoUserPoolClient}
     CognitoUserPoolDomain: ${file(./resources/CognitoUserPool.yml):CognitoUserPoolDomain}
     CognitoFacebookUserPoolIdentityProvider: ${file(./resources/CognitoUserPool.yml):CognitoFacebookUserPoolIdentityProvider}
     CognitoGoogleUserPoolIdentityProvider: ${file(./resources/CognitoUserPool.yml):CognitoGoogleUserPoolIdentityProvider}
+    CognitoUserPoolClient: ${file(./resources/CognitoUserPool.yml):CognitoUserPoolClient}
     ReportingSNSTopic: ${file(./resources/ReportingSNSTopic.yml):ReportingSNSTopic}
     # create this only after lambda function is created so comment it down
     CloudwatchMerticFilter: ${file(./resources/CloudwatchMerticFilter.yml):CloudwatchMerticFilter}
