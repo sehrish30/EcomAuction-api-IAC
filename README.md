@@ -24,6 +24,7 @@ Using Queue Chaining, Publish-Subscribe, Fan-out design patterns
 | Orchestration     | Step Functions       |
 | API               | AppSync/ API Gateway |
 | Event Streams     | Kinesis              |
+| Chreography       | Event Bridge         |
 
 The following are all the usecases covered in the api.
 
@@ -43,7 +44,7 @@ Decoupled sending emails and other notifications to users improves fault toleran
 
 ## 👉Architecture of Streaming Order Receipts
 
-Used Lambda streaming technique to improve customer experiences by reducing application latency and providing partial results in real-time during long-running tasks or queries. <br/>
+Used Lambda function urls and Lambda streaming technique to improve customer experiences by reducing application latency and providing partial results in real-time during long-running tasks or queries. <br/>
 
 <img src="readmeimages/getReceipt.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
