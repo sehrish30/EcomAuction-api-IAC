@@ -54,7 +54,7 @@ plugins:
   - serverless-dotenv-plugin
   - serverless-jetpack
   - serverless-layers
-  # - serverless-domain-manager BASIT
+  - serverless-domain-manager
 
 functions:
   authorizer:
