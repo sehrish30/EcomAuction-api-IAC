@@ -1,0 +1,14 @@
+{
+  "name": "@src/product",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.341.0",
+    "@aws-sdk/util-dynamodb": "^3.341.0",
+    "http-errors": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/http-errors": "^2.0.1",
+    "@types/uuid": "^9.0.1"
+  }
+}
