@@ -14,18 +14,38 @@ export class EcomAuctionDatabase extends Construct {
   // public member to access this outside of the class
 
   public readonly productTable: ITable;
+  public readonly basketTable: ITable;
 
   constructor(scope: Construct, id: string) {
     super(scope, id);
+    // reach productTable from this class publicly
+    this.productTable = this.createProductTable();
+    this.basketTable = this.createBasketTableTable();
+  }
+  private createProductTable(): ITable {
     // dynamodb tables, Table is construct to create dynamodb table
     const productTable = new Table(this, "product", {
+      // product: PK: id --name - description - imageFile - price - category
       partitionKey: { name: "id", type: AttributeType.STRING },
       tableName: "product",
       // remove when cdk destroy else cdk wont remove it if it has items
       removalPolicy: RemovalPolicy.DESTROY,
       billingMode: BillingMode.PAY_PER_REQUEST,
     });
-    // reach productTable from this class publicly
-    this.productTable = productTable;
+    return productTable;
+  }
+
+  private createBasketTableTable(): ITable {
+    // basket: PK: userName --items (-quantity, color, price, productId, productName)
+    const basketTable = new Table(this, "basket", {
+      tableName: "basket",
+      partitionKey: {
+        name: "userName",
+        type: AttributeType.STRING,
+      },
+      removalPolicy: RemovalPolicy.DESTROY,
+      billingMode: BillingMode.PAY_PER_REQUEST,
+    });
+    return basketTable;
   }
 }
