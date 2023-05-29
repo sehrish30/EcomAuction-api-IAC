@@ -5,6 +5,8 @@ import {
   deleteProduct,
   getAllProducts,
   getProduct,
+  getProductsByCategory,
+  updateProduct,
 } from "./model";
 
 /**
@@ -23,26 +25,50 @@ export async function handler(
 
   let body;
 
-  switch (event.httpMethod) {
-    case "GET":
-      if (event.pathParameters !== null) {
-        body = await getProduct(event.pathParameters?.id); // /product/{id}
-      } else {
-        body = await getAllProducts();
-      }
-      break;
-    case "POST":
-      body = await createProduct(event);
-      break;
-    case "DELETE":
-      body = await deleteProduct(event.pathParameters?.id as string);
-      break;
-    default:
-      throw new Error(`Unsupported route: ${event.httpMethod}`);
-  }
+  try {
+    switch (event.httpMethod) {
+      case "GET":
+        if (event.queryStringParameters !== null) {
+          body = await getProductsByCategory(event); // GET product/1234?category=Phone
+        } else {
+          if (event.pathParameters !== null) {
+            body = await getProduct(event.pathParameters?.id); // GET /product/{id}
+          } else {
+            body = await getAllProducts(); // get /product
+          }
+        }
+        break;
+      case "POST":
+        body = await createProduct(event); // post /product
+        break;
+      case "DELETE":
+        body = await deleteProduct(event.pathParameters?.id as string); // DELETE /product/{id}
+        break;
+      case "PUT":
+        body = await updateProduct(event); // PUT /product/{id}
+        break;
+      default:
+        throw new Error(`Unsupported route: ${event.httpMethod}`);
+    }
+    console.log({ body });
 
-  return {
-    body: JSON.stringify(body),
-    statusCode: 200,
-  };
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        message: `Successfully finished operation ${event.httpMethod}`,
+        body,
+      }),
+    };
+  } catch (e) {
+    const err = e as Error;
+    console.log(err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        message: "Failed to perform operation",
+        errMsg: err.message,
+        errorStack: err.stack,
+      }),
+    };
+  }
 }
