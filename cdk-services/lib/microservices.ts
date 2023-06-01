@@ -11,6 +11,7 @@ import { join } from "path";
 interface EcomAuctionServicesProps {
   productTable: ITable;
   basketTable: ITable;
+  orderTable: ITable;
 }
 
 // EcomAuction is company name
@@ -19,12 +20,14 @@ interface EcomAuctionServicesProps {
 export class EcomAuctionServices extends Construct {
   public readonly productMicroservice: NodejsFunction;
   public readonly basketMicroservice: NodejsFunction;
+  public readonly orderMicroservice: NodejsFunction;
 
   constructor(scope: Construct, id: string, props: EcomAuctionServicesProps) {
     super(scope, id);
 
     this.productMicroservice = this.createProductFunction(props.productTable);
     this.basketMicroservice = this.createBasketFunction(props.basketTable);
+    this.orderMicroservice = this.createOrderFunction(props.orderTable);
   }
   private createProductFunction(productTable: ITable): NodejsFunction {
     /**
@@ -73,7 +76,10 @@ export class EcomAuctionServices extends Construct {
       },
       environment: {
         PRIMARY_KEY: "username",
-        DYNAMODB_TABLE_NAME: basketTable.tableName, // get table name
+        DYNAMODB_TABLE_NAME: basketTable.tableName, // get table name,
+        EVENT_DETAIL_TYPE: "CheckoutBasket",
+        EVENT_BUSNAME: "EcomAuctionEventBus",
+        EVENT_SOURCE: "com.ecomAuction.basket.checkoutbasket",
       },
       runtime: Runtime.NODEJS_18_X,
     };
@@ -86,5 +92,31 @@ export class EcomAuctionServices extends Construct {
     // give crud operations permission on product table
     basketTable.grantReadWriteData(backetFunction);
     return backetFunction;
+  }
+
+  private createOrderFunction(orderTable: ITable): NodejsFunction {
+    const orderFunctionProps: NodejsFunctionProps = {
+      bundling: {
+        // externalModules property is used to specify that the aws-sdk module should be excluded from the bundled package. This is because the aws-sdk is already provided by the Lambda execution environment,
+        // so there's no need to include it in the function package.
+        // A list of modules that should be considered as externals (already available in the runtime).
+        externalModules: ["aws-sdk/*"],
+      },
+      environment: {
+        PRIMARY_KEY: "username",
+        SORT_KEY: "orderDate",
+        DYNAMODB_TABLE_NAME: orderTable.tableName, // get table name
+      },
+      runtime: Runtime.NODEJS_18_X,
+    };
+    //  NodejsFunction construct as a lambda function
+    // which automatically transpiles and bundles our code, regardless if it's written in JavaScript or TypeScript
+    const orderFunction = new NodejsFunction(this, "orderLambdaFunction", {
+      ...orderFunctionProps,
+      entry: join(__dirname, "./../src/order-service/index.ts"),
+    });
+    // give crud operations permission on order table to orderFunction
+    orderTable.grantReadWriteData(orderFunction);
+    return orderFunction;
   }
 }

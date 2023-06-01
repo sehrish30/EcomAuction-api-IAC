@@ -126,9 +126,10 @@ functions:
     iamRoleStatements:
       - ${file(./iam/NotesTableIAM.yml):DeleteItemNotesTableIAM}
       - ${file(./iam/NotesTableIAM.yml):ScanItemNotesTableIAM}
-    # events:
-    #   # Invoke lambda function every 2 minutes
-    #   - schedule: cron(0/2 * ? * MON-FRI *)
+    events:
+      # eventbridge rule to send events to lambda function using default event bus, scheduled patterns
+      # Invoke lambda function every 2 minutes
+      - schedule: cron(0/2 * ? * MON-FRI *)
 
   reportingError:
     handler: src/handlers/reportingError.handler

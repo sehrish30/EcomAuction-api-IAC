@@ -42,6 +42,12 @@ curl --location --request POST 'https://dev-mtzrfmcr246svjn6.us.auth0.com/oauth/
 --data-urlencode 'grant_type=password' \
 --data-urlencode 'scope=openid'
 
+curl --request POST \
+  --url 'https://dev-mtzrfmcr246svjn6.us.auth0.com/oauth/token' \
+  --header 'content-type: application/json' \
+  --data '{ "grant_type" : "client_credentials", "client_id" : "ky4C6XXzXQhXHNnnPh9iDJqo6QW59zPV" , "client_secret" : "C0bpd77vF2DWzls-lWHjJAXSwhbJPIEH-MXaUJ7moZAJCF-1CX8UZ6qXDTjFw5X7" , "audience" : "https://dev-mtzrfmcr246svjn6.us.auth0.com/api/v2/" }'
+
+
 {
   "nickname": "sehrishwaheed98",
   "name": "sehrishwaheed98@gmail.com",

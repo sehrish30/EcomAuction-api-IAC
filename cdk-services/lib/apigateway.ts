@@ -5,6 +5,7 @@ import { Construct } from "constructs";
 interface EcomAuctionApiGatewayProps {
   productMicroService: IFunction;
   basketMicroService: IFunction;
+  orderMicroService: IFunction
 }
 
 export class EcomAuctionApiGateway extends Construct {
@@ -13,6 +14,7 @@ export class EcomAuctionApiGateway extends Construct {
 
     this.createProductApi(props.productMicroService);
     this.creatBasketApi(props.basketMicroService);
+    this.creatOrderApi(props.orderMicroService);
   }
 
   private createProductApi(productMicroService: IFunction) {
@@ -53,5 +55,22 @@ export class EcomAuctionApiGateway extends Construct {
 
     const basketCheckout = basket.addResource("checkout");
     basketCheckout.addMethod("POST"); // POST /basket/checkout
+  }
+
+  private creatOrderApi(orderMicroService: IFunction) {
+    const apigw = new LambdaRestApi(this, "orderApi", {
+      proxy: false,
+      restApiName: "orderService",
+      handler: orderMicroService,
+    });
+
+    // resource name = order
+    const order = apigw.root.addResource("order");
+    order.addMethod("GET"); // GET /order
+
+
+    const singleOrder = order.addResource("{userName}");
+    singleOrder.addMethod("GET"); // GET /order/{userName} OR /order/{userName}?userName=""
+    
   }
 }
