@@ -3,6 +3,7 @@ import { Construct } from "constructs";
 import { EcomAuctionDatabase } from "./database";
 import { EcomAuctionServices } from "./microservices";
 import { EcomAuctionApiGateway } from "./apigateway";
+import { EcomAuctionEventBus } from "./eventbus";
 
 export class CdkServicesStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -12,6 +13,7 @@ export class CdkServicesStack extends Stack {
      * All constructs besides root construct
      * must be created within the scope of another construct
      * encapulate infrastructure resources, as per resource type
+     * Creating all custom constructs
      */
 
     const database = new EcomAuctionDatabase(this, "Database");
@@ -19,11 +21,18 @@ export class CdkServicesStack extends Stack {
     const microservices = new EcomAuctionServices(this, "Microservices", {
       productTable: database.productTable,
       basketTable: database.basketTable,
+      orderTable: database.orderTable,
     });
 
     const apigateway = new EcomAuctionApiGateway(this, "ApiGateway", {
       productMicroService: microservices.productMicroservice,
       basketMicroService: microservices.basketMicroservice,
+      orderMicroService: microservices.orderMicroservice,
+    });
+
+    const eventBus = new EcomAuctionEventBus(this, "EventBus", {
+      publisherFunction: microservices.basketMicroservice,
+      targetFunction: microservices.orderMicroservice,
     });
   }
 }

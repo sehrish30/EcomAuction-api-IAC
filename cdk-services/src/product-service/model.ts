@@ -5,6 +5,7 @@ import {
   ScanCommand,
   UpdateItemCommand,
   QueryCommand,
+  UpdateItemCommandOutput,
 } from "@aws-sdk/client-dynamodb";
 import createError from "http-errors";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
@@ -118,7 +119,7 @@ export const updateProduct = async (event: APIGatewayEvent) => {
     return {
       ...updatedProduct,
       Attributes: unmarshalledItem,
-    };
+    } as UpdateItemCommandOutput;
   } catch (error) {
     const err = error as Error;
     console.log(err);

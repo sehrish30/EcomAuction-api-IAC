@@ -15,12 +15,15 @@ export class EcomAuctionDatabase extends Construct {
 
   public readonly productTable: ITable;
   public readonly basketTable: ITable;
+  public readonly orderTable: ITable;
+
 
   constructor(scope: Construct, id: string) {
     super(scope, id);
     // reach productTable from this class publicly
     this.productTable = this.createProductTable();
-    this.basketTable = this.createBasketTableTable();
+    this.basketTable = this.createBasketTable();
+    this.orderTable = this.createOrderTable();
   }
   private createProductTable(): ITable {
     // dynamodb tables, Table is construct to create dynamodb table
@@ -35,7 +38,7 @@ export class EcomAuctionDatabase extends Construct {
     return productTable;
   }
 
-  private createBasketTableTable(): ITable {
+  private createBasketTable(): ITable {
     // basket: PK: userName --items (-quantity, color, price, productId, productName)
     const basketTable = new Table(this, "basket", {
       tableName: "basket",
@@ -47,5 +50,25 @@ export class EcomAuctionDatabase extends Construct {
       billingMode: BillingMode.PAY_PER_REQUEST,
     });
     return basketTable;
+  }
+
+  // order: PK: userName, SK: orderDate
+  // --totalPrice -firstName -lastName
+  private createOrderTable(): ITable {
+    // basket: PK: userName --items (-quantity, color, price, productId, productName)
+    const orderTable = new Table(this, "order", {
+      tableName: "order",
+      partitionKey: {
+        name: "userName",
+        type: AttributeType.STRING,
+      },
+      sortKey: {
+        name: "orderDate",
+        type: AttributeType.STRING,
+      },
+      removalPolicy: RemovalPolicy.DESTROY,
+      billingMode: BillingMode.PAY_PER_REQUEST,
+    });
+    return orderTable;
   }
 }
