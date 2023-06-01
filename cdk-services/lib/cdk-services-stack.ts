@@ -88,8 +88,10 @@ export class CdkServicesStack extends Stack {
  */
 
 /**
- * Standard Queues: offer maximum throughput, best effort ordering and at least once delivery
- * FIFO Queues: designed to guarantee that messages are processed exactly once, in the exact order that they are sent.
+ * Standard Queues: offer maximum throughput, best effort ordering and at least once delivery, unlimited throughput
+ * FIFO Queues: designed to guarantee that messages are processed and delivered exactly once, in the exact order that they are sent, limited to 300 messages per second per API action without batching and 3000 with batching
+ *
+ * Use Standard Queue if processing duplicates and out of order messages. Use FIFO when ordering of message is must and duplicates are not accepted at any cost
  *
  * SQS queues are dynamically created and scale automatcically
  * SQS locks your messages during processing, so multiple producers
@@ -108,4 +110,33 @@ export class CdkServicesStack extends Stack {
  * Component 2 processes Message and then deletes it from the queue during the visibility timeout period
  *
  * consumer must delete the message from the queue after receiving and processing it, else it stays in the queue
+ *
+ * Message Lifecycle:
+ * When a consumer receives and processes a message from queue, the message remains in the queue
+ * the consumer must delete the message from the queue after receiving and processing it
+ * Visibility timeout, a period of time during which SQS prevents other consumers from processing the message
+ * default visibility timeout for a message is 30s and min is 0s maximum 12hrs
+ * if not deleted after visibility timeout another consumer will start processing it
+ *
+ * Short and Long polling:
+ * Short polling, the ReceiveMessage request queries only a subset of the servers to find messages that are available to include in the response
+ * Long polling: Receive message request queries all of the servers for messages. SQS sends a response after it collects at least one available message
+ *
+ * Consume messages using short polling, SQS sample a subset of it servers and returns messages from only those servers
+ * When the wait time for ReceiveMessage API action is greater than 0, long polling is in effect.
+ * Long polling helps reduce the cost of using SQS by eleminating the number of empty responses.
+ * In some cases short polling is best practice else long polling is better
+ * by default SQS uses short polling
+ *
+ * DLQ: Dead letter queue for messages that can't be processed
+ * Example: User places an order of a product, but product is deleted. Since there is no product Id code fails and displays an error, and the message
+ * with the order request is sent to dead letter queue
+ * main task is ti handle lifecycle of unconsumed messages.
+ * DLQ: lets you set aside and isolate messages that can't be processed correctly
+ *
+ * Setup DLQ:
+ * Configure alarm for messages moved to DLQ
+ * Examing logs for exceptions that might have caused messages to be moved to a DLQ
+ * Analyze the contents of messages moved to DLQ
+ * Determine wether you have given your consumer sufficient time to process messages
  */
