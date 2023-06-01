@@ -154,7 +154,8 @@ functions:
     iamRoleStatements:
       - ${file(./iam/SNSPublishIAM.yml):SNSPublishIAM}
       - ${file(./iam/ListingBucketIAM.yml):ListingBucketGetObjectBucketIAM}
-    # destinations only work with asynchronous events like s3 and sns not sqs
+    # destinations only work with asynchronous invocation events like s3, eventbridge and sns not sqs because it follows lambda polling pattern not async
+    # https://docs.aws.amazon.com/lambda/latest/dg/lambda-services.html
     destinations:
       # put message to sns topic to report to admins
       # resource must be existing

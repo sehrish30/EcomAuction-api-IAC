@@ -8,7 +8,7 @@ import {
 import { TDetail } from "./types";
 import createError from "http-errors";
 import { ddbClient } from "./ddbClient";
-import { APIGatewayEvent, AttributeValue } from "aws-lambda";
+import { APIGatewayEvent, AttributeValue, SQSEvent } from "aws-lambda";
 
 export const createOrder = async (basketCheckoutEventDetail: TDetail) => {
   try {
@@ -91,4 +91,17 @@ export const getAllOrders = async (event: APIGatewayEvent) => {
     console.log(err);
     throw createError.InternalServerError(err?.message as string);
   }
+};
+
+export const sqsInvocation = async (event: SQSEvent) => {
+  // Records only 1 because batchSize has been set 1 by me
+  event.Records.forEach(async (record) => {
+    console.log({ record });
+    // expected record.body : { "detail-type\":\"CheckoutBasket\",\"source\":\"com.swn.basket.checkoutbasket\", "detail\":{\"userName\":\"swn\",\"totalPrice\":1820, .. }
+    const checkoutEventRequest = JSON.parse(record.body);
+
+    // create order item into db
+    return await createOrder(checkoutEventRequest.detail);
+    // detail object should be checkoutbasket json object
+  });
 };

@@ -16,15 +16,18 @@ Using Queue Chaining, Publish-Subscribe, Fan-out design patterns
 
 <img src="readmeimages/layers.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
-| Pattern           | Service              |
-| ----------------- | -------------------- |
-| Queue Chaining    | SQS                  |
-| Event Bus         | Event Bridge         |
-| Pub/sub (fan-out) | SNS                  |
-| Orchestration     | Step Functions       |
-| API               | AppSync/ API Gateway |
-| Event Streams     | Kinesis              |
-| Chreography       | Event Bridge         |
+| Pattern              | Service              |
+| -------------------- | -------------------- |
+| Topic-Queue Chaining | SQS                  |
+| Load balancing       | SQS                  |
+| Event Bus            | Event Bridge         |
+| Pub/sub (fan-out)    | SNS                  |
+| Orchestration        | Step Functions       |
+| API (REST/Graphql)   | AppSync/ API Gateway |
+| Event Streams        | Kinesis              |
+| Chreography          | Event Bridge         |
+| Saga Pattern         | Step functions       |
+| Circuit Breaker      | Dynamo DB, Lambda    |
 
 The following are all the usecases covered in the api.
 

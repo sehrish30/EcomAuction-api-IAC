@@ -1,13 +1,14 @@
-import { APIGatewayEvent, EventBridgeEvent } from "aws-lambda";
+import { APIGatewayEvent, EventBridgeEvent, SQSEvent } from "aws-lambda";
 
-import { createOrder, getAllOrders, getOrder } from "./model";
+import { createOrder, getAllOrders, getOrder, sqsInvocation } from "./model";
 import { TDetail, TDetailType } from "./types";
 
 export const handler = async (
-  event: EventBridgeEvent<TDetailType, TDetail> & APIGatewayEvent
+  event: EventBridgeEvent<TDetailType, TDetail> & APIGatewayEvent & SQSEvent
 ) => {
-  const eventType = event["detail-type"];
-  if (eventType) {
+  if (event.Records) {
+    return await sqsInvocation(event);
+  } else if (event["detail-type"]) {
     // EventBridge Invocation
     return await eventBridgeInvocation(event);
   } else {

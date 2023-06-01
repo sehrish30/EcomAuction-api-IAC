@@ -4,6 +4,7 @@ import { EcomAuctionDatabase } from "./database";
 import { EcomAuctionServices } from "./microservices";
 import { EcomAuctionApiGateway } from "./apigateway";
 import { EcomAuctionEventBus } from "./eventbus";
+import { EcomAuctionQueue } from "./queue";
 
 export class CdkServicesStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -30,9 +31,15 @@ export class CdkServicesStack extends Stack {
       orderMicroService: microservices.orderMicroservice,
     });
 
+    const queue = new EcomAuctionQueue(this, "Queue", {
+      // sqs requires consumer that pulls events from sqs
+      consumer: microservices.orderMicroservice,
+    });
+
     const eventBus = new EcomAuctionEventBus(this, "EventBus", {
       publisherFunction: microservices.basketMicroservice,
-      targetFunction: microservices.orderMicroservice,
+      // targetFunction: microservices.orderMicroservice,
+      targetQueue: queue.orderQueue,
     });
   }
 }
@@ -88,7 +95,7 @@ export class CdkServicesStack extends Stack {
  */
 
 /**
- * Standard Queues: offer maximum throughput, best effort ordering and at least once delivery, unlimited throughput
+ * Standard Queues: offer maximum throughput than FIFO, best effort ordering and at least once delivery, unlimited throughput, cheaper than FIFO
  * FIFO Queues: designed to guarantee that messages are processed and delivered exactly once, in the exact order that they are sent, limited to 300 messages per second per API action without batching and 3000 with batching
  *
  * Use Standard Queue if processing duplicates and out of order messages. Use FIFO when ordering of message is must and duplicates are not accepted at any cost
@@ -96,6 +103,12 @@ export class CdkServicesStack extends Stack {
  * SQS queues are dynamically created and scale automatcically
  * SQS locks your messages during processing, so multiple producers
  * can send and multiple consumers can receice messages at the same time
+ * There is visibility timeout for both standard and FIFO
+ * The number of inflight messages is limited to 20,000 in FIFO queue
+ * A message is considered to be in flight after it is received from a queue by a consumer, but not yet deleted from the queue
+ *
+ * keep the number of messages with the same message group id low in FIFO queue
+ * implement a dead-letter queue so that messages that fail processing are quickly moved out of the main queue
  *
  * SQS scales automatically with your application so you don't have to worry
  * about capacity planning and pre provisioning. There is no limit to the number of messages per queue,
@@ -139,4 +152,11 @@ export class CdkServicesStack extends Stack {
  * Examing logs for exceptions that might have caused messages to be moved to a DLQ
  * Analyze the contents of messages moved to DLQ
  * Determine wether you have given your consumer sufficient time to process messages
+ */
+
+/**
+ * Lambda worker will poll the queue and invoke
+ * our lambda function synchronously with an event that contains queue message
+ * lambda is executed once for each batch and received a triggered event
+ * sqs as event source of order microservice
  */
