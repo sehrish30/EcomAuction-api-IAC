@@ -76,3 +76,36 @@ export class CdkServicesStack extends Stack {
  * Store the event messages into SQS Queue with durable and persistent manner. No message will get lost.
  * Queue can act as a buffering load balancer.
  */
+
+/**
+ * In polling events , consumer poll the messages in batch from producer
+ * SQS to decouple microservices, suppose if service is down when event is published
+ * so in order to prevent message loss we should use queue because event bridge is send event and forget abt it
+ *
+ * Synchronous invocation
+ * Asyncronous invocation
+ * Event source mapping
+ */
+
+/**
+ * Standard Queues: offer maximum throughput, best effort ordering and at least once delivery
+ * FIFO Queues: designed to guarantee that messages are processed exactly once, in the exact order that they are sent.
+ *
+ * SQS queues are dynamically created and scale automatcically
+ * SQS locks your messages during processing, so multiple producers
+ * can send and multiple consumers can receice messages at the same time
+ *
+ * SQS scales automatically with your application so you don't have to worry
+ * about capacity planning and pre provisioning. There is no limit to the number of messages per queue,
+ * and standard queues provide nearly unlimited throughput
+ *
+ * Security: SQS to exchange sensitive data between application using server side(SSE) to
+ * encrypt each message body, keep sensitive data secure
+ *
+ * Visibility timeout:
+ * Component 1 sends message A to the queue
+ * Component 2 retrieves message A from the queue and the visibility timeout period starts
+ * Component 2 processes Message and then deletes it from the queue during the visibility timeout period
+ *
+ * consumer must delete the message from the queue after receiving and processing it, else it stays in the queue
+ */
