@@ -70,9 +70,6 @@ const redeemPoints = async ({ email, total }: CalculateTotalType) => {
     // by using ErrorEquals: [States.ALL] so it will match with all the error
     throw new Error(err);
   }
-  return {
-    total,
-  };
 };
 
 export const handler = redeemPoints;

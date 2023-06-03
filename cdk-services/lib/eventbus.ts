@@ -1,7 +1,7 @@
 import { IFunction } from "aws-cdk-lib/aws-lambda";
 import { Construct } from "constructs";
-import { EventBus, Rule } from "aws-cdk-lib/aws-events";
-import { LambdaFunction, SqsQueue } from "aws-cdk-lib/aws-events-targets";
+import { EventBus, IEventBus, Rule } from "aws-cdk-lib/aws-events";
+import { SqsQueue } from "aws-cdk-lib/aws-events-targets";
 import { IQueue } from "aws-cdk-lib/aws-sqs";
 
 interface EcomAuctionEventBusProps {
@@ -11,6 +11,8 @@ interface EcomAuctionEventBusProps {
 }
 
 export class EcomAuctionEventBus extends Construct {
+  public readonly ecomAuctionEventBus: IEventBus;
+
   constructor(scope: Construct, id: string, props: EcomAuctionEventBusProps) {
     super(scope, id);
 
@@ -26,7 +28,7 @@ export class EcomAuctionEventBus extends Construct {
       eventPattern: {
         // these eventPatterns are matched
         source: ["com.ecomAuction.basket.checkoutbasket"],
-        detailType: ["CheckoutBasket"],
+        detailType: ["CheckoutBasket"], // past tense
       },
       ruleName: "CheckoutBasketRule",
     });
@@ -37,6 +39,7 @@ export class EcomAuctionEventBus extends Construct {
 
     // grant permissions to publisher function to push events to custom event bus
     bus.grantPutEventsTo(props.publisherFunction);
+    this.ecomAuctionEventBus = bus;
   }
 }
 

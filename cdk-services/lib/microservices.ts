@@ -46,7 +46,7 @@ export class EcomAuctionServices extends Construct {
       bundling: {
         // externalModules property is used to specify that the aws-sdk module should be excluded from the bundled package. This is because the aws-sdk is already provided by the Lambda execution environment,
         // so there's no need to include it in the function package.
-        externalModules: ["aws-sdk/*"],
+        externalModules: ["@aws-sdk/*"],
       },
       environment: {
         PRIMARY_KEY: "id",
@@ -72,7 +72,7 @@ export class EcomAuctionServices extends Construct {
         // externalModules property is used to specify that the aws-sdk module should be excluded from the bundled package. This is because the aws-sdk is already provided by the Lambda execution environment,
         // so there's no need to include it in the function package.
         // A list of modules that should be considered as externals (already available in the runtime).
-        externalModules: ["aws-sdk/*"],
+        externalModules: ["@aws-sdk/*"],
       },
       environment: {
         PRIMARY_KEY: "username",
@@ -100,7 +100,7 @@ export class EcomAuctionServices extends Construct {
         // externalModules property is used to specify that the aws-sdk module should be excluded from the bundled package. This is because the aws-sdk is already provided by the Lambda execution environment,
         // so there's no need to include it in the function package.
         // A list of modules that should be considered as externals (already available in the runtime).
-        externalModules: ["aws-sdk/*"],
+        externalModules: ["@aws-sdk/*"],
       },
       environment: {
         PRIMARY_KEY: "username",

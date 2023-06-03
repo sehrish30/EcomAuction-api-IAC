@@ -9,7 +9,6 @@ import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 import { ddbClient } from "./ddbClient";
 import { APIGatewayEvent } from "aws-lambda";
 import { v4 as uuidv4 } from "uuid";
-// import { unMarshalItem } from "./lib/util";
 import createError from "http-errors";
 import { ebClient } from "./eventBridgeClient";
 
@@ -81,7 +80,7 @@ export const deleteBasket = async (userName: string) => {
   }
 };
 
-interface ICheckoutBasket {
+export interface ICheckoutBasket {
   userName: string;
 }
 

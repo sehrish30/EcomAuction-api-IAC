@@ -5,6 +5,8 @@ import { EcomAuctionServices } from "./microservices";
 import { EcomAuctionApiGateway } from "./apigateway";
 import { EcomAuctionEventBus } from "./eventbus";
 import { EcomAuctionQueue } from "./queue";
+import { EcomAuctionStateMachine } from "./stateMachines";
+import { EcomAuctionSNS } from "./sns";
 
 export class CdkServicesStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -40,6 +42,14 @@ export class CdkServicesStack extends Stack {
       publisherFunction: microservices.basketMicroservice,
       // targetFunction: microservices.orderMicroservice,
       targetQueue: queue.orderQueue,
+    });
+
+    const snsTopics = new EcomAuctionSNS(this, "snsTopics");
+
+    const stateMachine = new EcomAuctionStateMachine(this, "StateMachine", {
+      basketTable: database.basketTable,
+      ecomAuctionEventBus: eventBus.ecomAuctionEventBus,
+      checkoutTopic: snsTopics.checkoutTopic,
     });
   }
 }
@@ -159,4 +169,80 @@ export class CdkServicesStack extends Stack {
  * our lambda function synchronously with an event that contains queue message
  * lambda is executed once for each batch and received a triggered event
  * sqs as event source of order microservice
+ */
+
+/**
+ * Idempotency: Operation will return the same results whether it is called once or multiple times
+ * Idempotency-Key: Assigned to the message by the sender to simplify deduplication by the receiver
+ *
+ * Store Idempotency-Key in external database
+ * Client sends an event to something that can process the event
+ * here in this case, its a lambda function
+ * to lambda function
+ * and that event includes idempotency key
+ * Lambda will check external data store to see if that key exists
+ * if it doesnot it processes the key, handles the event and stores the result to persistent store
+ */
+
+/**
+ * Step functions:
+ * Workflows you build with step functions are called state machines
+ * and each step of your workflow is called a state
+ *
+ * When you execute your state machine, each move from one state
+ * to the next is called state transition
+ *
+ * You can resuse components, easily edit the sequence of steps, or swap
+ * out the code called by task states as your needs change
+ *
+ * declartive way of workflow using stack Language
+ *
+ * waitForTaskToken (Service integration pattern)
+ * Queue work -> waitForTaskToken => queue => Tasktoken => Receiver
+ * Receiver returns => SendTaskFailure => handler failure
+ * Receiver returns =>  SendTaskSuccess => handler success
+ *
+ * loosely coupled chreography
+ * tightly coupled orchestration
+ * events vs workflows
+ *
+ * There can be nested express flow in standard workflow
+ *
+ * CallbackTaskToken pattern
+ */
+
+/**
+ * Step functions:
+ * You can use step function overflow for design
+ *
+ * Serverless function orchestrator
+ * States:
+ * Task State: unit of work, can have retries and catch
+ * Wait state: state machine will be on hold until such time, can pause upto 1 year, for standard workflows not express
+ * Parallel state: When you want to execute two things in parallel
+ * Choice State: corresponds to if, then and else
+ * Pass state: append new attrbiutes to your execution state
+ * Succeed State: successfully complete state machine
+ * Fail state: Fail state machine, specify the cause and error of fail state
+ * Map state: array of inputs, according to set maxConcurrency if 0 will happen one after other, if 5 then all 5 will start together
+ *
+ * step functions can integaret with
+ * external lambda functions
+ * sqs, sns
+ * ecs,
+ * AWS batch
+ * sagebaker
+ * another step function
+ *
+ * Callback pattern: where you call third party service
+ * e.g in one of the step we have to put message in sqs queue and wait till that message
+ * is consumed by lambda
+ * when scheduling a task in sqs queue, step function will send taskToken along with that message
+ * so once message is being executed, it will use that task token to send the message back to state machine
+ * whether it is successful or not. so it depends on the message if its success or failed
+ * advantage is state machine or step function donot have to check the progress
+ * once task is completed lambda will call back
+ * highly scalable approach in event driven architecture
+ *
+ * Acitvity Pattern
  */
