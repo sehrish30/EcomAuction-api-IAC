@@ -1,0 +1,10 @@
+[
+  {
+    "Time": "2016-01-14T01:02:03Z",
+    "Source": "com.ecomAuction.basket.checkoutbasket",
+    "Resources": ["resource1", "resource2"],
+    "DetailType": "CheckoutBasket",
+    "Detail": "{ \"userName\": \"sehrish\", \"basket\": \"phone\" }",
+    "EventBusName": "EcomAuctionEventBus"
+  }
+]

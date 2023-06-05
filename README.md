@@ -16,15 +16,18 @@ Using Queue Chaining, Publish-Subscribe, Fan-out design patterns
 
 <img src="readmeimages/layers.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
-| Pattern           | Service              |
-| ----------------- | -------------------- |
-| Queue Chaining    | SQS                  |
-| Event Bus         | Event Bridge         |
-| Pub/sub (fan-out) | SNS                  |
-| Orchestration     | Step Functions       |
-| API               | AppSync/ API Gateway |
-| Event Streams     | Kinesis              |
-| Chreography       | Event Bridge         |
+| Pattern              | Service              |
+| -------------------- | -------------------- |
+| Topic-Queue Chaining | SQS                  |
+| Load balancing       | SQS                  |
+| Event Bus            | Event Bridge         |
+| Pub/sub (fan-out)    | SNS                  |
+| Orchestration        | Step Functions       |
+| API (REST/Graphql)   | AppSync/ API Gateway |
+| Event Streams        | Kinesis              |
+| Chreography          | Event Bridge         |
+| Saga Pattern         | Step functions       |
+| Circuit Breaker      | Dynamo DB, Lambda    |
 
 The following are all the usecases covered in the api.
 
@@ -32,7 +35,7 @@ The following are all the usecases covered in the api.
 
 ## 👉Architecture of the Auction API
 
-Implemented a comprehensive auction service that enables Create, Read, Update, and Delete (CRUD) operations on auctions. Additionally, leveraged AWS EventBridge schedulers to process expired auctions and automatically trigger notifications to the notifications service. This approach ensures that expired auctions are handled efficiently and that notifications are sent to sellers and buyers in a timely manner. The system was designed with scalability and fault tolerance in mind, ensuring that it can handle large volumes of auctions and events without compromising performance or reliability.
+Implemented a comprehensive auction service that enables Create, Read, Update, and Delete (CRUD) operations on auctions and middy middleware for input validation. Additionally, leveraged AWS EventBridge schedulers to process expired auctions and automatically trigger notifications to the notifications service. This approach ensures that expired auctions are handled efficiently and that notifications are sent to sellers and buyers in a timely manner. The system was designed with scalability and fault tolerance in mind, ensuring that it can handle large volumes of auctions and events without compromising performance or reliability.
 
 <img src="readmeimages/serverless.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
@@ -140,3 +143,9 @@ The synchronous approach involves REST APIs where each microservice waits for a 
 Event sourcing to record all the events and transactions that occur in the system, polling from sqs to retrieve records and invoke functions.
 
 <img src="readmeimages/ecommerce.png" style="max-width: 100%; height: auto; object-fit: contain;">
+
+## 👉 Architecture of Checkout Order
+
+<img src="readmeimages/orchestrate-checkout.png" style="max-width: 100%; height: auto; object-fit: contain;">
+
+Utilized the CDK and Step Functions with saga pattern to seamlessly orchestrate the flow of checkout order using express workflow.
