@@ -13,6 +13,8 @@ import {
   Succeed,
   TaskInput,
   Condition,
+  Map,
+  JsonPath,
 } from "aws-cdk-lib/aws-stepfunctions";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
@@ -22,6 +24,7 @@ import { LambdaInvoke, SnsPublish } from "aws-cdk-lib/aws-stepfunctions-tasks";
 import { ITopic } from "aws-cdk-lib/aws-sns";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import { IEventBus } from "aws-cdk-lib/aws-events";
+import { EndpointType, LambdaRestApi } from "aws-cdk-lib/aws-apigateway";
 
 interface EcomAuctionProps {
   basketTable: ITable;
@@ -84,6 +87,43 @@ export class EcomAuctionStateMachine extends Construct {
     table.grantReadWriteData(fn);
     ecomAuctionEventBus?.grantPutEventsTo(fn);
     return fn;
+  }
+
+  private checkQuantityOfAllStepFunctions() {
+    const map = new Map(this, "Products Map", {
+      maxConcurrency: 1,
+      itemsPath: JsonPath.stringAt("$.inputForMap"),
+    });
+    map.iterator(new Pass(this, "Pass State"));
+
+    //Step function definition
+    const definition = Chain.start(map);
+
+    let saga = new StateMachine(this, "StateMachine", {
+      definition,
+      stateMachineName: "CheckQuantityStateMachine",
+      stateMachineType: StateMachineType.STANDARD,
+    });
+
+    const sagaLambda = new NodejsFunction(this, "sagaLambdaHandler", {
+      runtime: Runtime.NODEJS_18_X,
+      entry: join(
+        __dirname,
+        `./../src/basket-service/stateMachines/sagaLambda.ts`
+      ),
+      bundling: {
+        externalModules: ["@aws-sdk/*"], // Use the 'aws-sdk' available in the Lambda runtime
+      },
+      environment: {
+        statemachineArn: saga.stateMachineArn,
+      },
+    });
+    saga.grantStartExecution(sagaLambda);
+
+    new LambdaRestApi(this, "ServerlessSagaPattern", {
+      handler: sagaLambda,
+      endpointTypes: [EndpointType.REGIONAL],
+    });
   }
 
   private createCheckoutStateMachine(props: EcomAuctionProps): StateMachine {
@@ -293,27 +333,8 @@ export class EcomAuctionStateMachine extends Construct {
  * I have used 2 method for this state machine
  */
 
-// const sagaLambda = new NodejsFunction(this, "sagaLambdaHandler", {
-//   runtime: Runtime.NODEJS_18_X,
-//   entry: join(
-//     __dirname,
-//     `./../src/basket-service/stateMachines/sagaLambda.ts`
-//   ),
-//   bundling: {
-//     externalModules: ["@aws-sdk/*"], // Use the 'aws-sdk' available in the Lambda runtime
-//   },
-//   environment: {
-//     statemachine_arn: saga.stateMachineArn,
-//   },
-// });
-
 // Grant permission to the IAM role to start an execution of the Step Function
-// saga.grantStartExecution(sagaLambda);
 
 /**
  * Simple API Gateway proxy integration
  */
-// new LambdaRestApi(this, "ServerlessSagaPattern", {
-//   handler: sagaLambda,
-//   endpointTypes: [EndpointType.REGIONAL],
-// });

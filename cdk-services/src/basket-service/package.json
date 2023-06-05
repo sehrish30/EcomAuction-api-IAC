@@ -5,6 +5,7 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.341.0",
     "@aws-sdk/client-eventbridge": "^3.341.0",
+    "@aws-sdk/client-sfn": "^3.345.0",
     "@aws-sdk/util-dynamodb": "^3.341.0",
     "http-errors": "^2.0.0"
   },

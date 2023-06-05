@@ -8,6 +8,7 @@ import { EcomAuctionQueue } from "./queue";
 import { EcomAuctionStateMachine } from "./stateMachines";
 import { EcomAuctionSNS } from "./sns";
 import { EcomAuctionIAMRole } from "./iam-role";
+import { EcomAuctionCloudformationParameters } from "./cloudformation-parameters";
 
 export class CdkServicesStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -19,6 +20,11 @@ export class CdkServicesStack extends Stack {
      * encapulate infrastructure resources, as per resource type
      * Creating all custom constructs
      */
+
+    const cdkParams = new EcomAuctionCloudformationParameters(
+      this,
+      "CloudformationParams"
+    );
 
     const database = new EcomAuctionDatabase(this, "Database");
 
@@ -39,7 +45,10 @@ export class CdkServicesStack extends Stack {
       targetQueue: queue.orderQueue,
     });
 
-    const snsTopics = new EcomAuctionSNS(this, "snsTopics");
+    const snsTopics = new EcomAuctionSNS(this, "snsTopics", {
+      adminPhone: cdkParams.adminsPhoneParam,
+      adminsEmailParam: cdkParams.adminsEmailParam,
+    });
 
     const stateMachine = new EcomAuctionStateMachine(this, "StateMachine", {
       basketTable: database.basketTable,
@@ -241,6 +250,21 @@ export class CdkServicesStack extends Stack {
  * sagebaker
  * another step function
  *
+ * State machines pattern:
+ * 1) Request response => state machine doesnot worry about output of that work
+ * 2) waitForTaskToken => e.g
+ * SQS receives task token from step functions
+ * backend process takes the message off the queue
+ * backend process performs some work
+ * the process responds back to step functions
+ * will come back with tasktoken which it got from step functions
+ * step function will receive the result and check the taskToken
+ * and know which execution of the state machine goes with this taskToken
+ * it will take the output
+ * and send it as input to parse results state
+ *
+ * .syncommand, wait for a state to complete before progressing to next state
+ *
  * Callback pattern: where you call third party service
  * e.g in one of the step we have to put message in sqs queue and wait till that message
  * is consumed by lambda
@@ -252,4 +276,39 @@ export class CdkServicesStack extends Stack {
  * highly scalable approach in event driven architecture
  *
  * Acitvity Pattern
+ * create an activity -> think of it like a queue
+ * Queue of tasks which can be pulled by some workers to do some actual work then
+ * get an arn that points to that activity
+ * when u define an activity resource task in your state machine you specify that arn
+ * heartbeat and timeout for activity
+ * after my worker comes to fetch a task to do via activity
+ * it will send a heartbeat every specified heartbeat seconds to tell step functions that it is going to work
+ * the work from the time acitvity tasks is fetched, to the time the worker comes back to say i'm done should be done within timeout duration
+ * else perform work state acitvity is marked as failed
+ * 1) first worker will make a getAcivityTask call to stepFunctions, specifying the arn of the activity
+ * worker will keep doing infinitely, until there is task for that activity
+ * respose from worker will have the input that was sent to this perform work task
+ * as well as the task token that is unique to this activity task was received from this GetActivityTasks
+ * while worker does that work it will need to make sure that it sends hearbeats within heartbeat time to step functions by specifying the task token that it was given at the first step
+ * it will send back taskSuccess or taskFailure
+ *
+ * STANDARD vs EXPRESS:
+ * For high volume, like IoT = EXPRESS
+ * Execution start rate: Over 2000 per second | Over 100,000 per second
+ * State transition rate: Over 4000 per second per account | unlimited
+ * Persisted to disk | In memory only
+ * Exactly-once workflow execution | At least once workflow execution
+ * so if there is an issue with state: standard workflow only has to restart the state but EXPRESS has to restart the whole machine
+ * because data is on dish in STANDARD workflow
+ * that means that you need to make sure that entirety of your code behind step functions is idempotent when using EXPRESS worflow
+ * STANDARD: priced per transition, limit 365 days
+ * EXPRESS: Priced by the number of executions you run, their duration or length and memory consumption, limit: 5minutes
+ *
+ * STANDARD: Execution history is stored in step functions, and can be sent to cloudwatch logs
+ * EXPRESS: Sent to AWS cloudwatch logs
+ *
+ * Both support All Service Integrations
+ * But STANDARD support all patterns
+ * But Express doesnot support all patterns, doesnot support job run(.sync) or callback pattern(.waitForTaskPattern)
+ *
  */

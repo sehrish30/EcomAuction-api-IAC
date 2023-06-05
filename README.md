@@ -151,3 +151,7 @@ Utilized the CDK and Step Functions with saga pattern to seamlessly orchestrate 
 <img src="readmeimages/orchestrate-checkout.png" style="max-width: 100%; height: auto; object-fit: contain;">
 <img src="readmeimages/checkout-workflow-1.png" style="max-width: 100%; height: auto; object-fit: contain;">
 <img src="readmeimages/checkout-workflow-2.png" style="max-width: 100%; height: auto; object-fit: contain;">
+
+## 👉 Architecture of Check product quantity
+
+Utilized the CDK and Step Functions with to loop through all products in database and remove products that are out of stock.
