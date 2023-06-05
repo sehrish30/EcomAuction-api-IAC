@@ -7,6 +7,7 @@ import { EcomAuctionEventBus } from "./eventbus";
 import { EcomAuctionQueue } from "./queue";
 import { EcomAuctionStateMachine } from "./stateMachines";
 import { EcomAuctionSNS } from "./sns";
+import { EcomAuctionIAMRole } from "./iam-role";
 
 export class CdkServicesStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -27,12 +28,6 @@ export class CdkServicesStack extends Stack {
       orderTable: database.orderTable,
     });
 
-    const apigateway = new EcomAuctionApiGateway(this, "ApiGateway", {
-      productMicroService: microservices.productMicroservice,
-      basketMicroService: microservices.basketMicroservice,
-      orderMicroService: microservices.orderMicroservice,
-    });
-
     const queue = new EcomAuctionQueue(this, "Queue", {
       // sqs requires consumer that pulls events from sqs
       consumer: microservices.orderMicroservice,
@@ -50,6 +45,18 @@ export class CdkServicesStack extends Stack {
       basketTable: database.basketTable,
       ecomAuctionEventBus: eventBus.ecomAuctionEventBus,
       checkoutTopic: snsTopics.checkoutTopic,
+    });
+
+    const iamRole = new EcomAuctionIAMRole(this, "iamRole", {
+      checkoutStateMachineArn: stateMachine.CheckoutMachineArn,
+    });
+
+    const apigateway = new EcomAuctionApiGateway(this, "ApiGateway", {
+      productMicroService: microservices.productMicroservice,
+      basketMicroService: microservices.basketMicroservice,
+      orderMicroService: microservices.orderMicroservice,
+      checkoutStateMachine: stateMachine.CheckoutStateMachine,
+      stateMachineIamExecutionRole: iamRole.stateMachineIamExecutionRole,
     });
   }
 }

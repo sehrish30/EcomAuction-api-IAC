@@ -9,14 +9,14 @@ export const handler = async (event: IStepFunction) => {
   const basket = event.resultGetBasketOfUserFunctionResult?.Payload?.basket;
 
   try {
-    if (basket === null || basket.items?.length === 0) {
+    if (basket?.items === null || basket.items?.length === 0) {
       let BasketEmptyError = new Error("Basket has no items");
       BasketEmptyError.name = "BasketEmpty";
       throw BasketEmptyError;
     }
 
     let totalPrice = 0;
-    basket.items.forEach((item) => (totalPrice = totalPrice + item.price));
+    basket.items?.forEach((item) => (totalPrice = totalPrice + item.price));
     newBasket.totalPrice = +totalPrice.toFixed(2);
 
     // copy all objects from basket to newBasket

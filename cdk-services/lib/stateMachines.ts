@@ -2,6 +2,7 @@ import { Construct } from "constructs";
 import { ITable } from "aws-cdk-lib/aws-dynamodb";
 import {
   Chain,
+  Choice,
   Fail,
   IntegrationPattern,
   LogLevel,
@@ -11,26 +12,16 @@ import {
   StateMachineType,
   Succeed,
   TaskInput,
+  Condition,
 } from "aws-cdk-lib/aws-stepfunctions";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { Duration, RemovalPolicy } from "aws-cdk-lib";
 import { join } from "path";
-import {
-  CallApiGatewayRestApiEndpoint,
-  LambdaInvoke,
-  SnsPublish,
-} from "aws-cdk-lib/aws-stepfunctions-tasks";
-import { ITopic, Topic } from "aws-cdk-lib/aws-sns";
-import { SmsSubscription } from "aws-cdk-lib/aws-sns-subscriptions";
-import {
-  EndpointType,
-  LambdaRestApi,
-  RestApi,
-} from "aws-cdk-lib/aws-apigateway";
+import { LambdaInvoke, SnsPublish } from "aws-cdk-lib/aws-stepfunctions-tasks";
+import { ITopic } from "aws-cdk-lib/aws-sns";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
-import { Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
-import { HttpMethod, IEventBus } from "aws-cdk-lib/aws-events";
+import { IEventBus } from "aws-cdk-lib/aws-events";
 
 interface EcomAuctionProps {
   basketTable: ITable;
@@ -47,11 +38,55 @@ interface EcomAuctionProps {
  */
 
 export class EcomAuctionStateMachine extends Construct {
-  public Machine: StateMachine;
+  public CheckoutMachineArn: string;
+  public CheckoutStateMachine: StateMachine;
 
   constructor(scope: Construct, id: string, props: EcomAuctionProps) {
     super(scope, id);
+    this.CheckoutStateMachine = this.createCheckoutStateMachine(props);
+  }
 
+  /**
+   * Utility method to create Lambda blueprint
+   * @param scope
+   * @param id
+   * @param handler
+   * @param table
+   * @param ecomAuctionEventBus
+   */
+  createLambda(
+    scope: Construct,
+    id: string,
+    handler: string,
+    table: ITable,
+    ecomAuctionEventBus?: IEventBus
+  ) {
+    const fn = new NodejsFunction(scope, id, {
+      entry: join(
+        __dirname,
+        `./../src/basket-service/stateMachines/${handler}`
+      ),
+      bundling: {
+        externalModules: ["@aws-sdk/*"], // Use the 'aws-sdk' available in the Lambda runtime
+      },
+      environment: {
+        PRIMARY_KEY: "username",
+        DYNAMODB_TABLE_NAME: table.tableName, // get table name,
+        EVENT_DETAIL_TYPE: "CheckoutBasket",
+        EVENT_BUSNAME: "EcomAuctionEventBus",
+        EVENT_SOURCE: "com.ecomAuction.basket.checkoutbasket",
+      },
+      runtime: Runtime.NODEJS_18_X,
+      timeout: Duration.seconds(3),
+    });
+
+    // Give Lambda permissions to read and write data from the DynamoDB table and event bridge if it needs
+    table.grantReadWriteData(fn);
+    ecomAuctionEventBus?.grantPutEventsTo(fn);
+    return fn;
+  }
+
+  private createCheckoutStateMachine(props: EcomAuctionProps): StateMachine {
     /**
      * Create Lambda Functions for checkout
      */
@@ -142,14 +177,13 @@ export class EcomAuctionStateMachine extends Construct {
     const removeTotalPriceStep = new LambdaInvoke(this, "RemoveTotalPrice", {
       lambdaFunction: removeTotalPriceLambda,
       resultPath: "$.RemoveTotalPriceFunctionResult",
-    })
-      .addRetry({ maxAttempts: 3 }) // retry this task a max of 3 times if it fails
-      // .next(snsNotificationFailure) // step functions interate directly with sns
-      .next(checkoutFailed);
+    }).addRetry({ maxAttempts: 3 }); // retry this task a max of 3 times if it fails
 
     handlePrepareOrderFailure.branch(removeTotalPriceStep);
     handlePrepareOrderFailure.branch(snsNotificationFailure);
+    handlePrepareOrderFailure.next(checkoutFailed);
 
+    // LambdaInvoke = Invoke a Lambda function as a Task.
     const validationCheckStep = new LambdaInvoke(this, "ValidationCheck", {
       lambdaFunction: validationCheckLambda,
       resultPath: "$.validationCheckFunctionResult", // where in the state machine data the step result should be inserted
@@ -170,13 +204,6 @@ export class EcomAuctionStateMachine extends Construct {
         resultPath: "$.resultGetBasketOfUserFunctionResult",
       });
 
-    const prepareOrderLambdaStep = new LambdaInvoke(this, "PrepareOrder", {
-      lambdaFunction: prepareOrderLambda,
-      resultPath: "$.resultPrepareOrderFunctionResult", // where in the state machine data the step result should be inserted
-    }).addCatch(handlePrepareOrderFailure, {
-      resultPath: "$.resultPrepareOrderFunctionResult",
-    });
-
     const checkoutPublishEventLambdaStep = new LambdaInvoke(
       this,
       "CheckoutPublishEvent",
@@ -187,6 +214,35 @@ export class EcomAuctionStateMachine extends Construct {
     ).addCatch(checkoutPublishEventFailed, {
       // resultPath: "$.checkoutPublishEventFunctionResult",
       resultPath: undefined, // disrregard result directly copy input state to output
+    });
+
+    const checkOrderIsLessThanLimit = new Choice(
+      this,
+      "Is order less than $10000?"
+    )
+      .when(
+        Condition.numberGreaterThan(
+          "$.resultPrepareOrderFunctionResult.Payload.newBasket.totalPrice", // Look at the "status" field
+          10000
+        ),
+        checkoutFailed
+      )
+      .when(
+        Condition.numberLessThan(
+          "$.resultPrepareOrderFunctionResult.Payload.newBasket.totalPrice",
+          10000
+        ),
+        checkoutPublishEventLambdaStep
+      )
+      .otherwise(checkoutFailed)
+      .afterwards();
+    // when 0 totalPrice // If none of the given conditions match, continue execution with the given state.
+
+    const prepareOrderLambdaStep = new LambdaInvoke(this, "PrepareOrder", {
+      lambdaFunction: prepareOrderLambda,
+      resultPath: "$.resultPrepareOrderFunctionResult", // where in the state machine data the step result should be inserted
+    }).addCatch(handlePrepareOrderFailure, {
+      resultPath: "$.resultPrepareOrderFunctionResult",
     });
 
     const deleteBasketStep = new LambdaInvoke(this, "deleteBasket", {
@@ -201,9 +257,9 @@ export class EcomAuctionStateMachine extends Construct {
     const definition = Chain.start(validationCheckStep)
       .next(getBasketOfUservalidationCheckStep)
       .next(prepareOrderLambdaStep)
-      .next(checkoutPublishEventLambdaStep)
+      .next(checkOrderIsLessThanLimit)
       .next(deleteBasketStep)
-      .next(snsNotificationSuccess)
+      .next(snsNotificationSuccess) // pass so much data like HttpStatusCode etc
       .next(checkoutSucceeded);
 
     const expressLogGroup = new LogGroup(this, "ExpressLogs", {
@@ -224,76 +280,40 @@ export class EcomAuctionStateMachine extends Construct {
       },
     });
 
-    // AWS Lambda resource to connect to our API Gateway to kick
-    // off our step function
-    const sagaLambda = new NodejsFunction(this, "sagaLambdaHandler", {
-      runtime: Runtime.NODEJS_18_X,
-      entry: join(
-        __dirname,
-        `./../src/basket-service/stateMachines/sagaLambda.ts`
-      ),
-      bundling: {
-        externalModules: ["@aws-sdk/*"], // Use the 'aws-sdk' available in the Lambda runtime
-      },
-      environment: {
-        statemachine_arn: saga.stateMachineArn,
-      },
-    });
-
-    // const myRole = new Role(this, "MyRole", {
-    //   assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
-    // });
-    // Grant permission to the IAM role to start an execution of the Step Function
-    saga.grantStartExecution(sagaLambda);
-    // saga.grantStartExecution(myRole);
-
-    /**
-     * Simple API Gateway proxy integration
-     */
-    new LambdaRestApi(this, "ServerlessSagaPattern", {
-      handler: sagaLambda,
-      endpointTypes: [EndpointType.REGIONAL],
-    });
-  }
-  // add choice state if price is greater than 3000
-
-  /**
-   * Utility method to create Lambda blueprint
-   * @param scope
-   * @param id
-   * @param handler
-   * @param table
-   * @param ecomAuctionEventBus
-   */
-  createLambda(
-    scope: Construct,
-    id: string,
-    handler: string,
-    table: ITable,
-    ecomAuctionEventBus?: IEventBus
-  ) {
-    const fn = new NodejsFunction(scope, id, {
-      entry: join(
-        __dirname,
-        `./../src/basket-service/stateMachines/${handler}`
-      ),
-      bundling: {
-        externalModules: ["@aws-sdk/*"], // Use the 'aws-sdk' available in the Lambda runtime
-      },
-      environment: {
-        PRIMARY_KEY: "username",
-        DYNAMODB_TABLE_NAME: table.tableName, // get table name,
-        EVENT_DETAIL_TYPE: "CheckoutBasket",
-        EVENT_BUSNAME: "EcomAuctionEventBus",
-        EVENT_SOURCE: "com.ecomAuction.basket.checkoutbasket",
-      },
-      runtime: Runtime.NODEJS_18_X,
-      timeout: Duration.seconds(3),
-    });
-
-    // Give Lambda permissions to read and write data from the DynamoDB table and event bridge if it needs
-    table.grantReadWriteData(fn);
-    ecomAuctionEventBus?.grantPutEventsTo(fn);
-    return fn;
+    this.CheckoutMachineArn = saga.stateMachineArn;
+    return saga;
   }
 }
+
+/**
+ * There are 2 methods to start state machines
+ * 1) AWS Lambda resource to connect to our API Gateway to kickoff our step function
+ * 2) direct API Gateway integration with Statemachine
+ *
+ * I have used 2 method for this state machine
+ */
+
+// const sagaLambda = new NodejsFunction(this, "sagaLambdaHandler", {
+//   runtime: Runtime.NODEJS_18_X,
+//   entry: join(
+//     __dirname,
+//     `./../src/basket-service/stateMachines/sagaLambda.ts`
+//   ),
+//   bundling: {
+//     externalModules: ["@aws-sdk/*"], // Use the 'aws-sdk' available in the Lambda runtime
+//   },
+//   environment: {
+//     statemachine_arn: saga.stateMachineArn,
+//   },
+// });
+
+// Grant permission to the IAM role to start an execution of the Step Function
+// saga.grantStartExecution(sagaLambda);
+
+/**
+ * Simple API Gateway proxy integration
+ */
+// new LambdaRestApi(this, "ServerlessSagaPattern", {
+//   handler: sagaLambda,
+//   endpointTypes: [EndpointType.REGIONAL],
+// });

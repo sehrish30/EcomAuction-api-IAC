@@ -10,6 +10,7 @@ export interface IProduct {
 export interface IBasket {
   userName: string;
   items: IProduct[];
+  totalPrice?: number;
 }
 
 export interface IStepFunction {

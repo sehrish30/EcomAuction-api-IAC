@@ -6,13 +6,18 @@ import { IStepFunction } from "../types";
 
 export const handler = async (event: IStepFunction) => {
   try {
-    console.log("GETBASKET", event);
     const input = {
       TableName: process.env.DYNAMODB_TABLE_NAME,
       Key: marshall({ userName: event.userName }),
     };
 
     const { Item } = await ddbClient.send(new GetItemCommand(input));
+
+    if (!Item) {
+      let EmptyBasketError = new Error("Your basket is empty");
+      EmptyBasketError.name = "EmptyBasket";
+      throw EmptyBasketError;
+    }
 
     return {
       basket: Item ? unmarshall(Item) : {}, // resultGetBasketOfUser

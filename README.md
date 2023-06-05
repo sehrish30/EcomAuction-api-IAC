@@ -146,6 +146,8 @@ Event sourcing to record all the events and transactions that occur in the syste
 
 ## 👉 Architecture of Checkout Order
 
-<img src="readmeimages/orchestrate-checkout.png" style="max-width: 100%; height: auto; object-fit: contain;">
-
 Utilized the CDK and Step Functions with saga pattern to seamlessly orchestrate the flow of checkout order using express workflow.
+
+<img src="readmeimages/orchestrate-checkout.png" style="max-width: 100%; height: auto; object-fit: contain;">
+<img src="readmeimages/checkout-workflow-1.png" style="max-width: 100%; height: auto; object-fit: contain;">
+<img src="readmeimages/checkout-workflow-2.png" style="max-width: 100%; height: auto; object-fit: contain;">
