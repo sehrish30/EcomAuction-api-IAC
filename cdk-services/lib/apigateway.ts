@@ -1,5 +1,6 @@
 import {
   AwsIntegration,
+  EndpointType,
   LambdaRestApi,
   RestApi,
 } from "aws-cdk-lib/aws-apigateway";
@@ -14,6 +15,7 @@ interface EcomAuctionApiGatewayProps {
   orderMicroService: IFunction;
   checkoutStateMachine: StateMachine;
   stateMachineIamExecutionRole: Role;
+  checkProductQuantitySagaLambda: IFunction;
 }
 
 export class EcomAuctionApiGateway extends Construct {
@@ -27,6 +29,7 @@ export class EcomAuctionApiGateway extends Construct {
       props.checkoutStateMachine,
       props.stateMachineIamExecutionRole
     );
+    this.stateMachineCheckProductQuantity(props.checkProductQuantitySagaLambda)
   }
 
   private createProductApi(productMicroService: IFunction) {
@@ -155,5 +158,12 @@ export class EcomAuctionApiGateway extends Construct {
        }
       }
      */
+  }
+
+  private stateMachineCheckProductQuantity(sagaLambda: IFunction){
+    new LambdaRestApi(this, "ServerlessSagaPattern", {
+      handler: sagaLambda,
+      endpointTypes: [EndpointType.REGIONAL],
+    });
   }
 }

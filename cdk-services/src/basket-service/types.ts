@@ -5,6 +5,7 @@ export interface IProduct {
   description: string;
   imageFile: string;
   quantity: number;
+  id: string;
 }
 
 export interface IBasket {

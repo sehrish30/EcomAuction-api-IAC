@@ -21,6 +21,7 @@ export class EcomAuctionServices extends Construct {
   public readonly productMicroservice: NodejsFunction;
   public readonly basketMicroservice: NodejsFunction;
   public readonly orderMicroservice: NodejsFunction;
+  public readonly checkProductLambdaWorker: NodejsFunction;
 
   constructor(scope: Construct, id: string, props: EcomAuctionServicesProps) {
     super(scope, id);
@@ -28,6 +29,9 @@ export class EcomAuctionServices extends Construct {
     this.productMicroservice = this.createProductFunction(props.productTable);
     this.basketMicroservice = this.createBasketFunction(props.basketTable);
     this.orderMicroservice = this.createOrderFunction(props.orderTable);
+    this.checkProductLambdaWorker = this.productLambdaWorker(
+      props.productTable
+    );
   }
   private createProductFunction(productTable: ITable): NodejsFunction {
     /**
@@ -118,5 +122,37 @@ export class EcomAuctionServices extends Construct {
     // give crud operations permission on order table to orderFunction
     orderTable.grantReadWriteData(orderFunction);
     return orderFunction;
+  }
+
+  private productLambdaWorker(productTable: ITable) {
+    const productFunctionProps: NodejsFunctionProps = {
+      bundling: {
+        // externalModules property is used to specify that the aws-sdk module should be excluded from the bundled package. This is because the aws-sdk is already provided by the Lambda execution environment,
+        // so there's no need to include it in the function package.
+        // A list of modules that should be considered as externals (already available in the runtime).
+        externalModules: ["@aws-sdk/*"],
+      },
+      environment: {
+        PRIMARY_KEY: "id",
+        DYNAMODB_TABLE_NAME: productTable.tableName, // get table name
+      },
+      runtime: Runtime.NODEJS_18_X,
+    };
+
+    const productFunction = new NodejsFunction(
+      this,
+      "productSQSLambdaWorkerFunction",
+      {
+        ...productFunctionProps,
+        entry: join(
+          __dirname,
+          "./../src/basket-service/stateMachines/productSQSLambdaWorker.ts"
+        ),
+      }
+    );
+
+    productTable.grantReadWriteData(productFunction);
+
+    return productFunction;
   }
 }

@@ -15,21 +15,31 @@ import {
   Condition,
   Map,
   JsonPath,
+  Wait,
+  WaitTime,
 } from "aws-cdk-lib/aws-stepfunctions";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
-import { Runtime } from "aws-cdk-lib/aws-lambda";
+import { IFunction, Runtime } from "aws-cdk-lib/aws-lambda";
 import { Duration, RemovalPolicy } from "aws-cdk-lib";
 import { join } from "path";
-import { LambdaInvoke, SnsPublish } from "aws-cdk-lib/aws-stepfunctions-tasks";
+import {
+  LambdaInvoke,
+  SnsPublish,
+  SqsSendMessage,
+} from "aws-cdk-lib/aws-stepfunctions-tasks";
 import { ITopic } from "aws-cdk-lib/aws-sns";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import { IEventBus } from "aws-cdk-lib/aws-events";
 import { EndpointType, LambdaRestApi } from "aws-cdk-lib/aws-apigateway";
+import { IQueue } from "aws-cdk-lib/aws-sqs";
 
 interface EcomAuctionProps {
   basketTable: ITable;
   ecomAuctionEventBus: IEventBus;
   checkoutTopic: ITopic;
+  productTable: ITable;
+  checkQuantityProductsQueue: IQueue;
+  checkProductLambdaWorker: IFunction;
 }
 
 /**
@@ -41,12 +51,18 @@ interface EcomAuctionProps {
  */
 
 export class EcomAuctionStateMachine extends Construct {
+  public readonly CheckoutStateMachine: StateMachine;
   public CheckoutMachineArn: string;
-  public CheckoutStateMachine: StateMachine;
+  public checkProductQuantitySagaLambda: IFunction;
 
   constructor(scope: Construct, id: string, props: EcomAuctionProps) {
     super(scope, id);
     this.CheckoutStateMachine = this.createCheckoutStateMachine(props);
+    this.checkQuantityOfAllStepFunctions(
+      props.productTable,
+      props.checkQuantityProductsQueue,
+      props.checkProductLambdaWorker
+    );
   }
 
   /**
@@ -89,21 +105,69 @@ export class EcomAuctionStateMachine extends Construct {
     return fn;
   }
 
-  private checkQuantityOfAllStepFunctions() {
-    const map = new Map(this, "Products Map", {
-      maxConcurrency: 1,
-      itemsPath: JsonPath.stringAt("$.inputForMap"),
+  private checkQuantityOfAllStepFunctions(
+    productTable: ITable,
+    checkQuantityProductsQueue: IQueue,
+    checkProductLambdaWorker: IFunction
+  ) {
+    let checkProductQuantityLambda = this.createLambda(
+      this,
+      "checkProductQuantity",
+      "checkProductQuantity.ts",
+      productTable
+    );
+
+    // pass state when error
+    const checkProductFailed = new Pass(this, "checkProductFailed");
+    const sendToAdminFailed = new Pass(this, "sendToAdminFailed");
+
+    // step
+    const checkProduct = new LambdaInvoke(this, "CheckProduct", {
+      lambdaFunction: checkProductQuantityLambda,
+      resultPath: "$.CheckProductQuantityFunctionResult",
+    }).addCatch(checkProductFailed, {
+      resultPath: "$.resultCheckProductFailedFunctionResult",
     });
-    map.iterator(new Pass(this, "Pass State"));
+
+    const map = new Map(this, "Products Map", {
+      maxConcurrency: 1, // 1 item in the array at a time
+      itemsPath: JsonPath.stringAt("$.products"), // select the array to iterate over, here its products
+    });
+
+    // pass one object from products array to checkProduct lambda
+    map.iterator(checkProduct);
+
+    // put a message in sqs queue and wait until lambda reads that message
+    // once execution is completed we can move to next step
+    const sqsTask = new SqsSendMessage(this, "SendToAdmin", {
+      queue: checkQuantityProductsQueue,
+      messageBody: TaskInput.fromObject({
+        taskToken: JsonPath.taskToken, // when tasks are assigned to a worker, worker is assinged taskToken
+        output: JsonPath.stringAt("$"),
+      }),
+      resultPath: "$", // all output will be merged with $
+      integrationPattern: IntegrationPattern.WAIT_FOR_TASK_TOKEN, // Callback tasks provide a way to pause a workflow until a task token is returned.
+    }).addCatch(sendToAdminFailed);
+
+    // const wait = new Wait(this, "Wait", {
+    //   time: WaitTime.secondsPath("$.waitSeconds"),
+    // });
+    // checkQuantityProductsQueue
 
     //Step function definition
-    const definition = Chain.start(map);
+    const definition = Chain.start(map).next(sqsTask);
 
-    let saga = new StateMachine(this, "StateMachine", {
+    let saga = new StateMachine(this, "ProductQuantityStateMachine", {
       definition,
       stateMachineName: "CheckQuantityStateMachine",
       stateMachineType: StateMachineType.STANDARD,
     });
+
+    // Grant the given identity task response permissions on a state machine
+    saga.grantTaskResponse(checkProductLambdaWorker);
+
+    // Grant permissions to the state machine to receive messages from the queue
+    checkQuantityProductsQueue.grant(saga, "sqs:ReceiveMessage");
 
     const sagaLambda = new NodejsFunction(this, "sagaLambdaHandler", {
       runtime: Runtime.NODEJS_18_X,
@@ -116,14 +180,16 @@ export class EcomAuctionStateMachine extends Construct {
       },
       environment: {
         statemachineArn: saga.stateMachineArn,
+        DYNAMODB_TABLE_NAME: productTable.tableName,
       },
     });
     saga.grantStartExecution(sagaLambda);
-
-    new LambdaRestApi(this, "ServerlessSagaPattern", {
-      handler: sagaLambda,
-      endpointTypes: [EndpointType.REGIONAL],
-    });
+    productTable.grantReadWriteData(sagaLambda);
+    this.checkProductQuantitySagaLambda = sagaLambda;
+    /**
+     * Simple API Gateway proxy integration used check api gateway for its api gateway to invoke
+     * this lambda function
+     */
   }
 
   private createCheckoutStateMachine(props: EcomAuctionProps): StateMachine {
@@ -307,7 +373,7 @@ export class EcomAuctionStateMachine extends Construct {
       removalPolicy: RemovalPolicy.DESTROY,
     });
 
-    let saga = new StateMachine(this, "StateMachine", {
+    let saga = new StateMachine(this, "CheckoutStateMachine", {
       definition,
       stateMachineName: "CheckoutStateMachine",
       stateMachineType: StateMachineType.EXPRESS,
@@ -330,11 +396,6 @@ export class EcomAuctionStateMachine extends Construct {
  * 1) AWS Lambda resource to connect to our API Gateway to kickoff our step function
  * 2) direct API Gateway integration with Statemachine
  *
- * I have used 2 method for this state machine
- */
-
-// Grant permission to the IAM role to start an execution of the Step Function
-
-/**
- * Simple API Gateway proxy integration
+ * I have used 2 method for checkout state machine and 1 for checkPRoductQuantity state machine
+ * // Grant permission to the IAM role to start an execution of the Step Function in lambda
  */

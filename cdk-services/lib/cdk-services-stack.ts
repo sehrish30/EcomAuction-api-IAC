@@ -37,6 +37,7 @@ export class CdkServicesStack extends Stack {
     const queue = new EcomAuctionQueue(this, "Queue", {
       // sqs requires consumer that pulls events from sqs
       consumer: microservices.orderMicroservice,
+      checkProductLambdaWorker: microservices.checkProductLambdaWorker,
     });
 
     const eventBus = new EcomAuctionEventBus(this, "EventBus", {
@@ -54,6 +55,9 @@ export class CdkServicesStack extends Stack {
       basketTable: database.basketTable,
       ecomAuctionEventBus: eventBus.ecomAuctionEventBus,
       checkoutTopic: snsTopics.checkoutTopic,
+      productTable: database.productTable,
+      checkQuantityProductsQueue: queue.checkQuantityProductsQueue,
+      checkProductLambdaWorker: microservices.checkProductLambdaWorker,
     });
 
     const iamRole = new EcomAuctionIAMRole(this, "iamRole", {
@@ -66,6 +70,8 @@ export class CdkServicesStack extends Stack {
       orderMicroService: microservices.orderMicroservice,
       checkoutStateMachine: stateMachine.CheckoutStateMachine,
       stateMachineIamExecutionRole: iamRole.stateMachineIamExecutionRole,
+      checkProductQuantitySagaLambda:
+        stateMachine.checkProductQuantitySagaLambda,
     });
   }
 }

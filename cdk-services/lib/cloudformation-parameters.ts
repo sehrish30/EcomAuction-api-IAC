@@ -11,7 +11,7 @@ export class EcomAuctionCloudformationParameters extends Construct {
     const adminsPhoneParam = new CfnParameter(this, "AdminsPhone", {
       type: "String",
       description: "Admin Phone number",
-      default: "+973*********",
+      default: "+973999999999",
     });
     this.adminsPhoneParam = adminsPhoneParam.valueAsString;
 
