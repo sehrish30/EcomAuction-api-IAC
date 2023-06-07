@@ -183,6 +183,7 @@ export class EcomAuctionStateMachine extends Construct {
         DYNAMODB_TABLE_NAME: productTable.tableName,
       },
     });
+    // grant permission to given iam role to start an execution of this state machine, this role is assumed by api gateway
     saga.grantStartExecution(sagaLambda);
     productTable.grantReadWriteData(sagaLambda);
     this.checkProductQuantitySagaLambda = sagaLambda;

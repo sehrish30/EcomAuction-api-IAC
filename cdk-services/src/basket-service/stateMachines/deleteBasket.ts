@@ -7,7 +7,7 @@ export const handler = async (event: IStepFunction) => {
   try {
     const params = {
       TableName: process.env.DYNAMODB_TABLE_NAME,
-      Key: marshall({ userName: event.userName }),
+      Key: marshall({ userName: event.body.userName }),
     };
     const deletedProduct = await ddbClient.send(new DeleteItemCommand(params));
 

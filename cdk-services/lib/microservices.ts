@@ -58,6 +58,7 @@ export class EcomAuctionServices extends Construct {
       },
       runtime: Runtime.NODEJS_18_X,
       timeout: Duration.seconds(3),
+      memorySize: 128 // default
     };
     //  NodejsFunction construct as a lambda function
     // which automatically transpiles and bundles our code, regardless if it's written in JavaScript or TypeScript

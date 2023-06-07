@@ -15,23 +15,25 @@ export interface IBasket {
 }
 
 export interface IStepFunction {
-  userName: string;
-  totalPrice: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  address: {
-    street: string;
-    city: string;
-    state: string;
-    zip: string;
-    country: string;
+  body: {
+    userName: string;
+    totalPrice: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    address: {
+      street: string;
+      city: string;
+      state: string;
+      zip: string;
+      country: string;
+    };
+    cardInfo: string;
+    paymentMethod: string;
+    id: string;
+    items: any[][];
+    orderDate?: string;
   };
-  cardInfo: string;
-  paymentMethod: string;
-  id: string;
-  items: any[][];
-  orderDate?: string;
   resultGetBasketOfUserFunctionResult: {
     Payload: {
       basket: IBasket;

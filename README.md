@@ -158,3 +158,9 @@ Utilized the CDK and Step Functions with to loop through all products in databas
 
 <img src="readmeimages/mapping-orchestrate.png" style="max-width: 100%; height: auto; object-fit: contain;">
 <img src="readmeimages/mapping-orchestrate-1.png" style="max-width: 100%; height: auto; object-fit: contain;">
+
+## 👉 Architecture of Increasing apis performance
+
+Using best practices for Lambda and api gateway.
+
+<img src="readmeimages/best-practices.png" style="max-width: 100%; height: auto; object-fit: contain;">

@@ -5,10 +5,12 @@ import {
   Role,
   ServicePrincipal,
 } from "aws-cdk-lib/aws-iam";
+import { IFunction } from "aws-cdk-lib/aws-lambda";
 import { Construct } from "constructs";
 
 interface IEcomAuctionIAMRoleProps {
   checkoutStateMachineArn: string;
+  productMicroservice: IFunction;
 }
 
 export class EcomAuctionIAMRole extends Construct {
@@ -19,6 +21,21 @@ export class EcomAuctionIAMRole extends Construct {
     this.stateMachineIamExecutionRole = this.createStepFunctionIAMExecutionRole(
       props.checkoutStateMachineArn
     );
+    this.awsXRAYIAMRole(props.productMicroservice);
+  }
+
+  private awsXRAYIAMRole(checkProductLambdaWorker: IFunction) {
+    const xrayWriteAccess = new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ["xray:PutTraceSegments", "xray:PutTelemetryRecords"],
+      resources: [checkProductLambdaWorker.functionArn],
+    });
+
+    const role = new Role(this, "XRayLambdaRole", {
+      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    });
+
+    role.addToPolicy(xrayWriteAccess);
   }
 
   private createStepFunctionIAMExecutionRole(stateMachineArn: string) {

@@ -1,7 +1,7 @@
 import { IStepFunction } from "../types";
 
 const validationCheck = async (event: IStepFunction) => {
-  if (!event.userName) {
+  if (!event.body.userName) {
     throw new Error("Username is required");
   }
   return {

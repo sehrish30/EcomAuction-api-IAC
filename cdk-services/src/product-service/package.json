@@ -5,6 +5,7 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.341.0",
     "@aws-sdk/util-dynamodb": "^3.341.0",
+    "aws-xray-sdk": "^3.5.0",
     "http-errors": "^2.0.0"
   },
   "devDependencies": {

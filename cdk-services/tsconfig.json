@@ -11,6 +11,7 @@
     "alwaysStrict": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
+    "moduleResolution": "node",
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": false,
     "inlineSourceMap": true,
@@ -18,7 +19,11 @@
     "experimentalDecorators": true,
     "strictPropertyInitialization": false,
     "typeRoots": ["./node_modules/@types"],
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "rootDir": "./",
+    "paths": {
+      "/opt/nodejs/logging": ["./src/layer-service/logging/nodejs/logging"]
+    }
   },
   "exclude": ["node_modules", "cdk.out"]
 }

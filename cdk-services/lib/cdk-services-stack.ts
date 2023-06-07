@@ -9,6 +9,7 @@ import { EcomAuctionStateMachine } from "./stateMachines";
 import { EcomAuctionSNS } from "./sns";
 import { EcomAuctionIAMRole } from "./iam-role";
 import { EcomAuctionCloudformationParameters } from "./cloudformation-parameters";
+import { EcomAuctionApiLayer } from "./layer";
 
 export class CdkServicesStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -25,6 +26,8 @@ export class CdkServicesStack extends Stack {
       this,
       "CloudformationParams"
     );
+
+    const layers = new EcomAuctionApiLayer(this, "LayerVersion");
 
     const database = new EcomAuctionDatabase(this, "Database");
 
@@ -62,6 +65,7 @@ export class CdkServicesStack extends Stack {
 
     const iamRole = new EcomAuctionIAMRole(this, "iamRole", {
       checkoutStateMachineArn: stateMachine.CheckoutMachineArn,
+      productMicroservice: microservices.productMicroservice,
     });
 
     const apigateway = new EcomAuctionApiGateway(this, "ApiGateway", {
@@ -79,6 +83,11 @@ export class CdkServicesStack extends Stack {
 // https://github.com/aws/aws-cdk/tree/v1-main/packages/@aws-cdk
 
 /**
+ *
+ * cdk synth
+ * cdk diff
+ * cdk deploy
+ *
  * Apps: Include everything needed to deploy your app to cloud environment
  * Stack: Unit of deployment in AWS cdk is called a stack
  * Contructs: Basic building blocks of AWS CDK apps. A construct represents a "cloud environment"
@@ -317,4 +326,78 @@ export class CdkServicesStack extends Stack {
  * But STANDARD support all patterns
  * But Express doesnot support all patterns, doesnot support job run(.sync) or callback pattern(.waitForTaskPattern)
  *
+ *
+ * CLOUDWATCH:
+ * Execution Logging: What the traffic in and out of your API is.
+ * Access Logging: What's within your api, what it found from the request after logging in, or tansforing the request
+ * by specifying which peice of the context variable you want to log, not just the in and out like exection logging. But its only
+ * supported in REST api
+ *
+ * API Gateway:
+ * Edge endpoints: traffic goes from customer to edge location where cloudfront lives
+ * endpoint url actually pointing to Cloudfront itself
+ * which will then be pointing to your api in the region you selected
+ * best endpoint for geographically distrbuted clients
+ *
+ * Regional endpoints: are for clients in the same region. It reduces connection overhead.
+ * example: When a client  running on ec2 instance calls api in the same region
+ *
+ * Response caching turned on for stage level, so mostly for prod level cost reason
+ * When caching is enabled choose cache capacity, greater cache capacity greater performance
+ * but costs more
+ * After u enale caching api gateway creates dedicated cache instance process takes a while to boost up.
+ * If u increase cache capacity it will b rebooted and all existing cache will be deleted
+ * By default only GET method is cached
+ * method on integration params can be used as cache keys
+ * 
+
+ * Lambda@Edge feature of cloudfront to run api closer to user help to reduce latency and improve performance
+ * Invocation types
+ * Viewer request to cloudfront
+ * Viewer request to origin
+ * Origin response to Cloudfront
+ * Origin response to Viewer
+ * 
+ * Lambda layers:
+ * externally packages dependencies too share across multiple lambda functions
+ * reduces lines of code from lambda
+ * simplify dependency management
+ * 
+ * limitation:
+ * 2 lambda layers per lambda function
+ * total unzip size of function and all layers together cannot exceed unzipped package size limit of lambda that is 250MB
+ * layers dont add add space to your lambda function, you are still limited to total size
+ * name, description and zip archive of layer, list of runtimes compatible with layer, add layer permission
+ * You choose specific version of the layer to use
+ * At the time of runtime layer drops its code to /opt
+ * 
+ * Lambda best practices:
+ * smallest package size possible when deploying lambda function
+ * limit on lambda package size is 75MB
+ * dont package entire aws sdk only include whats needed e.g s3 portion of sdk 
+ * prefer small frameworks that load quickly under runtime
+ * e.g if u use frameworks that does depency injection
+ * the longer it takes for framework to manage those dependencies
+ * longer it will take for lambda function to initialize
+ * avoid recursive code in your lambda function
+ * if recursive design is done mistakenly make sure
+ * to set concurrent exection limit to 0
+ * to throttle all invocations of the function
+ * Execution context resuse: by intializing sdk clients
+ * and database connections outside of the function handler
+ * cache static assets in locally available storage for lambda function in /temp directory
+ * Any subsequent invocations processed by the same instance of your function can reuse these resources
+ * which will save execution time and cost
+ * Donot user store data or sensitive data in execution context
+ * Load test your lambda functions to determine optimal timeout value
+ * 
+ * Http apis are cheaper and faster
+ * 1) Lambda proxy
+ * 2) HTTP endpoint proxy
+ * 3) OPENID Connect
+ * 4) Oauth2 authorization
+ * 5) CORS support
+ * 6) Private integration support
+ * If you want to use response and mappings and full control use REST api
+ * If you are only using lambda proxy integration consider using http apis
  */

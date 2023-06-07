@@ -1,4 +1,5 @@
 import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
+import logging from "/opt/nodejs/logging";
 
 import {
   createProduct,
@@ -17,7 +18,7 @@ import {
 export async function handler(
   event: APIGatewayEvent
 ): Promise<APIGatewayProxyResult> {
-  console.log("event 👉", event);
+  console.log("logging 👉", logging());
 
   /**
    * Check event http method

@@ -7,6 +7,7 @@ import {
   QueryCommand,
   UpdateItemCommandOutput,
 } from "@aws-sdk/client-dynamodb";
+
 import createError from "http-errors";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 import { ddbClient } from "./ddbClient";
@@ -30,6 +31,10 @@ export const getProduct = async (productId?: string) => {
 };
 
 export const getAllProducts = async () => {
+  /**
+   * Subsequent allows you to provide more granular
+   * detail about a segment, including custom information
+   */
   try {
     const params = {
       TableName: process.env.DYNAMODB_TABLE_NAME,

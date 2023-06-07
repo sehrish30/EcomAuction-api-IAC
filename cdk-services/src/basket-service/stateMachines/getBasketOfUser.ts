@@ -8,7 +8,7 @@ export const handler = async (event: IStepFunction) => {
   try {
     const input = {
       TableName: process.env.DYNAMODB_TABLE_NAME,
-      Key: marshall({ userName: event.userName }),
+      Key: marshall({ userName: event.body.userName }),
     };
 
     const { Item } = await ddbClient.send(new GetItemCommand(input));

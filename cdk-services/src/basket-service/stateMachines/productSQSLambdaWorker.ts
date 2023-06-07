@@ -10,8 +10,6 @@ export const handler = async (event: SQSEvent) => {
 
   const body = JSON.parse(record.body as unknown as string);
 
-  // body.body.data.taskToken
-  console.log({ token: body.taskToken });
   try {
     const input = {
       // output becomes the result because of ResulltPath in yml file
