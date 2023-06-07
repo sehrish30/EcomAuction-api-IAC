@@ -10,6 +10,8 @@ import { EcomAuctionSNS } from "./sns";
 import { EcomAuctionIAMRole } from "./iam-role";
 import { EcomAuctionCloudformationParameters } from "./cloudformation-parameters";
 import { EcomAuctionApiLayer } from "./layer";
+import { EcomAuctionApiCognito } from "./cognito";
+import { EcomAuctionApiGatewayAuthorizer } from "./apigateway-authorizer";
 
 export class CdkServicesStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -28,6 +30,8 @@ export class CdkServicesStack extends Stack {
     );
 
     const layers = new EcomAuctionApiLayer(this, "LayerVersion");
+
+    const cognito = new EcomAuctionApiCognito(this, "Cognito");
 
     const database = new EcomAuctionDatabase(this, "Database");
 
@@ -68,6 +72,11 @@ export class CdkServicesStack extends Stack {
       productMicroservice: microservices.productMicroservice,
     });
 
+    const authorizer = new EcomAuctionApiGatewayAuthorizer(this, "authorizer", {
+      UserPool: cognito.userPool,
+      UserPoolClientId: cognito.UserPoolClientId,
+    });
+
     const apigateway = new EcomAuctionApiGateway(this, "ApiGateway", {
       productMicroService: microservices.productMicroservice,
       basketMicroService: microservices.basketMicroservice,
@@ -76,6 +85,8 @@ export class CdkServicesStack extends Stack {
       stateMachineIamExecutionRole: iamRole.stateMachineIamExecutionRole,
       checkProductQuantitySagaLambda:
         stateMachine.checkProductQuantitySagaLambda,
+      cognitoAuthorizer: authorizer.cognitoAuthorizer,
+      customCognitoAuthorizer: authorizer.customCognitoAuthorizer,
     });
   }
 }
@@ -400,4 +411,25 @@ export class CdkServicesStack extends Stack {
  * 6) Private integration support
  * If you want to use response and mappings and full control use REST api
  * If you are only using lambda proxy integration consider using http apis
+ */
+
+/**
+ * Cognito
+ * made of 2 services:
+ * User pool
+ * Federated identities or identity pool
+ *
+ * User pool is user directory also can be referred as identity provider
+ * signin user with email and password, phone numberor MFA,
+ * also an option for hosted user interface
+ *
+ * If you only need to communicate with API Gateway and want backend to
+ * have more information about the user then integrating with API gateway
+ * directly with user pool is a good idea
+ *
+ * If you need to communicate with any other AWS services directly then you will
+ * need to use Federared Identities. Federate identities also provide unauthenticated
+ * identity.
+ * you can give an IAM role for anyone who doesnot have credentials to authenticate
+ * This can be useful to provide anonymous access
  */

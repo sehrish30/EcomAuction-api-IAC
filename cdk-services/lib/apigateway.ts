@@ -1,9 +1,12 @@
 import { Duration } from "aws-cdk-lib";
 import {
+  AuthorizationType,
+  CognitoUserPoolsAuthorizer,
   EndpointType,
   LambdaIntegration,
   LambdaRestApi,
   StepFunctionsRestApi,
+  TokenAuthorizer,
 } from "aws-cdk-lib/aws-apigateway";
 import { IRole, Role } from "aws-cdk-lib/aws-iam";
 import { IFunction } from "aws-cdk-lib/aws-lambda";
@@ -17,13 +20,21 @@ interface EcomAuctionApiGatewayProps {
   checkoutStateMachine: StateMachine;
   stateMachineIamExecutionRole: Role;
   checkProductQuantitySagaLambda: IFunction;
+  cognitoAuthorizer: CognitoUserPoolsAuthorizer;
+  customCognitoAuthorizer: TokenAuthorizer;
 }
 
 export class EcomAuctionApiGateway extends Construct {
+  public readonly productRestAPIID: string;
+
   constructor(scope: Construct, id: string, props: EcomAuctionApiGatewayProps) {
     super(scope, id);
 
-    this.createProductApi(props.productMicroService);
+    this.productRestAPIID = this.createProductApi(
+      props.productMicroService,
+      props.cognitoAuthorizer,
+      props.customCognitoAuthorizer
+    );
     this.creatBasketApi(props.basketMicroService);
     this.creatOrderApi(props.orderMicroService);
     this.stateMachineCheckoutOrder(
@@ -33,7 +44,11 @@ export class EcomAuctionApiGateway extends Construct {
     this.stateMachineCheckProductQuantity(props.checkProductQuantitySagaLambda);
   }
 
-  private createProductApi(productMicroService: IFunction) {
+  private createProductApi(
+    productMicroService: IFunction,
+    cognitoAuthorizer: CognitoUserPoolsAuthorizer,
+    customCognitoAuthorizer: TokenAuthorizer
+  ): string {
     // proxy to false because we will define our methods
     // and resources ourselves
     // api gateway will redirect to the downstream product function
@@ -47,10 +62,10 @@ export class EcomAuctionApiGateway extends Construct {
 
     const queryintegration = new LambdaIntegration(productMicroService, {
       cacheKeyParameters: ["method.request.querystring.category"],
-      // requestParameters: {
-      //   "integration.request.querystring.category":
-      //     "method.request.querystring.category",
-      // },
+      requestParameters: {
+        "integration.request.querystring.category":
+          "method.request.querystring.category",
+      },
     });
 
     const apigw = new LambdaRestApi(this, "productApi", {
@@ -71,7 +86,10 @@ export class EcomAuctionApiGateway extends Construct {
     });
 
     const product = apigw.root.addResource("product");
+
+    // GET product/1234?category=Phone
     product.addMethod("GET", queryintegration, {
+      // authorizer: customCognitoAuthorizer,
       requestParameters: {
         "method.request.querystring.category": true,
       },
@@ -80,13 +98,16 @@ export class EcomAuctionApiGateway extends Construct {
 
     const singleProduct = product.addResource("{id}"); // /product/{id}
     singleProduct.addMethod("GET", Pathintegration, {
+      authorizer: cognitoAuthorizer,
+      authorizationType: AuthorizationType.COGNITO, //Use an AWS Cognito user pool.
       requestParameters: {
         "method.request.path.id": true,
       },
     }); // GET /product/{id}
     singleProduct.addMethod("PUT"); // PUT /product/{id}
     singleProduct.addMethod("DELETE"); // DELETE /product/{id}
-    // GET product/1234?category=Phone
+
+    return apigw.restApiId;
   }
   private creatBasketApi(basketMicroService: IFunction) {
     const apigw = new LambdaRestApi(this, "basketApi", {

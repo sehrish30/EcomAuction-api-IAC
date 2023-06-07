@@ -161,6 +161,12 @@ Utilized the CDK and Step Functions with to loop through all products in databas
 
 ## 👉 Architecture of Increasing apis performance
 
-Using best practices for Lambda and api gateway.
+I followed the best practices for Lambda and API Gateway integration to ensure optimal performance, scalability, and security in my application.
 
 <img src="readmeimages/best-practices.png" style="max-width: 100%; height: auto; object-fit: contain;">
+
+## 👉 Architecture of Authentication Cognito CDK
+
+To implement authentication in a CDK services, I utilized Amazon Cognito. This allowed me to easily incorporate user sign-up, sign-in, and access control functionality into my app services.
+
+<img src="readmeimages/cognito-cdk.png" style="max-width: 100%; height: auto; object-fit: contain;">
