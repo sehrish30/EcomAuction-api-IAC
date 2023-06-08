@@ -1,7 +1,16 @@
+import { RemovalPolicy } from "aws-cdk-lib";
+import * as dotenv from "dotenv";
+dotenv.config();
 import {
+  AccountRecovery,
+  DateTimeAttribute,
   OAuthScope,
+  ProviderAttribute,
   UserPool,
+  UserPoolClientIdentityProvider,
   UserPoolEmail,
+  UserPoolIdentityProviderFacebook,
+  UserPoolIdentityProviderGoogle,
   VerificationEmailStyle,
 } from "aws-cdk-lib/aws-cognito";
 import { Construct } from "constructs";
@@ -23,22 +32,37 @@ export class EcomAuctionApiCognito extends Construct {
       signInCaseSensitive: false,
       selfSignUpEnabled: true,
       userVerification: {
-        emailSubject: "Verify your email for our awesome app!",
+        emailSubject: "Verify your email for our ecomauction app!",
         emailBody:
-          "Thanks for signing up to our awesome app! Your verification code is {####}",
+          "Thanks for signing up to our ecomauction app! Your verification code is {####}",
         emailStyle: VerificationEmailStyle.CODE,
         smsMessage:
-          "Thanks for signing up to our awesome app! Your verification code is {####}",
+          "Thanks for signing up to our ecomauction app! Your verification code is {####}",
       },
       autoVerify: {
-        email: true,
+        email: true, // Makes Cognito to automatically verify given attributes by sending a verification code
       },
       email: UserPoolEmail.withCognito(), // withSES for prod app
-      //   UserPoolEmail.withSES({
-      //     fromEmail: 'noreply@myawesomeapp.com',
-      //     fromName: 'Awesome App',
-      //     replyTo: 'support@myawesomeapp.com',
-      //   })
+      // email: UserPoolEmail.withSES({
+      //   fromEmail: "sehrishwaheed98@gmail.com",
+      //   fromName: "Ecomauction App",
+      //   // replyTo: "support@myawesomeapp.com",
+      // }),
+      signInAliases: {
+        email: true,
+      },
+      accountRecovery: AccountRecovery.EMAIL_ONLY,
+      removalPolicy: RemovalPolicy.DESTROY, // remove it when cdk destroy
+      customAttributes: {
+        createdAt: new DateTimeAttribute(),
+      },
+      passwordPolicy: {
+        minLength: 8,
+        requireLowercase: true,
+        requireUppercase: false,
+        requireDigits: false,
+        requireSymbols: false,
+      },
     });
 
     this.userPool = userpool;
@@ -55,9 +79,9 @@ export class EcomAuctionApiCognito extends Construct {
     const client = userpool.addClient("Client", {
       generateSecret: false, // when we want to have server to server communication
       userPoolClientName: "ecom-auction-client",
-      //   authFlows: {
-      //     userPassword: true,
-      //   },
+      authFlows: {
+        userPassword: true, // Enable auth using username & password.
+      },
       oAuth: {
         flows: {
           // jwt token will be returned back to client
@@ -68,7 +92,41 @@ export class EcomAuctionApiCognito extends Construct {
         // scopes as part of jwt token
         scopes: [OAuthScope.EMAIL, OAuthScope.OPENID, OAuthScope.PROFILE],
       },
+      supportedIdentityProviders: [
+        UserPoolClientIdentityProvider.GOOGLE,
+        UserPoolClientIdentityProvider.FACEBOOK,
+        UserPoolClientIdentityProvider.COGNITO,
+      ],
     });
     this.UserPoolClientId = client.userPoolClientId;
+
+    const googleprovider = new UserPoolIdentityProviderGoogle(
+      this,
+      "Google-EcomAuctionApp",
+      {
+        clientId: process.env.GOOGLE_APP_ID!,
+        clientSecret: process.env.GOOGLE_SECRET!,
+        userPool: userpool,
+        attributeMapping: {
+          email: ProviderAttribute.GOOGLE_EMAIL, // Attribute mapping allows mapping attributes provided by the third-party identity providers
+        },
+      }
+    );
+
+    const facebookProvider = new UserPoolIdentityProviderFacebook(
+      this,
+      "Facebook-EcomAuctionApp",
+      {
+        userPool: userpool,
+        clientId: process.env.FACEBOOK_CLIENT_ID!,
+        clientSecret: process.env.FACEBOOK_SECRET_KEY!,
+        attributeMapping: {
+          email: ProviderAttribute.FACEBOOK_EMAIL, // Attribute mapping allows mapping attributes provided by the third-party identity providers
+        },
+      }
+    );
+
+    client.node.addDependency(facebookProvider);
+    client.node.addDependency(googleprovider);
   }
 }

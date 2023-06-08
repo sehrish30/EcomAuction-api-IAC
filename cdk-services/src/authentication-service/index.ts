@@ -110,17 +110,20 @@ export const handler = async (
   console.log("I REACHED", Math.floor(1000 + Math.random() * 9000));
 
   if (!token) {
-    throw new Error("No token found!");
+    throw new Error("Unauthorized");
   }
   let payload;
   try {
     // Validate the token from user pool
     payload = await jwtVerifier.verify(token);
-
-    console.log({});
   } catch (err) {
     console.log(err);
-    throw err;
+    const result = {
+      ...generatePolicy("User", "Deny", event.methodArn, {}),
+    };
+    return {
+      ...result,
+    };
   }
 
   const result = {

@@ -89,7 +89,7 @@ export class EcomAuctionApiGateway extends Construct {
 
     // GET product/1234?category=Phone
     product.addMethod("GET", queryintegration, {
-      // authorizer: customCognitoAuthorizer,
+      authorizer: customCognitoAuthorizer,
       requestParameters: {
         "method.request.querystring.category": true,
       },

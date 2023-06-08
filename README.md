@@ -170,3 +170,4 @@ I followed the best practices for Lambda and API Gateway integration to ensure o
 To implement authentication in a CDK services, I utilized Amazon Cognito. This allowed me to easily incorporate user sign-up, sign-in, and access control functionality into my app services.
 
 <img src="readmeimages/cognito-cdk.png" style="max-width: 100%; height: auto; object-fit: contain;">
+<img src="readmeimages/cognito.png" style="max-width: 100%; height: auto; object-fit: contain;">
