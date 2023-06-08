@@ -12,6 +12,7 @@ import { EcomAuctionCloudformationParameters } from "./cloudformation-parameters
 import { EcomAuctionApiLayer } from "./layer";
 import { EcomAuctionApiCognito } from "./cognito";
 import { EcomAuctionApiGatewayAuthorizer } from "./apigateway-authorizer";
+import { EcomAuctionElasticCache } from "./elastic-cache";
 
 export class CdkServicesStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -34,6 +35,8 @@ export class CdkServicesStack extends Stack {
     const cognito = new EcomAuctionApiCognito(this, "Cognito");
 
     const database = new EcomAuctionDatabase(this, "Database");
+
+    const elasticCache = new EcomAuctionElasticCache(this, "ElasticCache");
 
     const microservices = new EcomAuctionServices(this, "Microservices", {
       productTable: database.productTable,
@@ -432,4 +435,12 @@ export class CdkServicesStack extends Stack {
  * identity.
  * you can give an IAM role for anyone who doesnot have credentials to authenticate
  * This can be useful to provide anonymous access
+ */
+
+/**
+ * AMAZON ElasticCache for redis
+ * ElasticCache is inMemory database
+ * auto scaling policy for Elastic cache cluster can also use manual scaling
+ * short term storage
+ * Reduce load on databases and increase speed
  */
