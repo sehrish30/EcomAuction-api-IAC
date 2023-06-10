@@ -175,3 +175,9 @@ To implement authentication in a CDK services, I utilized Amazon Cognito. This a
 ## 👉 Architecture of Product Search with ElasticCache with Redis
 
 <img src="readmeimages/redis.png" style="max-width: 100%; height: auto; object-fit: contain;">
+
+## 👉 Architecture of Serverful express app
+
+To improve the performance of a Node.js Express app, used Worker Threads for high computing tasks and Clustering for instances of the app with PM2. In Node.js, worker threads can help you perform high-computing tasks by moving work onto separate threads that don't block the event loop. The cluster module, on the other hand, helps you run multiple instances of your application in parallel.
+
+<img src="readmeimages/express.png" style="max-width: 100%; height: auto; object-fit: contain;">
