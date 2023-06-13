@@ -22,9 +22,6 @@ mongoose.connect(process.env.MONGO_URI!);
 // create Express app instance
 const app = express();
 
-Authroute(app);
-BlogRoute(app);
-
 app.use(bodyParser.json());
 app.use(
   cookieSession({
@@ -32,6 +29,9 @@ app.use(
     keys: [process.env.SECRET_KEY!],
   })
 );
+
+Authroute(app);
+BlogRoute(app);
 
 app.use(passport.initialize());
 app.use(passport.session());

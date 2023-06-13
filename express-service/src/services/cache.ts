@@ -3,6 +3,9 @@ import mongoose from "mongoose";
 import redis from "redis";
 import { createClient } from "redis";
 
+interface Icache {
+  key: string;
+}
 declare module "mongoose" {
   interface DocumentQuery<
     T,
@@ -12,14 +15,12 @@ declare module "mongoose" {
     mongooseCollection: {
       name: any;
     };
-    cache(): Promise<DocumentQuery<T[], Document> & QueryHelpers>;
+    cache(arg0: Icache): Promise<DocumentQuery<T[], Document> & QueryHelpers>;
     useCache: boolean;
     hashKey: string;
     exec(): Promise<T>;
   }
 
-  // interface Query<ResultType, DocType, THelpers = {}, RawDocType = DocType>
-  //   extends DocumentQuery<any, any> {}
   interface Query<ResultType, DocType, THelpers = {}, RawDocType = DocType>
     extends DocumentQuery<any, any> {
     exec(): Promise<ResultType[]>;
@@ -90,7 +91,7 @@ mongoose.Query.prototype.exec = async function () {
   console.log({ key });
   // check redis for key
   // hget pull information out of nested hash
-  const cachedValue = await redisClient.hmGet(this.hashKey, key);
+  const cachedValue = await redisClient.hGet(this.hashKey, key);
 
   // if it does exist
   if (cachedValue) {
@@ -120,14 +121,16 @@ mongoose.Query.prototype.exec = async function () {
   console.log({ key });
   // @ts-ignore
   const result = await exec.apply(this, arguments);
+  redisClient.hSet(this.hashKey, key, JSON.stringify(result));
+  await redisClient.EXPIRE(this.hashKey, 10);
   // redisClient.hSet(this.hashKey, key, JSON.stringify(result), {
   //   // expiration time in 10s automatic
   //   EX: 10,
   // });
   // key, field, value
-  redisClient.hSet(this.hashKey, key, JSON.stringify(result), {
-    EX: 10,
-  });
+  // , {
+  // EX: 10,
+  // }
 
   console.log("MONGO RETURN");
   await redisClient.disconnect();
@@ -137,3 +140,9 @@ mongoose.Query.prototype.exec = async function () {
 /**
  *
  */
+
+export const clearHash = async (hashKey: string) => {
+  await redisClient.connect();
+  await redisClient.del(JSON.stringify(hashKey));
+  await redisClient.disconnect();
+};

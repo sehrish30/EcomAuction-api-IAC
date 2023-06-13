@@ -3,6 +3,8 @@ import { Request, Response } from "express";
 import requireLogin from "../middlewares/requireLogin";
 import { createClient } from "redis";
 import { Blog } from "../models/Blog";
+import { clearHash } from "../services/cache";
+import deleteCacheForKey from "../middlewares/clearCache";
 
 const USERID = "64771fef1796d52930fee186";
 const redisClient = createClient();
@@ -68,6 +70,7 @@ export default (app: any) => {
         const blogs = await Blog.find({ _user: userId }).cache({
           key: userId,
         });
+
         return res.send(blogs);
       } catch (err) {
         console.log(err);
@@ -80,19 +83,22 @@ export default (app: any) => {
   app.post(
     "/api/blogs",
     requireLogin,
+    deleteCacheForKey,
     async (req: CustomRequest, res: Response) => {
+      const userId = USERID;
       const { title, content } = req.body;
 
       const blog = new Blog({
         title,
         content,
-        _user: req.user?.id,
+        _user: userId,
       });
 
       try {
         await blog.save();
         res.send(blog);
       } catch (err) {
+        console.log(err);
         res.status(400).send(err);
       }
     }
