@@ -1,8 +1,40 @@
 import express, { Request, Response } from "express";
 import { Worker } from "node:worker_threads";
 import { join } from "path";
+
+import mongoose from "mongoose";
+import cookieSession from "cookie-session";
+import passport from "passport";
+import bodyParser from "body-parser";
+import dotenv from "dotenv";
+import Authroute from "./routes/authRoutes";
+import BlogRoute from "./routes/blogRoutes";
+
+import "./models/User";
+import "./models/Blog";
+import "./services/passport";
+import "./services/cache";
+
+dotenv.config();
+// mongoose.Promise = global.Promise;
+mongoose.connect(process.env.MONGO_URI!);
+
 // create Express app instance
 const app = express();
+
+Authroute(app);
+BlogRoute(app);
+
+app.use(bodyParser.json());
+app.use(
+  cookieSession({
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    keys: [process.env.SECRET_KEY!],
+  })
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 // set up a basic GET route
 app.get("/", (req: Request, res: Response) => {
@@ -59,4 +91,19 @@ app.listen(3000, () => {
  * ab -c 1 -n 1 localhost:3000/
  * two at the same time
  * ab -c 2 -n 2 localhost:3000/
+ */
+
+/**
+ * Redis
+ * node
+ * const redis = require("redis")
+ * const redisUrl = "redis://127.0.0.1:6379"
+ * const client = redis.createClient(redisUrl)
+ * client.flushall() // means remove all previous data
+ * docker run -p 6379:6379 -it redis/redis-stack-server:latest
+ *
+ *
+ * timeout values for caching
+ * ability to reset all values tied to specific event
+ * Fig out more robust solution for generating cache keys
  */
