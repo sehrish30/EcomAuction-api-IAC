@@ -13,7 +13,7 @@ import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 import { ddbClient } from "./ddbClient";
 import { APIGatewayEvent } from "aws-lambda";
 import { v4 as uuidv4 } from "uuid";
-import { unMarshalItem } from "./lib/util";
+import { clearHashInRedis, saveDataInRedis, unMarshalItem } from "./lib/util";
 
 export const getProduct = async (productId?: string) => {
   try {
@@ -30,18 +30,30 @@ export const getProduct = async (productId?: string) => {
   }
 };
 
-export const getAllProducts = async () => {
+export const getAllProducts = async (email: string) => {
   /**
    * Subsequent allows you to provide more granular
    * detail about a segment, including custom information
    */
+  // https://sewb.dev/posts/cdk-series:-creating-an-elasticache-cluster-bc1zupe
+  // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ec2.ClientVpnEndpoint.html
+  console.log("GET ALL PRODUCTS");
   try {
     const params = {
       TableName: process.env.DYNAMODB_TABLE_NAME,
     };
     const { Items } = await ddbClient.send(new ScanCommand(params));
 
-    return Items ? Items.map((item) => unmarshall(item)) : {};
+    const data = Items ? Items.map((item) => unmarshall(item)) : {};
+
+    console.log("REDIS", process.env.redisEndpoint, email);
+    await saveDataInRedis(
+      email || "",
+      process.env.DYNAMODB_TABLE_NAME!,
+      JSON.stringify(data)
+    );
+    console.log("AFTER SAVING DATA IN REDIS");
+    return data;
   } catch (error) {
     const err = error as Error;
     console.log(err);
@@ -60,7 +72,7 @@ export const createProduct = async (event: APIGatewayEvent) => {
     };
     const createResult = await ddbClient.send(new PutItemCommand(params));
     console.log({ createResult });
-
+    await clearHashInRedis(event?.requestContext?.authorizer?.email);
     return createResult;
   } catch (error) {
     const err = error as Error;

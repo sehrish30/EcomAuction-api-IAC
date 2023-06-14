@@ -122,7 +122,7 @@ mongoose.Query.prototype.exec = async function () {
   // @ts-ignore
   const result = await exec.apply(this, arguments);
   redisClient.hSet(this.hashKey, key, JSON.stringify(result));
-  await redisClient.EXPIRE(this.hashKey, 10);
+  await redisClient.expire(this.hashKey, 10);
   // redisClient.hSet(this.hashKey, key, JSON.stringify(result), {
   //   // expiration time in 10s automatic
   //   EX: 10,
@@ -145,4 +145,6 @@ export const clearHash = async (hashKey: string) => {
   await redisClient.connect();
   await redisClient.del(JSON.stringify(hashKey));
   await redisClient.disconnect();
+  // delete key and subkey
+  // await redisClient.hDel(JSON.stringify(hashKey), "sdsdsad");
 };

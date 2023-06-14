@@ -96,10 +96,7 @@ let getLogsAndSendEmail = async (
   const timestamp = Date.parse(message.StateChangeTime);
   const offset =
     message.Trigger.Period * message.Trigger.EvaluationPeriods * 1000;
-  console.log("BASIT", {
-    metricFilterData,
-    alarms: metricFilterData.metricFilters,
-  });
+
   const metricFilter = metricFilterData.metricFilters?.[0];
 
   console.log({
@@ -130,7 +127,7 @@ let getLogsAndSendEmail = async (
 
 const dispatchErrorsSNSTopicSubscription = async (event: SNSEvent) => {
   const message = JSON.parse(event.Records[0].Sns.Message);
-  console.log("BASIT", { message });
+
   // get more data about this particular metric
   const requestParams = {
     metricName: message.Trigger.MetricName,

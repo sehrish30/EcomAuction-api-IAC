@@ -13,6 +13,7 @@ import { EcomAuctionApiLayer } from "./layer";
 import { EcomAuctionApiCognito } from "./cognito";
 import { EcomAuctionApiGatewayAuthorizer } from "./apigateway-authorizer";
 import { EcomAuctionElasticCache } from "./elastic-cache";
+import { EcomAuctionIAMRoleElasticCache } from "./iam-role-elasticCache";
 
 export class CdkServicesStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -38,10 +39,22 @@ export class CdkServicesStack extends Stack {
 
     const elasticCache = new EcomAuctionElasticCache(this, "ElasticCache");
 
+    const iamRoleElastiCache = new EcomAuctionIAMRoleElasticCache(
+      this,
+      "IAMRoleElasticCache",
+      {
+        redisSecurityGroup: elasticCache.redisSecurityGroup,
+        elastiCachevpc: elasticCache.vpc,
+      }
+    );
+
     const microservices = new EcomAuctionServices(this, "Microservices", {
       productTable: database.productTable,
       basketTable: database.basketTable,
       orderTable: database.orderTable,
+      redisEndpoint: elasticCache.redisEndpoint,
+      elasticCachelambdaSG: iamRoleElastiCache.elasticCachelambdaSG,
+      elastiCachevpc: elasticCache.vpc,
     });
 
     const queue = new EcomAuctionQueue(this, "Queue", {

@@ -18,7 +18,12 @@ import {
 export async function handler(
   event: APIGatewayEvent
 ): Promise<APIGatewayProxyResult> {
-  console.log("logging 👉", logging());
+  console.log(
+    "logging 👉",
+    logging(),
+    event.httpMethod,
+    event?.requestContext?.authorizer
+  );
 
   /**
    * Check event http method
@@ -35,7 +40,9 @@ export async function handler(
           if (event.pathParameters !== null) {
             body = await getProduct(event.pathParameters?.id); // GET /product/{id}
           } else {
-            body = await getAllProducts(); // get /product
+            body = await getAllProducts(
+              event?.requestContext?.authorizer?.email
+            ); // get /product
           }
         }
         break;

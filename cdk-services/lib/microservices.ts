@@ -1,5 +1,6 @@
 import { Duration } from "aws-cdk-lib";
 import { ITable } from "aws-cdk-lib/aws-dynamodb";
+import { SecurityGroup, SubnetType, Vpc } from "aws-cdk-lib/aws-ec2";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import {
   NodejsFunction,
@@ -12,6 +13,9 @@ interface EcomAuctionServicesProps {
   productTable: ITable;
   basketTable: ITable;
   orderTable: ITable;
+  redisEndpoint: string;
+  elasticCachelambdaSG: SecurityGroup;
+  elastiCachevpc: Vpc;
 }
 
 // EcomAuction is company name
@@ -26,14 +30,24 @@ export class EcomAuctionServices extends Construct {
   constructor(scope: Construct, id: string, props: EcomAuctionServicesProps) {
     super(scope, id);
 
-    this.productMicroservice = this.createProductFunction(props.productTable);
+    this.productMicroservice = this.createProductFunction(
+      props.productTable,
+      props.redisEndpoint,
+      props.elastiCachevpc,
+      props.elasticCachelambdaSG
+    );
     this.basketMicroservice = this.createBasketFunction(props.basketTable);
     this.orderMicroservice = this.createOrderFunction(props.orderTable);
     this.checkProductLambdaWorker = this.productLambdaWorker(
       props.productTable
     );
   }
-  private createProductFunction(productTable: ITable): NodejsFunction {
+  private createProductFunction(
+    productTable: ITable,
+    redisEndpoint: string,
+    vpc: Vpc,
+    lambdaSG: SecurityGroup
+  ): NodejsFunction {
     /**
      * When bundling, performing with Nodejs
      * function, it is require to run docker daemon
@@ -55,10 +69,17 @@ export class EcomAuctionServices extends Construct {
       environment: {
         PRIMARY_KEY: "id",
         DYNAMODB_TABLE_NAME: productTable.tableName, // get table name
+        redisEndpoint: redisEndpoint,
       },
       runtime: Runtime.NODEJS_18_X,
       timeout: Duration.seconds(3),
-      memorySize: 128 // default
+      memorySize: 128, // default
+      // VPC, the function should be deployed in is the vpc of elastiCache with securitygroup
+      vpc: vpc,
+      securityGroups: [lambdaSG],
+      vpcSubnets: {
+        subnetType: SubnetType.PRIVATE_ISOLATED, // only resources deployed in the VPC would be granted access to the network
+      },
     };
     //  NodejsFunction construct as a lambda function
     // which automatically transpiles and bundles our code, regardless if it's written in JavaScript or TypeScript

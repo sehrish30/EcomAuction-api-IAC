@@ -61,12 +61,14 @@ export class EcomAuctionApiGateway extends Construct {
     });
 
     const queryintegration = new LambdaIntegration(productMicroService, {
-      cacheKeyParameters: ["method.request.querystring.category"],
-      requestParameters: {
-        "integration.request.querystring.category":
-          "method.request.querystring.category",
-      },
+      // cacheKeyParameters: ["method.request.querystring.category"],
+      // requestParameters: {
+      //   "integration.request.querystring.category":
+      //     "method.request.querystring.category",
+      // },
     });
+
+    const simpleIntegration = new LambdaIntegration(productMicroService);
 
     const apigw = new LambdaRestApi(this, "productApi", {
       proxy: false,
@@ -90,11 +92,13 @@ export class EcomAuctionApiGateway extends Construct {
     // GET product/1234?category=Phone
     product.addMethod("GET", queryintegration, {
       authorizer: customCognitoAuthorizer,
-      requestParameters: {
-        "method.request.querystring.category": true,
-      },
+      // requestParameters: {
+      //   "method.request.querystring.category": true,
+      // },
     }); // get /product
-    product.addMethod("POST"); // post /product
+    product.addMethod("POST", simpleIntegration, {
+      authorizer: customCognitoAuthorizer,
+    }); // post /product
 
     const singleProduct = product.addResource("{id}"); // /product/{id}
     singleProduct.addMethod("GET", Pathintegration, {
