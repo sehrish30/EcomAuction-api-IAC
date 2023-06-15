@@ -1,5 +1,9 @@
 import { Construct } from "constructs";
 import {
+  CfnEIP,
+  CfnNatGateway,
+  CfnRoute,
+  GatewayVpcEndpointAwsService,
   Peer,
   Port,
   SecurityGroup,
@@ -14,6 +18,7 @@ export class EcomAuctionElasticCache extends Construct {
   public readonly redisEndpoint: string;
   public readonly vpc: Vpc;
   public readonly redisSecurityGroup: SecurityGroup;
+  public natGateway: CfnNatGateway;
 
   constructor(scope: Construct, id: string) {
     super(scope, id);
@@ -37,6 +42,35 @@ export class EcomAuctionElasticCache extends Construct {
         },
       ],
     });
+
+    // Allocate a new Elastic IP address
+    const eip = new CfnEIP(this, "AuctionEip");
+
+    // Create a NAT gateway in a first public subnet
+    // NAT Gateway is used to allow resources in private subnets to access the internet
+    const natGateway = new CfnNatGateway(this, "NatGateway", {
+      subnetId: vpc.publicSubnets[0].subnetId,
+      allocationId: eip.attrAllocationId,
+    });
+
+    this.natGateway = natGateway;
+    // natGateway.attrNatGatewayId
+
+    // Add a default route to the private subnets to use the NAT gateway as the router
+    vpc.privateSubnets.forEach((subnet) => {
+      // iterates through all private subnets in the VPC and creates a new CfnRoute resource for each subnet
+      new CfnRoute(this, `RouteToInternetViaNatGateway-${subnet.node.id}`, {
+        routeTableId: subnet.routeTable.routeTableId, // ID of the subnet's route table
+        destinationCidrBlock: "0.0.0.0/0",
+        natGatewayId: natGateway.ref, // ID of the nat gateway
+      });
+    });
+
+    // Create a VPC endpoint for DynamoDB
+    const endpoint = vpc.addGatewayEndpoint("DynamoDBEndpoint", {
+      service: GatewayVpcEndpointAwsService.DYNAMODB,
+    });
+
     this.vpc = vpc;
 
     /**

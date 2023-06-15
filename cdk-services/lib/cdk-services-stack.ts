@@ -35,9 +35,9 @@ export class CdkServicesStack extends Stack {
 
     const cognito = new EcomAuctionApiCognito(this, "Cognito");
 
-    const database = new EcomAuctionDatabase(this, "Database");
-
     const elasticCache = new EcomAuctionElasticCache(this, "ElasticCache");
+
+    const database = new EcomAuctionDatabase(this, "Database");
 
     const iamRoleElastiCache = new EcomAuctionIAMRoleElasticCache(
       this,
@@ -55,6 +55,7 @@ export class CdkServicesStack extends Stack {
       redisEndpoint: elasticCache.redisEndpoint,
       elasticCachelambdaSG: iamRoleElastiCache.elasticCachelambdaSG,
       elastiCachevpc: elasticCache.vpc,
+      natGateway: elasticCache.natGateway
     });
 
     const queue = new EcomAuctionQueue(this, "Queue", {

@@ -1,4 +1,10 @@
-import { Port, SecurityGroup, Vpc } from "aws-cdk-lib/aws-ec2";
+import {
+  GatewayVpcEndpoint,
+  GatewayVpcEndpointAwsService,
+  Port,
+  SecurityGroup,
+  Vpc,
+} from "aws-cdk-lib/aws-ec2";
 import { ManagedPolicy, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 
@@ -9,6 +15,7 @@ interface EcomAuctionApiGatewayProps {
 
 export class EcomAuctionIAMRoleElasticCache extends Construct {
   public readonly elasticCachelambdaSG: SecurityGroup;
+  public dynamodbEndpoint: GatewayVpcEndpoint;
 
   constructor(scope: Construct, id: string, props: EcomAuctionApiGatewayProps) {
     super(scope, id);
@@ -51,6 +58,9 @@ export class EcomAuctionIAMRoleElasticCache extends Construct {
       Port.tcp(6379),
       "Allow this lambda function connect to the redis cache"
     );
+
+    // lambdaSG.connections.allowFrom(lambdaSecurityGroup, Port.tcp(443));
+
     return lambdaSG;
   }
 }

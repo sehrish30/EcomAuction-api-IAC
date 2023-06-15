@@ -8,7 +8,10 @@ import {
   ITable,
   Table,
 } from "aws-cdk-lib/aws-dynamodb";
+import { GatewayVpcEndpointAwsService, Vpc } from "aws-cdk-lib/aws-ec2";
 import { Construct } from "constructs";
+
+interface EcomAuctionDatabaseProps {}
 
 export class EcomAuctionDatabase extends Construct {
   // public member to access this outside of the class
@@ -16,7 +19,6 @@ export class EcomAuctionDatabase extends Construct {
   public readonly productTable: ITable;
   public readonly basketTable: ITable;
   public readonly orderTable: ITable;
-
 
   constructor(scope: Construct, id: string) {
     super(scope, id);
@@ -35,6 +37,7 @@ export class EcomAuctionDatabase extends Construct {
       removalPolicy: RemovalPolicy.DESTROY,
       billingMode: BillingMode.PAY_PER_REQUEST,
     });
+
     return productTable;
   }
 

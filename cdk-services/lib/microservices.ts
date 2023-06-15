@@ -1,6 +1,11 @@
 import { Duration } from "aws-cdk-lib";
 import { ITable } from "aws-cdk-lib/aws-dynamodb";
-import { SecurityGroup, SubnetType, Vpc } from "aws-cdk-lib/aws-ec2";
+import {
+  CfnNatGateway,
+  SecurityGroup,
+  SubnetType,
+  Vpc,
+} from "aws-cdk-lib/aws-ec2";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import {
   NodejsFunction,
@@ -16,6 +21,7 @@ interface EcomAuctionServicesProps {
   redisEndpoint: string;
   elasticCachelambdaSG: SecurityGroup;
   elastiCachevpc: Vpc;
+  natGateway: CfnNatGateway;
 }
 
 // EcomAuction is company name
@@ -34,7 +40,8 @@ export class EcomAuctionServices extends Construct {
       props.productTable,
       props.redisEndpoint,
       props.elastiCachevpc,
-      props.elasticCachelambdaSG
+      props.elasticCachelambdaSG,
+      props.natGateway
     );
     this.basketMicroservice = this.createBasketFunction(props.basketTable);
     this.orderMicroservice = this.createOrderFunction(props.orderTable);
@@ -46,7 +53,8 @@ export class EcomAuctionServices extends Construct {
     productTable: ITable,
     redisEndpoint: string,
     vpc: Vpc,
-    lambdaSG: SecurityGroup
+    lambdaSG: SecurityGroup,
+    natGateway: CfnNatGateway
   ): NodejsFunction {
     /**
      * When bundling, performing with Nodejs
@@ -88,8 +96,14 @@ export class EcomAuctionServices extends Construct {
       entry: join(__dirname, "./../src/product-service/index.ts"),
     });
 
+    // allow Lambda function to access the internet
+    // productFunction.connections.allow
+
+    // lambdaSG.connections.allowFrom(productFunction, Port.tcp(443));
     // give crud operations permission on product table
     productTable.grantReadWriteData(productFunction);
+
+    // Allow the Lambda function to access the DynamoDB endpoint
     return productFunction;
   }
   private createBasketFunction(basketTable: ITable): NodejsFunction {

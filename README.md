@@ -172,7 +172,7 @@ To implement authentication in a CDK services, I utilized Amazon Cognito. This a
 <img src="readmeimages/cognito-cdk.png" style="max-width: 100%; height: auto; object-fit: contain;">
 <img src="readmeimages/Cognito.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
-## 👉 Architecture of Product Search with ElasticCache with Redis
+## 👉 Architecture of Product Search with ElasticCache Redis
 
 <img src="readmeimages/elasticcache-architrecture.png" style="max-width: 100%; height: auto; object-fit: contain;">
 <img src="readmeimages/elastiCache.png" style="max-width: 100%; height: auto; object-fit: contain;">

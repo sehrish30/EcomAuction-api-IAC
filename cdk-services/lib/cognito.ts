@@ -1,4 +1,4 @@
-import { RemovalPolicy } from "aws-cdk-lib";
+import { RemovalPolicy, SecretValue } from "aws-cdk-lib";
 import * as dotenv from "dotenv";
 dotenv.config();
 import {
