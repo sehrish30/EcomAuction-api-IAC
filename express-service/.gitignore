@@ -1,1 +1,9 @@
 .env
+/node_modules
+dist
+client
+node_modules
+jspm_packages
+
+# Serverless directories
+.serverless

@@ -115,14 +115,14 @@ mongoose.Query.prototype.exec = async function () {
       ? doc.map((d) => new this.model(d))
       : new this.model(doc);
   }
-
+  console.log("MONGO RETURN");
   // else issue the query and store the result in redis
 
   console.log({ key });
   // @ts-ignore
   const result = await exec.apply(this, arguments);
   redisClient.hSet(this.hashKey, key, JSON.stringify(result));
-  await redisClient.expire(this.hashKey, 10);
+  await redisClient.expire(this.hashKey, 300); // 300s 5 min
   // redisClient.hSet(this.hashKey, key, JSON.stringify(result), {
   //   // expiration time in 10s automatic
   //   EX: 10,
@@ -132,7 +132,6 @@ mongoose.Query.prototype.exec = async function () {
   // EX: 10,
   // }
 
-  console.log("MONGO RETURN");
   await redisClient.disconnect();
   return result;
 };

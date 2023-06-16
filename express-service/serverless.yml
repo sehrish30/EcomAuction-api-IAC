@@ -1,0 +1,31 @@
+service: express-app-service
+
+useDotenv: true
+
+plugins:
+  - serverless-plugin-typescript
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: ${opt:stage, 'dev'}
+  region: us-east-2
+  environment:
+    MONGO_URI: ${env:MONGO_URI}
+    SECRET_KEY: ${env:SECRET_KEY}
+    googleClientID: ${env:googleClientID}
+    googleClientSecret: ${env:googleClientSecret}
+
+functions:
+  expressAppFunction:
+    handler: src/index.handler
+    events:
+     # All of the HTTP routing logic will be done inside the Express
+      - http: ANY /
+      - http: "ANY {proxy+}"
+
+# Override what tsconfig.json to use with the following snippet in your severless.yml
+custom:
+  serverlessPluginTypescript:
+    tsConfigFileLocation: "./tsconfig.build.json"
+# serverless logs -f expressAppFunction -t

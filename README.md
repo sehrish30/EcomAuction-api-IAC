@@ -174,8 +174,17 @@ To implement authentication in a CDK services, I utilized Amazon Cognito. This a
 
 ## 👉 Architecture of Product Search with ElasticCache Redis
 
+The Lambda function was configured to run inside a VPC and assigned a security group allowing outbound traffic to the Redis cluster.
+The Redis cluster's security group was configured to allow inbound traffic from the Lambda function's security group
+When lambda is run in VPC, it won't have access to internet (so access to public APIs won't work). NATGateway is required for this. But to improve security I have created Gateway endpoint and interface endpoints that can access services like DynamoDB and Kinesis streams without NAT establishing secure and private connection.
+
+You can also use NAT Gateway to access internet but Gateway endpoints are cheaper, secure and scalable.
+
+Gateway endpoints are used to connect to AWS services that are accessed over the internet, such as Amazon S3 or DynamoDB
+Interface endpoints, on the other hand, are used to connect to AWS services that are accessed over a private network connection, such as Amazon EC2 or Elastic Load Balancing
+
 <img src="readmeimages/elasticcache-architrecture.png" style="max-width: 100%; height: auto; object-fit: contain;">
-<img src="readmeimages/elasticache.png" style="max-width: 100%; height: auto; object-fit: contain;">
+<img src="readmeimages/ElastiCache.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
 ## 👉 Architecture of Serverful express app
 
@@ -183,3 +192,9 @@ To improve the performance of a Node.js Express app, used Worker Threads for hig
 
 <img src="readmeimages/express.png" style="max-width: 100%; height: auto; object-fit: contain;">
 <img src="readmeimages/redis.png" style="max-width: 100%; height: auto; object-fit: contain;">
+
+## 👉 Architecture of Serverless express app
+
+Used @vendia/serverless-express a package that allows you to deploy an Express.js app as a serverless application on AWS Lambda and API Gateway. It provides an easy way to wrap your existing Express.js app in a Lambda function and map API Gateway events to Express.js requests.
+
+<img src="readmeimages/express-app-serverless.png" style="max-width: 100%; height: auto; object-fit: contain;">

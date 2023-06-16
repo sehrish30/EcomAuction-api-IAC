@@ -1,6 +1,7 @@
 import {
   GatewayVpcEndpoint,
   GatewayVpcEndpointAwsService,
+  Peer,
   Port,
   SecurityGroup,
   Vpc,
@@ -15,7 +16,6 @@ interface EcomAuctionApiGatewayProps {
 
 export class EcomAuctionIAMRoleElasticCache extends Construct {
   public readonly elasticCachelambdaSG: SecurityGroup;
-  public dynamodbEndpoint: GatewayVpcEndpoint;
 
   constructor(scope: Construct, id: string, props: EcomAuctionApiGatewayProps) {
     super(scope, id);
@@ -44,11 +44,11 @@ export class EcomAuctionIAMRoleElasticCache extends Construct {
       )
     );
 
-    // create security group associated with VPC in which the ElastiCache Redis cluster is running
-    const lambdaSG = new SecurityGroup(this, `ambdaSG`, {
+    // create security group associated with VPC in which the lambda function will run
+    const lambdaSG = new SecurityGroup(this, `lambdaSG`, {
       vpc: vpc,
       allowAllOutbound: true, // allows all outbound network traffic from the Lambda function to any destination
-      securityGroupName: "redis-lambdaFn Security Group",
+      securityGroupName: "redis-lambdaFn-Security-Group",
     });
 
     // allowTo method is used to allow inbound network traffic from the Redis cluster's security group
@@ -58,8 +58,6 @@ export class EcomAuctionIAMRoleElasticCache extends Construct {
       Port.tcp(6379),
       "Allow this lambda function connect to the redis cache"
     );
-
-    // lambdaSG.connections.allowFrom(lambdaSecurityGroup, Port.tcp(443));
 
     return lambdaSG;
   }

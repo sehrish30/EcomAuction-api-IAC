@@ -4,7 +4,7 @@ import mongoose, { Document } from "mongoose";
 
 import dotenv from "dotenv";
 
-dotenv.config();
+dotenv?.config();
 
 interface IUser extends Document {
   googleId: string;

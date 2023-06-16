@@ -4,6 +4,7 @@ import {
   CfnNatGateway,
   CfnRoute,
   GatewayVpcEndpointAwsService,
+  InterfaceVpcEndpointAwsService,
   Peer,
   Port,
   SecurityGroup,
@@ -26,10 +27,15 @@ export class EcomAuctionElasticCache extends Construct {
     /**
      * Create the VPC where the Elasticache Redis cluster will be deployed
      * Redis instance must be in vpc
+     * also lambda function that needs to communicate with that redis cluster
+     * subnet is always in availability zone
+     * security group is a firewall that controls what traffic goes into the instance
+     * and what goes out of instance, they are stateful if allowed traffic from certain port automatically allow traffic
+     * to go out from that port
      */
     const vpc = new Vpc(this, "EcomAuctionVpc", {
-      maxAzs: 2, // maximum number of AZs to use in this region
-      cidr: "10.32.0.0/24",
+      maxAzs: 1, // maximum number of AZs to use in this region
+      // cidr: "10.0.0.0/20", // Vpc ip address range cannot change it after created it
       natGateways: 1,
       subnetConfiguration: [
         {
@@ -43,33 +49,44 @@ export class EcomAuctionElasticCache extends Construct {
       ],
     });
 
-    // Allocate a new Elastic IP address
-    const eip = new CfnEIP(this, "AuctionEip");
+    // // Allocate a new Elastic IP address
+    // public ip that we assign to internet gateway
+    // const eip = new CfnEIP(this, "AuctionEip");
 
-    // Create a NAT gateway in a first public subnet
-    // NAT Gateway is used to allow resources in private subnets to access the internet
-    const natGateway = new CfnNatGateway(this, "NatGateway", {
-      subnetId: vpc.publicSubnets[0].subnetId,
-      allocationId: eip.attrAllocationId,
-    });
+    // // Create a NAT gateway in a first public subnet
+    // // NAT Gateway is used to allow resources in private subnets to access the internet
+    // const natGateway = new CfnNatGateway(this, "NatGateway", {
+    //   subnetId: vpc.publicSubnets[0].subnetId,
+    //   allocationId: eip.attrAllocationId,
+    // });
 
-    this.natGateway = natGateway;
-    // natGateway.attrNatGatewayId
+    // this.natGateway = natGateway;
+    // // natGateway.attrNatGatewayId
 
-    // Add a default route to the private subnets to use the NAT gateway as the router
-    vpc.privateSubnets.forEach((subnet) => {
-      // iterates through all private subnets in the VPC and creates a new CfnRoute resource for each subnet
-      new CfnRoute(this, `RouteToInternetViaNatGateway-${subnet.node.id}`, {
-        routeTableId: subnet.routeTable.routeTableId, // ID of the subnet's route table
-        destinationCidrBlock: "0.0.0.0/0",
-        natGatewayId: natGateway.ref, // ID of the nat gateway
-      });
-    });
+    // // Add a default route to the private subnets to use the NAT gateway as the router
+    // create a route to nat gateway in private subnets
+    // vpc.privateSubnets.forEach((subnet) => {
+    //   // iterates through all private subnets in the VPC and creates a new CfnRoute resource for each subnet
+    //   new CfnRoute(this, `RouteToInternetViaNatGateway-${subnet.node.id}`, {
+    //     routeTableId: subnet.routeTable.routeTableId, // ID of the subnet's route table
+    //     destinationCidrBlock: "0.0.0.0/0",
+    //     natGatewayId: natGateway.ref, // ID of the nat gateway
+    //   });
+    // });
 
     // Create a VPC endpoint for DynamoDB
     const endpoint = vpc.addGatewayEndpoint("DynamoDBEndpoint", {
       service: GatewayVpcEndpointAwsService.DYNAMODB,
     });
+    // causing requests within the public subnet destined for Kinesis to go through the Interface Endpoint
+    const kinesisInterfaceEndpoint = vpc.addInterfaceEndpoint(
+      "kinesis-endpoint",
+      {
+        service: InterfaceVpcEndpointAwsService.KINESIS_STREAMS,
+        privateDnsEnabled: true,
+        subnets: { subnetType: SubnetType.PRIVATE_ISOLATED },
+      }
+    );
 
     this.vpc = vpc;
 
@@ -81,6 +98,8 @@ export class EcomAuctionElasticCache extends Construct {
         can have only allow rules
         if no rule is defined that traffic is blocked
         setting up a security group and adding the IP address of your Node.js application to the security group.
+        public subnet is the one that has internet gateway attached and route table has entry to internet gateway
+        private subnet doesnot have internet gateway attached or no routing rule to internet gateway
      */
     const redisSecurityGroup = new SecurityGroup(
       this,
@@ -108,6 +127,7 @@ export class EcomAuctionElasticCache extends Construct {
       {
         subnetIds: vpc.selectSubnets({
           subnetType: SubnetType.PUBLIC,
+          // subnetType: SubnetType.PRIVATE_ISOLATED,
         }).subnetIds, // The EC2 subnet IDs for the cache subnet group.
         description: "Subnets for Elasticache Redis",
         // subnetIds: vpc.privateSubnets.map((subnet) => subnet.subnetId),
@@ -125,21 +145,9 @@ export class EcomAuctionElasticCache extends Construct {
       vpcSecurityGroupIds: [redisSecurityGroup.securityGroupId],
       // port: 6379, // port number on which each of the cache nodes accepts connections 6379 is default
       cacheSubnetGroupName: subnetGroup.cacheSubnetGroupName, // The name of the subnet group.
-      // logDeliveryConfigurations: [
-      //   {
-      //     destinationDetails: {
-      //       cloudWatchLogsDetails: {
-      //         logGroup: "logGroup",
-      //       },
-      //     },
-      //     destinationType: "cloudwatch-logs",
-      //     logFormat: "json",
-      //     logType: "slow-log",
-      //   },
-      // ],
       transitEncryptionEnabled: false,
     });
-    // clientSecretValue
+
     // Indicates that this resource depends on another resource and cannot be provisioned unless the other resource has been successfully provisioned
     // This is to ensure that the subnetGroup is completed before the Redis cluster.
     redis.addDependency(subnetGroup);

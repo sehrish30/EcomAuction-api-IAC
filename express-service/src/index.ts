@@ -1,12 +1,15 @@
 import express, { Request, Response } from "express";
 import { Worker } from "node:worker_threads";
 import { join } from "path";
+import serverless from "@vendia/serverless-express";
 
 import mongoose from "mongoose";
 import cookieSession from "cookie-session";
 import passport from "passport";
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
+import { APIGatewayProxyHandler } from "aws-lambda";
+
 import Authroute from "./routes/authRoutes";
 import BlogRoute from "./routes/blogRoutes";
 
@@ -15,7 +18,9 @@ import "./models/Blog";
 import "./services/passport";
 import "./services/cache";
 
-dotenv.config();
+console.log("RUNNING FUNCTION");
+
+dotenv?.config();
 // mongoose.Promise = global.Promise;
 mongoose.connect(process.env.MONGO_URI!);
 
@@ -30,14 +35,14 @@ app.use(
   })
 );
 
-Authroute(app);
-BlogRoute(app);
+app.use("/", Authroute);
+app.use("/api", BlogRoute);
 
 app.use(passport.initialize());
 app.use(passport.session());
 
 // set up a basic GET route
-app.get("/", (req: Request, res: Response) => {
+app.get("/worker-threads", (req: Request, res: Response) => {
   // using our existing thread pool
   // most of tha native nodejs functions are already using libuv and their own threadpool
   // they dont work on our event loop
@@ -45,8 +50,8 @@ app.get("/", (req: Request, res: Response) => {
   // worker.js when running on production from dist folder
   // else worker.ts
 
-  const filePath = join(__dirname, "worker.ts");
-  //   const filePath = join(__dirname, "src", "worker.ts");
+  // const filePath = join(__dirname, "worker.ts");
+  const filePath = join(__dirname, "worker.js");
   const worker = new Worker(filePath);
 
   // function is equal to thread itself
@@ -70,6 +75,21 @@ app.get("/fast", (req, res) => {
 app.listen(3000, () => {
   console.log("Express app listening on port 3000!");
 });
+
+const config = {
+  app,
+  // event from sns will be routed to controller that handles /sns route
+  // and same explanation for the rest
+  eventSourceRoutes: {
+    AWS_SNS: "/sns",
+    AWS_DYNAMODB: "/dynamodb",
+    AWS_SQS: "/sqs",
+    AWS_EVENTBRIDGE: "/eventbridge",
+    AWS_KINESIS_DATA_STREAM: "/kinesis",
+  },
+};
+
+export const handler: APIGatewayProxyHandler = serverless(config);
 
 /**
  * For clustering start multiple nodejs processes
@@ -106,4 +126,37 @@ app.listen(3000, () => {
  * timeout values for caching
  * ability to reset all values tied to specific event
  * Fig out more robust solution for generating cache keys
+ *
+ * load testing
+ * npx loadtest --rps 100 -k -n 1500 -c 50 https://xxxx.execute-api.us-east-1.amazonaws.com/prod/users
+ */
+
+/**
+ * Deployment to lambda
+ *
+ * This will install only the production dependencies of your project and create a ZIP file containing your entire project directory.
+ * npm install --production
+ * zip -r function.zip *
+ *
+ * npm i
+ *
+ * Upload the deployment package to an S3 bucket:
+ * aws s3 cp function.zip s3://bucket-name/function.zip
+ * 
+ * Create the Lambda function from the deployment package
+ * Role should have policy AWSLambdaBasicExecutionRole
+ * aws lambda create-function \
+  --function-name express-app-function \
+  --handler index.serverlessHandler \
+  --runtime nodejs18.x \
+  --memory-size 128 \
+  --timeout 10 \
+  --role arn:aws:iam::123456789012:role/lambda-role \
+  --code S3Bucket=bucket-name,S3Key=function.zip
+
+  * Test your Lambda function:
+  * aws lambda invoke \
+  --function-name my-function \
+  --payload '{"key1": "value1", "key2": "value2", "key3": "value3"}' \
+  output.json
  */

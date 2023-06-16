@@ -1,30 +1,30 @@
-import { Request, Response, Application } from "express";
+import { Request, Response, Application, Router } from "express";
 import passport from "passport";
 
-const route = (app: Application) => {
-  app.get(
-    "/auth/google",
-    passport.authenticate("google", {
-      scope: ["profile", "email"],
-    })
-  );
+const authRouter = Router();
 
-  app.get(
-    "/auth/google/callback",
-    passport.authenticate("google"),
-    (req: Request, res: Response) => {
-      res.redirect("/blogs");
-    }
-  );
+authRouter.get(
+  "/auth/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+  })
+);
 
-  app.get("/auth/logout", (req: Request, res: Response) => {
-    req.logout(() => {});
-    res.redirect("/");
-  });
+authRouter.get(
+  "/auth/google/callback",
+  passport.authenticate("google"),
+  (req: Request, res: Response) => {
+    res.redirect("/blogs");
+  }
+);
 
-  app.get("/api/current_user", (req: Request, res: Response) => {
-    res.send(req.user);
-  });
-};
+authRouter.get("/auth/logout", (req: Request, res: Response) => {
+  req.logout(() => {});
+  res.redirect("/");
+});
 
-export default route;
+authRouter.get("/api/current_user", async (req: Request, res: Response) => {
+  res.send(req.user);
+});
+
+export default authRouter;
