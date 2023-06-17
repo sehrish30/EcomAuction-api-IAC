@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./src",
+    "rootDirs": ["src"],
+    "outDir": "./dist",
+    "lib": ["es2020"],
+    "target": "es2020",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "types": ["node"],
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+  },
+  "include": [
+    "src/**/*.ts",
+    "serverless.yml"
+  ],
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.test.tsx",
+    "**/*.stories.js",
+    "node_modules",
+    "src/test-utils",
+    "dist",
+    "docs",
+    "src/setupTests.js"
+  ]
+}

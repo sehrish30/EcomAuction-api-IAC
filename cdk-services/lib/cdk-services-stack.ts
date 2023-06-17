@@ -14,6 +14,7 @@ import { EcomAuctionApiCognito } from "./cognito";
 import { EcomAuctionApiGatewayAuthorizer } from "./apigateway-authorizer";
 import { EcomAuctionElasticCache } from "./elastic-cache";
 import { EcomAuctionIAMRoleElasticCache } from "./iam-role-elasticCache";
+import { EcomAuctionSecret } from "./secret";
 
 export class CdkServicesStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -31,9 +32,13 @@ export class CdkServicesStack extends Stack {
       "CloudformationParams"
     );
 
+    const secrets = new EcomAuctionSecret(this, "Secret");
+
     const layers = new EcomAuctionApiLayer(this, "LayerVersion");
 
-    const cognito = new EcomAuctionApiCognito(this, "Cognito");
+    const cognito = new EcomAuctionApiCognito(this, "Cognito", {
+      googleClientSecret: secrets.googleClientSecretValue,
+    });
 
     const elasticCache = new EcomAuctionElasticCache(this, "ElasticCache");
 
@@ -55,7 +60,7 @@ export class CdkServicesStack extends Stack {
       redisEndpoint: elasticCache.redisEndpoint,
       elasticCachelambdaSG: iamRoleElastiCache.elasticCachelambdaSG,
       elastiCachevpc: elasticCache.vpc,
-      natGateway: elasticCache.natGateway
+      natGateway: elasticCache.natGateway,
     });
 
     const queue = new EcomAuctionQueue(this, "Queue", {

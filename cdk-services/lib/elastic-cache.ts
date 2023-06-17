@@ -1,8 +1,6 @@
 import { Construct } from "constructs";
 import {
-  CfnEIP,
   CfnNatGateway,
-  CfnRoute,
   GatewayVpcEndpointAwsService,
   InterfaceVpcEndpointAwsService,
   Peer,
@@ -12,6 +10,8 @@ import {
   Vpc,
 } from "aws-cdk-lib/aws-ec2";
 import { CfnCacheCluster, CfnSubnetGroup } from "aws-cdk-lib/aws-elasticache";
+import { RemovalPolicy } from "aws-cdk-lib";
+import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 
 interface EcomAuctionApiGatewayProps {}
 
@@ -136,6 +136,12 @@ export class EcomAuctionElasticCache extends Construct {
       }
     );
 
+    const logGroup = new LogGroup(this, "RedisLogGroup", {
+      logGroupName: "redis-log-group",
+      retention: RetentionDays.ONE_MONTH,
+      removalPolicy: RemovalPolicy.DESTROY,
+    });
+
     // Create the Elasticache Redis cluster L1 construct
     const redis = new CfnCacheCluster(this, `RedisCluster`, {
       engine: "redis",
@@ -146,6 +152,18 @@ export class EcomAuctionElasticCache extends Construct {
       // port: 6379, // port number on which each of the cache nodes accepts connections 6379 is default
       cacheSubnetGroupName: subnetGroup.cacheSubnetGroupName, // The name of the subnet group.
       transitEncryptionEnabled: false,
+      logDeliveryConfigurations: [
+        {
+          destinationDetails: {
+            cloudWatchLogsDetails: {
+              logGroup: logGroup.logGroupName,
+            },
+          },
+          destinationType: "cloudwatch-logs",
+          logFormat: "json",
+          logType: "slow-log",
+        },
+      ],
     });
 
     // Indicates that this resource depends on another resource and cannot be provisioned unless the other resource has been successfully provisioned
@@ -155,3 +173,5 @@ export class EcomAuctionElasticCache extends Construct {
     this.redisEndpoint = `redis://${redis.attrRedisEndpointAddress}:${redis.attrRedisEndpointPort}`;
   }
 }
+
+// https://sewb.dev/posts/cdk-series:-creating-an-elasticache-cluster-bc1zupe

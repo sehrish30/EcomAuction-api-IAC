@@ -130,33 +130,3 @@ export const handler: APIGatewayProxyHandler = serverless(config);
  * load testing
  * npx loadtest --rps 100 -k -n 1500 -c 50 https://xxxx.execute-api.us-east-1.amazonaws.com/prod/users
  */
-
-/**
- * Deployment to lambda
- *
- * This will install only the production dependencies of your project and create a ZIP file containing your entire project directory.
- * npm install --production
- * zip -r function.zip *
- *
- * npm i
- *
- * Upload the deployment package to an S3 bucket:
- * aws s3 cp function.zip s3://bucket-name/function.zip
- * 
- * Create the Lambda function from the deployment package
- * Role should have policy AWSLambdaBasicExecutionRole
- * aws lambda create-function \
-  --function-name express-app-function \
-  --handler index.serverlessHandler \
-  --runtime nodejs18.x \
-  --memory-size 128 \
-  --timeout 10 \
-  --role arn:aws:iam::123456789012:role/lambda-role \
-  --code S3Bucket=bucket-name,S3Key=function.zip
-
-  * Test your Lambda function:
-  * aws lambda invoke \
-  --function-name my-function \
-  --payload '{"key1": "value1", "key2": "value2", "key3": "value3"}' \
-  output.json
- */

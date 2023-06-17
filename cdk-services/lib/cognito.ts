@@ -15,14 +15,16 @@ import {
 } from "aws-cdk-lib/aws-cognito";
 import { Construct } from "constructs";
 
-interface EcomAuctionApiGatewayProps {}
+interface EcomAuctionApiGatewayProps {
+  googleClientSecret: SecretValue;
+}
 
 export class EcomAuctionApiCognito extends Construct {
   public readonly userPoolArn: string;
   public readonly userPool: UserPool;
   public readonly UserPoolClientId: string;
 
-  constructor(scope: Construct, id: string) {
+  constructor(scope: Construct, id: string, props: EcomAuctionApiGatewayProps) {
     super(scope, id);
 
     // pool contains users information: email, phone, name
@@ -105,7 +107,8 @@ export class EcomAuctionApiCognito extends Construct {
       "Google-EcomAuctionApp",
       {
         clientId: process.env.GOOGLE_APP_ID!,
-        clientSecret: process.env.GOOGLE_SECRET!,
+        // clientSecret: process.env.GOOGLE_SECRET!,
+        clientSecretValue: props.googleClientSecret,
         userPool: userpool,
         attributeMapping: {
           email: ProviderAttribute.GOOGLE_EMAIL, // Attribute mapping allows mapping attributes provided by the third-party identity providers

@@ -2,7 +2,7 @@ import { Request, Response, Application, Router } from "express";
 import requireLogin from "../middlewares/requireLogin";
 import { createClient } from "redis";
 import { Blog } from "../models/Blog";
-import { clearHash } from "../services/cache";
+import { clearHash, clearSingleHash } from "../services/cache";
 import deleteCacheForKey from "../middlewares/clearCache";
 import { getCurrentInvoke } from "@vendia/serverless-express";
 
@@ -19,7 +19,7 @@ redisClient.on("error", (err) => console.log("Redis Client Error", err));
 // const Blog = mongoose.model("Blog");
 
 interface CustomRequest extends Request {
-  user?: {
+  user: {
     id: string;
   };
 }
@@ -28,13 +28,18 @@ blogRouter.get(
   "/blogs/:id",
   requireLogin,
   async (req: Request, res: Response) => {
-    const blog = await Blog.findOne({
-      // @ts-ignore
-      _user: req.user!.id!,
-      _id: req.params.id,
-    });
+    const userId = USERID;
+    try {
+      const blog = await Blog.findOne({
+        _user: userId,
+        _id: req.params.id,
+      }).stringCache();
 
-    res.send(blog);
+      return res.send(blog);
+    } catch (err) {
+      console.log(err);
+      return res.status(500).json(err);
+    }
   }
 );
 
@@ -45,6 +50,14 @@ blogRouter.get("/blogs", requireLogin, async (req: Request, res: Response) => {
     console.log(event, context);
     // const userId = req.user.id;
     const userId = USERID;
+
+    const blogs = await Blog.find({ _user: userId }).cache({
+      key: userId,
+    });
+
+    // always return when you are using serverless express app
+    // it will exit lambda function
+    return res.send(blogs);
     // await redisClient.connect();
     // // const userId = req.user.id
     // const userId = USERID;
@@ -68,12 +81,6 @@ blogRouter.get("/blogs", requireLogin, async (req: Request, res: Response) => {
 
     // console.log("SERVING FROM MONGODB");
     // await redisClient.disconnect();
-
-    const blogs = await Blog.find({ _user: userId }).cache({
-      key: userId,
-    });
-
-    return res.send(blogs);
   } catch (err) {
     console.log(err);
     await redisClient.disconnect();
@@ -85,7 +92,7 @@ blogRouter.post(
   "/blogs",
   requireLogin,
   deleteCacheForKey,
-  async (req: CustomRequest, res: Response) => {
+  async (req: Request, res: Response) => {
     const userId = USERID;
     const { title, content } = req.body;
 
@@ -97,10 +104,50 @@ blogRouter.post(
 
     try {
       await blog.save();
-      res.send(blog);
+      await clearHash(userId);
+      // always return when you are using serverless express app
+      // it will exit lambda function
+      return res.send(blog);
     } catch (err) {
       console.log(err);
-      res.status(400).send(err);
+      return res.status(400).send(err);
+    }
+  }
+);
+
+blogRouter.put(
+  "/blog/:id",
+  requireLogin,
+  deleteCacheForKey,
+  async (req: Request, res: Response) => {
+    const userId = USERID;
+    const { title, content } = req.body;
+    const { id } = req.params;
+
+    const blog = await Blog.findByIdAndUpdate(
+      id,
+      {
+        title,
+        content,
+      },
+      {
+        new: true,
+      }
+    );
+
+    const key = {
+      _user: userId,
+      _id: id,
+    };
+
+    try {
+      await clearSingleHash(key);
+      // always return when you are using serverless express app
+      // it will exit lambda function
+      return res.send(blog);
+    } catch (err) {
+      console.log(err);
+      return res.status(400).send(err);
     }
   }
 );
