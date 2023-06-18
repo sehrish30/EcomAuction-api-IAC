@@ -7,9 +7,10 @@ provider:
 
 custom:
   webpack:
-    webpackConfig: ./webpack.config.js
+    webpackConfig: "webpack.config.js"
   httpApi:
     cors: true
+
 functions:
   graphql:
     # Make sure your file path is correct!

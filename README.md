@@ -198,3 +198,9 @@ To improve the performance of a Node.js Express app, used Worker Threads for hig
 Used @vendia/serverless-express a package that allows you to deploy an Express.js app as a serverless application on AWS Lambda and API Gateway. It provides an easy way to wrap your existing Express.js app in a Lambda function and map API Gateway events to Express.js requests.
 
 <img src="readmeimages/express-app-serverless.png" style="max-width: 100%; height: auto; object-fit: contain;">
+
+## 👉 Architecture of Serverless apollo graphql server
+
+Used startServerAndCreateLambdaHandler it simplifies the process of integrating Apollo Server with AWS Lambda. With this package, you can easily create a Lambda handler function that can start an Apollo Server instance and handle incoming requests.
+
+<img src="readmeimages/apollo.png" style="max-width: 100%; height: auto; object-fit: contain;">

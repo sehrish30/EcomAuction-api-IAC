@@ -52,7 +52,10 @@ export const getAllProducts = async (email: string) => {
     const cachedData = await getDataFromRedis(email || "", params);
 
     if (cachedData) {
-      return cachedData;
+      return {
+        ...cachedData,
+        cached: true,
+      };
     }
 
     const { Items } = await ddbClient.send(new ScanCommand(params));

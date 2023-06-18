@@ -19,18 +19,22 @@ export const getDataFromRedis = async (key: string, subkey: unknown) => {
   await redisClient.connect();
 
   const cachedValue = await redisClient.hGet(key, JSON.stringify(subkey));
-
+  console.log(
+    "BASIT GET CACHEDVALUE",
+    cachedValue,
+    key,
+    JSON.stringify(subkey)
+  );
   if (cachedValue) {
-    // await redisClient.disconnect();
+    await redisClient.quit();
     return JSON.parse(cachedValue);
   }
-  // await redisClient.disconnect();
 };
 
 export const deleteAllKeys = async () => {
   await redisClient.connect();
   await redisClient.flushDb();
-  await redisClient.disconnect();
+  await redisClient.quit();
 };
 
 export const saveDataInRedis = async (
@@ -47,11 +51,26 @@ export const saveDataInRedis = async (
     JSON.stringify(result)
   );
   const cachedValue = await redisClient.hGet(key, JSON.stringify(subkey));
-
+  console.log(
+    "BASIT SET CACHEDVALUE",
+    key,
+    JSON.stringify(subkey),
+    cachedValue
+  );
   // can also simply set with key and value
   // but i wanted to keep key as useremail -> keyOfItem -> value
   // await redisClient.set(subkey, result)
   await redisClient.expire(key, 300); // 300s 5 min
+  const cachedValueAfterExpiry = await redisClient.hGet(
+    key,
+    JSON.stringify(subkey)
+  );
+  console.log(
+    "BASIT SET CACHEDVALUE EXPIRY",
+    key,
+    JSON.stringify(subkey),
+    cachedValueAfterExpiry
+  );
   await redisClient.quit();
 };
 
