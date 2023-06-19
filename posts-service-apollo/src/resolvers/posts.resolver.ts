@@ -1,6 +1,6 @@
-import { PostsModel } from "./../models/posts.mongo.js";
-import { UserModel } from "./../models/user.mongo.js";
-import { authCheck } from "../helpers/auth.js";
+import { PostsModel } from "./../models/posts.mongo";
+import { UserModel } from "./../models/user.mongo";
+import { authCheck } from "../helpers/auth";
 import { ObjectId } from "bson";
 import { PubSub } from "graphql-subscriptions";
 

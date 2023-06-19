@@ -1,5 +1,5 @@
-import { UserModel } from "./../models/user.mongo.js";
-import { authCheck } from "../helpers/auth.js";
+import { UserModel } from "./../models/user.mongo";
+import { authCheck } from "../helpers/auth";
 import shortid from "shortid";
 import { DateTimeResolver } from "graphql-scalars";
 

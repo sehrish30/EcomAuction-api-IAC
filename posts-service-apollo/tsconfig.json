@@ -3,19 +3,16 @@
     "baseUrl": "./src",
     "rootDirs": ["src"],
     "outDir": "./dist",
-    "lib": ["es2020"],
-    "target": "es2020",
-    "module": "esnext",
+    "lib": ["es2017"],
+    "target": "es2017",
+    "module": "CommonJS",
     "moduleResolution": "node",
     "esModuleInterop": true,
     "types": ["node"],
     "skipLibCheck": true,
-    "resolveJsonModule": true,
+    "resolveJsonModule": true
   },
-  "include": [
-    "src/**/*.ts",
-    "serverless.yml"
-  ],
+  "include": ["src/**/*.ts", "serverless.yml"],
   "exclude": [
     "**/*.spec.ts",
     "**/*.test.tsx",

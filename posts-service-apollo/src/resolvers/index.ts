@@ -6,11 +6,13 @@ import url from "url";
 
 import { loadFilesSync } from "@graphql-tools/load-files";
 import { mergeResolvers } from "@graphql-tools/merge";
-import posts from "./posts.resolver.js";
-import auth from "./auth.resolver.js";
+import posts from "./posts.resolver";
+import auth from "./auth.resolver";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = dirname(__filename);
+
+// const resolversArray = loadFilesSync(path.join(__dirname, "*.resolver.ts"));
 
 // const resolversArray = loadFilesSync(path.join(__dirname, "*/.resolver.js"), {
 //   extensions: ["ts"],

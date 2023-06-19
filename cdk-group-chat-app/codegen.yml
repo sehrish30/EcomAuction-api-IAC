@@ -1,0 +1,26 @@
+overwrite: true
+
+schema:
+  # graphql-codegen which schema file(s) it should use
+  - schema/schema.graphql #your schema file
+  - appsync.graphql
+
+generates:
+  # place the output in appsync.d.ts
+  appsync.d.ts:
+    plugins:
+      - typescript
+
+# tell graphql-codegen how to map these scalars to TypeScript
+# add this - appsync.graphql in schema and config
+config:
+  scalars:
+    AWSJSON: string
+    AWSDate: string
+    AWSTime: string
+    AWSDateTime: string
+    AWSTimestamp: number
+    AWSEmail: string
+    AWSURL: string
+    AWSPhone: string
+    AWSIPAddress: string

@@ -204,3 +204,9 @@ Used @vendia/serverless-express a package that allows you to deploy an Express.j
 Used startServerAndCreateLambdaHandler it simplifies the process of integrating Apollo Server with AWS Lambda. With this package, you can easily create a Lambda handler function that can start an Apollo Server instance and handle incoming requests.
 
 <img src="readmeimages/apollo.png" style="max-width: 100%; height: auto; object-fit: contain;">
+
+## 👉 Architecture of Serverless chat app
+
+<img src="readmeimages/table-design.png" style="max-width: 100%; height: auto; object-fit: contain;">
+
+Single table design, we would use one single table for all our app. By having all entities in a single table, we can construct queries that return all the needed data with a single interaction with DynamoDB, speeding up the performance of the application for specific access patterns.

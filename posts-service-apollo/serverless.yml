@@ -5,9 +5,18 @@ provider:
   runtime: nodejs18.x
   region: us-east-2
 
+package:
+  patterns:
+    - "!@aws-sdk/*"
+
 custom:
   webpack:
-    webpackConfig: "webpack.config.js"
+    webpackConfig: "webpack.config.js" # Name of webpack configuration file
+    packager: "npm" # Packager that will be used to package your external modules
+    excludeFiles: src/**/*.test.js # Provide a glob for files to ignore
+    includeModules:
+      forceExclude:
+        - "@aws-sdk/*"
   httpApi:
     cors: true
 

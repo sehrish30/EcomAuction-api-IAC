@@ -1,4 +1,4 @@
-import { authCheck, authCheckREST, tokenIsNotValid } from "./helpers/auth.js";
+import { authCheck, authCheckREST, tokenIsNotValid } from "./helpers/auth";
 import express from "express";
 import morgan from "morgan";
 import {
@@ -17,10 +17,10 @@ import { makeExecutableSchema } from "@graphql-tools/schema";
 import { WebSocketServer } from "ws";
 import { useServer } from "graphql-ws/lib/use/ws";
 
-import { typeDefs } from "./types/index.js";
-import { resolvers } from "./resolvers/index.js";
+import { typeDefs } from "./types/index";
+import { resolvers } from "./resolvers/index";
 import dotenv from "dotenv";
-import connectToDb from "./connectToDb.js";
+import connectToDb from "./connectToDb";
 
 dotenv.config();
 
@@ -132,7 +132,29 @@ const server = new ApolloServer({
 // Hand in the schema we just created and have the
 // WebSocketServer start listening.
 // Ensure we wait for our server to start
-await server.start();
+server.start().then(() => {
+  console.log("SERVER STARTED");
+  // Set up our Express middleware to handle CORS, body parsing,
+  // and our expressMiddleware function.
+  app.use(
+    "/graphql",
+    cors<cors.CorsRequest>({
+      origin: "http://localhost:5173",
+    }),
+    bodyParser.json({ limit: "5mb" }),
+    // expressMiddleware accepts the same arguments:
+    // an Apollo Server instance and optional configuration options
+    expressMiddleware(server, {
+      // we want to pass req, res as context
+      // so now in our resolvers we have access to request and response
+      context: async ({ req, res }) => ({
+        token: req.headers.token,
+        req,
+        res,
+      }),
+    })
+  );
+});
 
 cloudinary.v2.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -200,34 +222,11 @@ app.post("/removeimage", (req, res) => {
     });
 });
 
-// Set up our Express middleware to handle CORS, body parsing,
-// and our expressMiddleware function.
-app.use(
-  "/graphql",
-  cors<cors.CorsRequest>({
-    origin: "http://localhost:5173",
-  }),
-  bodyParser.json({ limit: "5mb" }),
-  // expressMiddleware accepts the same arguments:
-  // an Apollo Server instance and optional configuration options
-  expressMiddleware(server, {
-    // we want to pass req, res as context
-    // so now in our resolvers we have access to request and response
-    context: async ({ req, res }) => ({
-      token: req.headers.token,
-      req,
-      res,
-    }),
-  })
-);
+connectToDb();
 
-await connectToDb();
-
-await new Promise<void>((resolve) =>
-  httpServer.listen({ port: 4000 }, resolve)
-);
-
-console.log(`🚀 Server ready at http://localhost:4000/graphql`);
+httpServer.listen({ port: 4000 }, () => {
+  console.log(`🚀 Server ready at http://localhost:4000/graphql`);
+});
 
 // types
 // https://stackoverflow.com/questions/67830070/graphql-apollo-server-resolvers-arguments-types
