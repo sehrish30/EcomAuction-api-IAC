@@ -10,9 +10,10 @@
     "esModuleInterop": true,
     "types": ["node"],
     "skipLibCheck": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "typeRoots": ["node_modules/@types", "src/@types"]
   },
-  "include": ["src/**/*.ts", "serverless.yml"],
+  "include": ["src/**/*.ts", "serverless.yml", "*.graphql"],
   "exclude": [
     "**/*.spec.ts",
     "**/*.test.tsx",
@@ -22,5 +23,6 @@
     "dist",
     "docs",
     "src/setupTests.js"
-  ]
+  ],
+  "files": ["src/@types/graphql.d.ts"]
 }
