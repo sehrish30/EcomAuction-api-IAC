@@ -26,6 +26,12 @@ dotenv.config();
 
 const schema = makeExecutableSchema({ typeDefs, resolvers });
 
+cloudinary.v2.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 // Create an Express app and HTTP server; we will attach both the WebSocket
 // server and the ApolloServer to this HTTP server.
 const app = express();
@@ -138,9 +144,9 @@ server.start().then(() => {
   // and our expressMiddleware function.
   app.use(
     "/graphql",
-    cors<cors.CorsRequest>({
-      origin: "http://localhost:5173",
-    }),
+    // cors<cors.CorsRequest>({
+    //   // origin: "http://localhost:5173",
+    // }),
     bodyParser.json({ limit: "5mb" }),
     // expressMiddleware accepts the same arguments:
     // an Apollo Server instance and optional configuration options
@@ -154,12 +160,54 @@ server.start().then(() => {
       }),
     })
   );
-});
 
-cloudinary.v2.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  httpServer.listen({ port: 4000 }, () => {
+    console.log(`🚀 Server ready at http://localhost:4000/graphql`);
+  });
+
+  app.use(bodyParser.json({ limit: "5mb" }));
+
+  // rest endpoint
+  app.use("/rest", authCheckREST, (req, res) => {
+    res.json({
+      data: "you hit rest endpoint",
+    });
+  });
+
+  app.post("/uploadimages", authCheckREST, (req, res) => {
+    cloudinary.v2.uploader
+      .upload(req.body.image, { public_id: `${Date.now()}` })
+      .then((result) => {
+        const data = {
+          url: result.secure_url,
+          public_id: result.public_id,
+        };
+        console.log(data);
+        return res.status(200).json(data);
+      })
+      .catch((err) => {
+        console.log(err, cloudinary);
+        return res.status(500).json(err);
+      });
+  });
+
+  app.post("/removeimage", (req, res) => {
+    let image_id = req.body.public_id;
+    cloudinary.v2.uploader
+      .destroy(image_id)
+      .then((result) => {
+        console.log(result);
+
+        res.json({
+          result,
+        });
+      })
+      .catch((err) => {
+        res.status(500).json({
+          err,
+        });
+      });
+  });
 });
 
 // app.use(
@@ -172,61 +220,13 @@ cloudinary.v2.config({
 // app.use(bodyParser.json());
 // app.use(morgan(':graphql-query'));
 
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-  })
-);
-
-app.use(bodyParser.json({ limit: "5mb" }));
-
-// rest endpoint
-app.use("/rest", authCheckREST, (req, res) => {
-  res.json({
-    data: "you hit rest endpoint",
-  });
-});
-
-app.post("/uploadimages", authCheckREST, (req, res) => {
-  cloudinary.v2.uploader
-    .upload(req.body.image, { public_id: `${Date.now()}` })
-    .then((result) => {
-      const data = {
-        url: result.secure_url,
-        public_id: result.public_id,
-      };
-      console.log(data);
-      return res.status(200).json(data);
-    })
-    .catch((err) => {
-      console.log(err, cloudinary);
-      return res.status(500).json(err);
-    });
-});
-
-app.post("/removeimage", (req, res) => {
-  let image_id = req.body.public_id;
-  cloudinary.v2.uploader
-    .destroy(image_id)
-    .then((result) => {
-      console.log(result);
-
-      res.json({
-        result,
-      });
-    })
-    .catch((err) => {
-      res.status(500).json({
-        err,
-      });
-    });
-});
+// app.use(
+//   cors({
+//     origin: "http://localhost:5173",
+//   })
+// );
 
 connectToDb();
-
-httpServer.listen({ port: 4000 }, () => {
-  console.log(`🚀 Server ready at http://localhost:4000/graphql`);
-});
 
 // types
 // https://stackoverflow.com/questions/67830070/graphql-apollo-server-resolvers-arguments-types
@@ -240,6 +240,13 @@ httpServer.listen(PORT, () => {
 
 export const graphqlHandler = startServerAndCreateLambdaHandler(
   server,
-  // We will be using the Proxy V2 handler
-  handlers.createAPIGatewayProxyEventV2RequestHandler()
+  handlers.createAPIGatewayProxyEventV2RequestHandler(),
+  {
+    context: async ({ event, context }) => {
+      return {
+        lambdaEvent: event,
+        lambdaContext: context,
+      };
+    },
+  }
 );

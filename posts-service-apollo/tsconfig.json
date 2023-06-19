@@ -11,9 +11,10 @@
     "types": ["node"],
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "typeRoots": ["node_modules/@types", "src/@types"]
+    "typeRoots": ["node_modules/@types", "src/@types"],
+    "allowSyntheticDefaultImports": true
   },
-  "include": ["src/**/*.ts", "serverless.yml", "*.graphql"],
+  "include": ["src/**/*.ts", "serverless.yml"],
   "exclude": [
     "**/*.spec.ts",
     "**/*.test.tsx",
