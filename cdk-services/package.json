@@ -30,6 +30,7 @@
     "@middy/validator": "^4.5.0",
     "aws-cdk-lib": "2.81.0",
     "constructs": "^10.0.0",
+    "dotenv": "^16.3.1",
     "http-errors": "^2.0.0",
     "jsonwebtoken": "^9.0.0",
     "source-map-support": "^0.5.21"
