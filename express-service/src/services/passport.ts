@@ -2,9 +2,7 @@ import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import mongoose, { Document } from "mongoose";
 
-import dotenv from "dotenv";
-
-dotenv?.config();
+import 'dotenv/config'
 
 interface IUser extends Document {
   googleId: string;

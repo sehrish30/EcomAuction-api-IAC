@@ -7,7 +7,7 @@ import mongoose from "mongoose";
 import cookieSession from "cookie-session";
 import passport from "passport";
 import bodyParser from "body-parser";
-import dotenv from "dotenv";
+import 'dotenv/config'
 import { APIGatewayProxyHandler } from "aws-lambda";
 
 import Authroute from "./routes/authRoutes";
@@ -20,7 +20,6 @@ import "./services/cache";
 
 console.log("RUNNING FUNCTION");
 
-dotenv?.config();
 // mongoose.Promise = global.Promise;
 mongoose.connect(process.env.MONGO_URI!);
 

@@ -1,10 +1,7 @@
 // import mongoose
 import mongoose from "mongoose";
 import { createClient } from "redis";
-import dotenv from "dotenv";
-
-dotenv?.config();
-
+import 'dotenv/config'
 const REDIS_URL = process.env.REDIS_URL!;
 
 interface Icache {

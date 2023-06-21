@@ -1,6 +1,5 @@
 import { RemovalPolicy, SecretValue } from "aws-cdk-lib";
-import * as dotenv from "dotenv";
-dotenv.config();
+import 'dotenv/config'
 import {
   AccountRecovery,
   DateTimeAttribute,

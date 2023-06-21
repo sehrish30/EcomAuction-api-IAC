@@ -8,17 +8,16 @@ import {
 } from "aws-cdk-lib/aws-dynamodb";
 import { Construct } from "constructs";
 
-interface EcomAuctionDynamoDBProps {
-  groupChatTable: Table;
-}
+interface EcomAuctionDynamoDBProps {}
 
 export class EcomAuctionDynamoDB extends Construct {
+  public readonly groupChatTable: Table;
   constructor(scope: Construct, id: string, props: EcomAuctionDynamoDBProps) {
     super(scope, id);
     /**
      * Database
      */
-    props.groupChatTable = new Table(this, "groupChatDynamoDbTable", {
+    this.groupChatTable = new Table(this, "groupChatDynamoDbTable", {
       tableName: "groupChatDynamoDBTable",
       partitionKey: {
         name: "PK",
@@ -34,7 +33,7 @@ export class EcomAuctionDynamoDB extends Construct {
       //   deletionProtection: true, // when u dont want to lose ur dynamodb data
     });
 
-    props.groupChatTable.addGlobalSecondaryIndex({
+    this.groupChatTable.addGlobalSecondaryIndex({
       indexName: "groupsCreatedByUser",
       partitionKey: {
         name: "GSI1PK",
@@ -47,7 +46,7 @@ export class EcomAuctionDynamoDB extends Construct {
       projectionType: ProjectionType.ALL,
     });
 
-    props.groupChatTable.addGlobalSecondaryIndex({
+    this.groupChatTable.addGlobalSecondaryIndex({
       indexName: "getMessagesPerGroup",
       partitionKey: {
         name: "GSI2PK",
@@ -61,7 +60,7 @@ export class EcomAuctionDynamoDB extends Construct {
       projectionType: ProjectionType.ALL,
     });
 
-    props.groupChatTable.addGlobalSecondaryIndex({
+    this.groupChatTable.addGlobalSecondaryIndex({
       indexName: "groupsUserBelongTo",
       partitionKey: {
         name: "GSI3PK",

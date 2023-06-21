@@ -12,7 +12,6 @@ interface EcomAuctionCfnOutputsProps {
   groupChatGraphqlApi: CfnGraphQLApi;
   apiSchema: CfnGraphQLSchema;
   groupChatTable: Table;
-  groupChatTableDatasource: CfnDataSource;
   userPool: UserPool;
   userPoolClient: UserPoolClient;
 }
@@ -22,18 +21,18 @@ export class EcomAuctionCfnOutputs extends Construct {
     super(scope, id);
 
     new CfnOutput(this, "UserPoolId", {
-      value: props.userPool.userPoolId,
+      value: props.userPool?.userPoolId,
     });
     new CfnOutput(this, "UserPoolClientId", {
-      value: props.userPoolClient.userPoolClientId,
+      value: props.userPoolClient?.userPoolClientId,
     });
 
     new CfnOutput(this, "GraphQLAPI ID", {
-      value: props.groupChatGraphqlApi.attrApiId,
+      value: props.groupChatGraphqlApi?.attrApiId,
     });
 
     new CfnOutput(this, "GraphQLAPI URL", {
-      value: props.groupChatGraphqlApi.attrGraphQlUrl,
+      value: props.groupChatGraphqlApi?.attrGraphQlUrl,
     });
   }
 }

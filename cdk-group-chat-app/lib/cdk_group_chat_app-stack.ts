@@ -1,4 +1,4 @@
-import * as cdk from "aws-cdk-lib";
+import { Stack, StackProps } from "aws-cdk-lib";
 import {
   CfnDataSource,
   CfnGraphQLApi,
@@ -11,35 +11,29 @@ import { EcomAuctionCloudWatch } from "./cloud-watch";
 import { EcomAuctionCognito } from "./cognito";
 import { EcomAuctionDynamoDB } from "./dynamodb";
 import { EcomAuctionGraphql } from "./graphql";
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
 
-export class CdkGroupChatAppStack extends cdk.Stack {
-  public readonly groupChatGraphqlApi: CfnGraphQLApi;
-  public readonly apiSchema: CfnGraphQLSchema;
-  public readonly groupChatTable: Table;
-  public readonly groupChatTableDatasource: CfnDataSource;
+export class CdkGroupChatAppStack extends Stack {
+  // public readonly groupChatGraphqlApi: CfnGraphQLApi;
+  // public readonly apiSchema: CfnGraphQLSchema;
+  // public readonly groupChatTable: Table;
+  // public readonly groupChatTableDatasource: CfnDataSource;
 
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
     const cloudwatchLogs = new EcomAuctionCloudWatch(this, "CloudWatch");
     const cognito = new EcomAuctionCognito(this, "Cognito", {});
     const graphql = new EcomAuctionGraphql(this, "Graphql", {
-      groupChatGraphqlApi: this.groupChatGraphqlApi,
       userPool: cognito.userPool,
       cloudWatchRole: cloudwatchLogs.cloudWatchRole,
-      apiSchema: this.apiSchema,
     });
 
-    const dynamodb = new EcomAuctionDynamoDB(this, "dynamodb", {
-      groupChatTable: this.groupChatTable,
-    });
+    const dynamodb = new EcomAuctionDynamoDB(this, "dynamodb", {});
 
     const cfnOutputs = new EcomAuctionCfnOutputs(this, "cfnouput", {
-      groupChatGraphqlApi: this.groupChatGraphqlApi,
-      apiSchema: this.apiSchema,
-      groupChatTable: this.groupChatTable,
-      groupChatTableDatasource: this.groupChatTableDatasource,
+      groupChatGraphqlApi: graphql.groupChatGraphqlApi,
+      apiSchema: graphql.apiSchema,
+      groupChatTable: dynamodb.groupChatTable,
       userPool: cognito.userPool,
       userPoolClient: cognito.userPoolClient,
     });

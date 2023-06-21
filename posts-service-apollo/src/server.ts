@@ -19,10 +19,9 @@ import { useServer } from "graphql-ws/lib/use/ws";
 
 import { typeDefs } from "./types/index";
 import { resolvers } from "./resolvers/index";
-import dotenv from "dotenv";
+import 'dotenv/config'
 import connectToDb from "./connectToDb";
 
-dotenv.config();
 
 const schema = makeExecutableSchema({ typeDefs, resolvers });
 

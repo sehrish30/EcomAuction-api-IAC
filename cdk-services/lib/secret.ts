@@ -2,8 +2,7 @@ import { RemovalPolicy, SecretValue } from "aws-cdk-lib";
 import { Secret } from "aws-cdk-lib/aws-secretsmanager";
 import { Construct } from "constructs";
 
-import * as dotenv from "dotenv";
-dotenv.config();
+import 'dotenv/config'
 
 interface EcomAuctionApiSecretProps {}
 

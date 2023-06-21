@@ -1,25 +1,26 @@
 import { CfnGraphQLApi, CfnGraphQLSchema } from "aws-cdk-lib/aws-appsync";
 import { UserPool } from "aws-cdk-lib/aws-cognito";
 import { Role } from "aws-cdk-lib/aws-iam";
+import { join } from "path";
 
 import { Construct } from "constructs";
 import { readFileSync } from "fs";
 
 interface EcomAuctionGraphqlProps {
-  groupChatGraphqlApi: CfnGraphQLApi;
   userPool: UserPool;
   cloudWatchRole: Role;
-  apiSchema: CfnGraphQLSchema;
 }
 
 export class EcomAuctionGraphql extends Construct {
+  public readonly groupChatGraphqlApi: CfnGraphQLApi;
+  public readonly apiSchema: CfnGraphQLSchema;
   constructor(scope: Construct, id: string, props: EcomAuctionGraphqlProps) {
     super(scope, id);
 
     /**
      * GraphQL API
      */
-    props.groupChatGraphqlApi = new CfnGraphQLApi(this, "groupChatGraphqlApi", {
+    this.groupChatGraphqlApi = new CfnGraphQLApi(this, "groupChatGraphqlApi", {
       name: "groupChat",
       authenticationType: "API_KEY", // default authorizer
       additionalAuthenticationProviders: [
@@ -48,9 +49,11 @@ export class EcomAuctionGraphql extends Construct {
     /**
      * Graphql Schema
      */
-    props.apiSchema = new CfnGraphQLSchema(this, "GroupChatGraphqlApiSchema", {
-      apiId: props.groupChatGraphqlApi.attrApiId,
-      definition: readFileSync("../schema/schema.graphql").toString(),
+    this.apiSchema = new CfnGraphQLSchema(this, "GroupChatGraphqlApiSchema", {
+      apiId: this.groupChatGraphqlApi.attrApiId,
+      definition: readFileSync(
+        join(__dirname, "../schema/schema.graphql")
+      ).toString(),
     });
   }
 }
