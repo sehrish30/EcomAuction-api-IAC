@@ -1,0 +1,9 @@
+get_groups_created_by_user_request.vtl
+
+The first line gets the limit from the request and sets it to a variable called $limit. If no limit was sent, a default of 10 is applied. If a limit of more than 10(> 10) was sent, we default to 10(#set($limit=10)), before proceeding.
+This limit represents the amount of data objects we want back with every request.
+We also get the nextToken from the request and if none was sent, this implies it's the first request. So we default the nextToken variable to null since it's a string.
+For the nextToken variable, $util.toJson($util.defaultIfNull($ctx.args.nextToken, null)).
+Getting the groups created by a user involves using our first Global Secondary index(GSI1), which was  indexName: "groupsCreatedByUser".
+We would use begins_with (a, substr) function in our query operation to carry out this request. We want all groups for a particular user that begins with GROUP#.
+"expression": "#GSI1PK = :GSI1PK and begins_with(#GSI1SK,:GSI1SK)",

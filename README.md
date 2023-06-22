@@ -210,3 +210,4 @@ Used startServerAndCreateLambdaHandler it simplifies the process of integrating 
 <img src="readmeimages/table-design.png" style="max-width: 100%; height: auto; object-fit: contain;">
 Single table design, we would use one single table for all our app. By having all entities in a single table, we can construct queries that return all the needed data with a single interaction with DynamoDB, speeding up the performance of the application for specific access patterns.
 <img src="readmeimages/chat.png" style="max-width: 100%; height: auto; object-fit: contain;">
+<img src="readmeimages/appsync-aws.png" style="max-width: 100%; height: auto; object-fit: contain;">

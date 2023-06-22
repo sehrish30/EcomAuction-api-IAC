@@ -11,6 +11,8 @@ interface EcomAuctionIAMRoleProps {}
 
 export class EcomAuctionIAMRole extends Construct {
   public readonly appsyncLambdaRole: Role;
+  public readonly dynamoDBRole: Role;
+
   constructor(scope: Construct, id: string, props: EcomAuctionIAMRoleProps) {
     super(scope, id);
 
@@ -22,5 +24,15 @@ export class EcomAuctionIAMRole extends Construct {
     );
 
     this.appsyncLambdaRole = appsyncLambdaRole;
+
+    const dynamoDBRole = new Role(this, "DynamoDBRole", {
+      assumedBy: new ServicePrincipal("appsync.amazonaws.com"),
+    });
+
+    dynamoDBRole.addManagedPolicy(
+      ManagedPolicy.fromAwsManagedPolicyName("AmazonDynamoDBFullAccess")
+    );
+
+    this.dynamoDBRole = dynamoDBRole;
   }
 }

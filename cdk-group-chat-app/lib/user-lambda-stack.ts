@@ -30,6 +30,7 @@ export class UserLamdaStacks extends Stack {
       appsyncLambdaRole: IAMRole.appsyncLambdaRole,
       apiSchema: props.apiSchema,
       groupChatTable: props.groupChatTable,
+      dynamoDBRole: IAMRole.dynamoDBRole
     });
 
     const { groupChatGraphqlApi, groupChatTable, apiSchema } = props;

@@ -10,34 +10,93 @@ import { CodeSigningConfig, Runtime, Tracing } from "aws-cdk-lib/aws-lambda";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { SigningProfile, Platform } from "aws-cdk-lib/aws-signer";
 import { Construct } from "constructs";
+import { readFileSync } from "fs";
 import { join } from "path";
+// https://github.com/trey-rosius/cdk_group_chat/blob/master/lib/group_lambda_stack.ts
+
+// Create Lambda Handler
+// Create and Assign Lambda Appsync role
+// Assign Lambda Cloudwatch service role
+// Create Lambda Datasource
+// Create lambda resolver and attach to Datasource
+// Attach Lambda resolver to api schema.
+// Grant DynamoDB full access to lambda function
 
 interface EcomAuctionUserLambdaProps {
   groupChatGraphqlApi: CfnGraphQLApi;
   appsyncLambdaRole: Role;
   apiSchema: CfnGraphQLSchema;
   groupChatTable: Table;
+  dynamoDBRole: Role;
 }
 
 export class EcomAuctionUserLambda extends Construct {
+  public readonly groupChatTableDatasource: CfnDataSource;
+  region: any;
   constructor(scope: Construct, id: string, props: EcomAuctionUserLambdaProps) {
     super(scope, id);
 
     // define the lambda datasource and resolver resources
-    const userLambda = this.createUserLambda();
-    const userToGroupLambda = this.addUserToGroupLambda();
-    const datasource = this.createUserDataSource(
+    // const userLambda = this.createUserLambda();
+
+    const userLambda = this.createLambda(
+      "lambda_fns/user",
+      "CreateUserAccountsLambda.ts",
+      "userLambdaHandler"
+    );
+    const createGroupLambda = this.createLambda(
+      "lambda_fns/group",
+      "CreateGroupHandler.ts",
+      "createGroupLambdaHandler"
+    );
+
+    const addUserToGroupLambda = this.createLambda(
+      "lambda_fns/group",
+      "AddUserToGroupHandler.ts",
+      "addUserToGroupLambdaHandler"
+    );
+
+    const userDataSource = this.createLambdaDataSource(
       props.groupChatGraphqlApi,
       userLambda,
       props.appsyncLambdaRole,
       props.groupChatTable,
-      props.apiSchema
+      props.apiSchema,
+      "UserLambdaDatasource",
+      "createUserAccount"
+    );
+    const createGroupLambdaDataSource = this.createLambdaDataSource(
+      props.groupChatGraphqlApi,
+      createGroupLambda,
+      props.appsyncLambdaRole,
+      props.groupChatTable,
+      props.apiSchema,
+      "createGroupLambdaDataSource",
+      "createGroup"
+    );
+    const addUserToGroupDataSource = this.createLambdaDataSource(
+      props.groupChatGraphqlApi,
+      addUserToGroupLambda,
+      props.appsyncLambdaRole,
+      props.groupChatTable,
+      props.apiSchema,
+      "addUserToGroupDataSource",
+      "addUserToGroup"
+    );
+
+    this.groupChatTableDatasource = this.getGroupsCreatedByUserDataSource(
+      props.groupChatGraphqlApi,
+      props.groupChatTable,
+      props.apiSchema,
+      props.dynamoDBRole
     );
   }
 
-  private createUserLambda(): NodejsFunction {
-    // first create a code signing profile in AWS Signer
-    // which includes the signing algorithm
+  private createLambda(
+    directory: string,
+    functionName: string,
+    lambdaName: string
+  ): NodejsFunction {
     const signingProfile = new SigningProfile(this, "SigningProfile", {
       platform: Platform.AWS_LAMBDA_SHA384_ECDSA,
     });
@@ -46,95 +105,47 @@ export class EcomAuctionUserLambda extends Construct {
       signingProfiles: [signingProfile],
     });
 
-    // only valid signature function is deployed
-    return new NodejsFunction(this, "GroupChatUserHandler", {
+    const lambda = new NodejsFunction(this, lambdaName, {
       tracing: Tracing.ACTIVE,
       codeSigningConfig,
       runtime: Runtime.NODEJS_18_X,
       handler: "handler",
-      entry: join(__dirname, "lambda_fns/user", "CreateUserAccountsLambda.ts"),
-      memorySize: 1024,
-    });
-  }
-
-  private addUserToGroupLambda() {
-    const signingProfile = new SigningProfile(this, "SigningProfile", {
-      platform: Platform.AWS_LAMBDA_SHA384_ECDSA,
-    });
-
-    const codeSigningConfig = new CodeSigningConfig(this, "CodeSigningConfig", {
-      signingProfiles: [signingProfile],
-    });
-
-    const addUserToGroupLambda = new NodejsFunction(
-      this,
-      "addUserToGroupLambdaHandler",
-      {
-        tracing: Tracing.ACTIVE,
-        codeSigningConfig,
-        runtime: Runtime.NODEJS_18_X,
-        handler: "handler",
-        entry: join(__dirname, "lambda_fns/group", "AddUserToGroupHandler.ts"),
-
-        memorySize: 1024,
-      }
-    );
-
-    addUserToGroupLambda.role?.addManagedPolicy(
-      ManagedPolicy.fromAwsManagedPolicyName(
-        "service-role/AWSAppSyncPushToCloudWatchLogs"
-      )
-    );
-    return addUserToGroupLambda;
-  }
-
-  private createGroupLambda() {
-    const signingProfile = new SigningProfile(this, "SigningProfile", {
-      platform: Platform.AWS_LAMBDA_SHA384_ECDSA,
-    });
-
-    const codeSigningConfig = new CodeSigningConfig(this, "CodeSigningConfig", {
-      signingProfiles: [signingProfile],
-    });
-
-    const createGroupLambda = new NodejsFunction(this, "GroupLambdaHandler", {
-      tracing: Tracing.ACTIVE,
-      codeSigningConfig,
-      runtime: Runtime.NODEJS_18_X,
-      handler: "handler",
-      entry: join(__dirname, "lambda_fns/group", "CreateGroupHandler.ts"),
+      entry: join(__dirname, directory, functionName),
 
       memorySize: 1024,
     });
 
-    createGroupLambda.role?.addManagedPolicy(
+    // Assign Lambda Cloudwatch service role
+    lambda.role?.addManagedPolicy(
       ManagedPolicy.fromAwsManagedPolicyName(
         "service-role/AWSAppSyncPushToCloudWatchLogs"
       )
     );
 
-    return createGroupLambda;
+    return lambda;
   }
 
-  private createUserDataSource(
+  private createLambdaDataSource(
     groupChatGraphqlApi: CfnGraphQLApi,
-    userLambda: NodejsFunction,
+    lambda: NodejsFunction,
     appsyncLambdaRole: Role,
     groupChatTable: Table,
-    apiSchema: CfnGraphQLSchema
+    apiSchema: CfnGraphQLSchema,
+    name: string,
+    resolverFieldName: string
   ) {
     const lambdaDataSources: CfnDataSource = new CfnDataSource(
       this,
       "UserLambdaDatasource",
       {
         apiId: groupChatGraphqlApi.attrApiId,
-        name: "UserLambdaDatasource",
+        name,
         type: "AWS_LAMBDA",
 
         lambdaConfig: {
-          lambdaFunctionArn: userLambda.functionArn,
+          lambdaFunctionArn: lambda.functionArn,
         },
-        serviceRoleArn: appsyncLambdaRole.roleArn,
+        serviceRoleArn: appsyncLambdaRole.roleArn, // assumes this role when accessing the data source
       }
     );
 
@@ -145,91 +156,68 @@ export class EcomAuctionUserLambda extends Construct {
       {
         apiId: groupChatGraphqlApi.attrApiId,
         typeName: "Mutation",
-        fieldName: "createUserAccount",
+        fieldName: resolverFieldName,
         dataSourceName: lambdaDataSources.attrName,
       }
     );
-    //Grant permissions and add dependsOn
 
-    createUserAccountResolver.addDependency(apiSchema);
-    groupChatTable.grantFullAccess(userLambda);
-    //set the database table name as an environment variable for the lambda function
-    userLambda.addEnvironment("GroupChat_DB", groupChatTable.tableName);
-  }
-
-  private createGroupResource(
-    groupChatGraphqlApi: CfnGraphQLApi,
-    apiSchema: CfnGraphQLSchema,
-    appsyncLambdaRole: Role,
-    groupChatTable: Table
-  ) {
-    const lambdaDataSources: CfnDataSource = new CfnDataSource(
-      this,
-      "GroupLambdaDatasource",
-      {
-        apiId: groupChatGraphqlApi.attrApiId,
-        name: "GroupLambdaDatasource",
-        type: "AWS_LAMBDA",
-
-        lambdaConfig: {
-          lambdaFunctionArn: createGroupLambda.functionArn,
-        },
-        serviceRoleArn: appsyncLambdaRole.roleArn,
-      }
-    );
-
-    //create a resolver and attach the datasource to it
+    // Attach Lambda resolver to api schema
     // resolver depends on our graphql schema
-    const createGroupResolver: CfnResolver = new CfnResolver(
-      this,
-      "createGroupResolver",
-      {
-        apiId: groupChatGraphqlApi.attrApiId,
-        typeName: "Mutation",
-        fieldName: "createGroup",
-        dataSourceName: lambdaDataSources.attrName,
-      }
-    );
-    createGroupResolver.addDependency(apiSchema);
-    groupChatTable.grantFullAccess(createGroupLambda);
-    createGroupLambda.addEnvironment("GroupChat_DB", groupChatTable.tableName);
+    createUserAccountResolver.addDependency(apiSchema);
+
+    //Grant permissions and add dependsOn
+    groupChatTable.grantFullAccess(lambda);
+
+    //set the database table name as an environment variable for the lambda function
+    lambda.addEnvironment("GroupChat_DB", groupChatTable.tableName);
   }
-  private addUserToGroupDataSource(
+
+  private getGroupsCreatedByUserDataSource(
     groupChatGraphqlApi: CfnGraphQLApi,
+    groupChatTable: Table,
     apiSchema: CfnGraphQLSchema,
-    appsyncLambdaRole: Role,
-    groupChatTable: Table
+    dynamoDBRole: Role
   ) {
-    const addUserToGroupDataSources: CfnDataSource = new CfnDataSource(
+    // datasource for this resolver, is created from the dynamoDB table
+    const dataSource = new CfnDataSource(
       this,
-      "AddUserToGroupLambdaDatasource",
+      "groupChatDynamoDBTableDataSource",
       {
         apiId: groupChatGraphqlApi.attrApiId,
-        name: "AddUserToGroupLambdaDatasource",
-        type: "AWS_LAMBDA",
-
-        lambdaConfig: {
-          lambdaFunctionArn: addUserToGroupLambda.functionArn,
+        name: "AcmsDynamoDBTableDataSource",
+        type: "AMAZON_DYNAMODB",
+        dynamoDbConfig: {
+          tableName: groupChatTable.tableName,
+          awsRegion: this.region, // this.region is default region of the stack
         },
-        serviceRoleArn: appsyncLambdaRole.roleArn,
+        serviceRoleArn: dynamoDBRole.roleArn,
       }
     );
 
-    const addUserToGroupResolver: CfnResolver = new CfnResolver(
+    //  connect these vtl mapping templates to a resolver
+    // Attach mapping templates and dataSource to resolver
+    // since the datasource is dynamodb resolver connects to dynamodb datasource through vtl
+    // vtl directly communicates to dynamodb without the need of lambda
+    const getGroupsCreatedByUserResolver: CfnResolver = new CfnResolver(
       this,
-      "addUserToGroupResolver",
+      "getGroupsCreatedByUserResolver",
       {
         apiId: groupChatGraphqlApi.attrApiId,
-        typeName: "Mutation",
-        fieldName: "addUserToGroup",
-        dataSourceName: addUserToGroupDataSources.attrName,
+        typeName: "Query",
+        fieldName: "getAllGroupsCreatedByUser",
+        dataSourceName: dataSource.name,
+        requestMappingTemplate: readFileSync(
+          join(__dirname, "./vtl/get_groups_created_by_user_request.vtl")
+        ).toString(),
+
+        responseMappingTemplate: readFileSync(
+          join(__dirname, "./vtl/get_groups_created_by_user_response.vtl")
+        ).toString(),
       }
     );
-    addUserToGroupResolver.addDependency(apiSchema);
-    groupChatTable.grantFullAccess(addUserToGroupLambda);
-    addUserToGroupLambda.addEnvironment(
-      "GroupChat_DB",
-      groupChatTable.tableName
-    );
+
+    getGroupsCreatedByUserResolver.addDependency(apiSchema);
+
+    return dataSource;
   }
 }
