@@ -42,6 +42,6 @@ import auth from "./auth.resolver";
 // const resolversArray = [posts, auth];
 
 const resolversArray = loadFilesSync(path.join(__dirname, "*.resolver.js"));
+export const resolvers = mergeResolvers(resolversArray);
 console.log({ resolversArray });
 // Resolvers define how to fetch the types defined in your schema.
-export const resolvers = mergeResolvers(resolversArray);

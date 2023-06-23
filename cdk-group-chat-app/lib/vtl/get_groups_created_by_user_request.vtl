@@ -1,10 +1,15 @@
 
+## gets the limit from the request and sets it to a variable called $limit
+## If no limit was sent, a default of 10 is applied.
 #set($limit=$util.defaultIfNull($ctx.args.limit, 10))
+## If a limit of more than 10(> 10) was sent, we default to 10(#set($limit=10)), before proceeding
+## limit represents the amount of data objects we want back with every request.
 #if($limit>10)
   #set($limit=10)
 #end
  #set($gsi1pk = $util.dynamodb.toStringJson("USER#${ctx.args.userId}"))
  #set($gsi1sk = $util.dynamodb.toStringJson("GROUP#"))
+## get the nextToken from the request and if none was sent, this implies it's the first request. So we default the nextToken variable to null since it's a string
 {
     "version" : "2018-05-29",
 

@@ -1,0 +1,14 @@
+
+{
+    "version": "2018-05-29",
+    "operation": "GetItem",
+    "key" : {
+        "PK": $util.dynamodb.toStringJson("GROUP#${ctx.source.groupId}"),
+        "SK": $util.dynamodb.toStringJson("GROUP#${ctx.source.groupId}")
+
+
+    },
+    "consistentRead": true
+}
+
+

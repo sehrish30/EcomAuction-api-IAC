@@ -19,9 +19,8 @@ import { useServer } from "graphql-ws/lib/use/ws";
 
 import { typeDefs } from "./types/index";
 import { resolvers } from "./resolvers/index";
-import 'dotenv/config'
+import "dotenv/config";
 import connectToDb from "./connectToDb";
-
 
 const schema = makeExecutableSchema({ typeDefs, resolvers });
 
@@ -134,6 +133,7 @@ const server = new ApolloServer({
     },
   ],
 });
+
 // Hand in the schema we just created and have the
 // WebSocketServer start listening.
 // Ensure we wait for our server to start

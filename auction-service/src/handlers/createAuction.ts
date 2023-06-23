@@ -11,7 +11,7 @@ import commonMiddleware from "../lib/commonMiddleware";
 import createAuctionSchema from "../lib/schemas/createAuctionsSchema";
 
 const client = new DynamoDBClient({
-  region: "us-east-2",
+  region: process.env.AWS_REGION,
   maxAttempts: 3,
 });
 

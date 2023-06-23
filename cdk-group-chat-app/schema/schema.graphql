@@ -73,7 +73,7 @@ input UpdateUserInput @aws_cognito_user_pools {
 type Message @aws_cognito_user_pools {
   id: ID!
   userId: String!
-  user: User
+  user: User # have to use a nested resolver to resolve the user field.
   groupId: String!
   messageText: String!
   createdOn: AWSTimestamp!
@@ -91,10 +91,9 @@ input MessageInput @aws_cognito_user_pools {
 
 type UserGroup @aws_cognito_user_pools {
   userId: String!
-  group: Group!
+  group: Group! # there is a nested group object within the UserGroup object, and this field would need to be resolved.
   createdOn: AWSTimestamp!
-}
-
+} # we used getGroupResolver check in user-lambda.ts to resolve these in items:[UserGroup]
 type Group @aws_cognito_user_pools {
   id: ID!
   userId: String!
@@ -116,3 +115,18 @@ type UserGroupResult @aws_cognito_user_pools {
   items: [UserGroup!]! @aws_cognito_user_pools
   nextToken: String
 }
+
+# How do we get a group object for each item in the UserGroup list.
+# $context variable map looks like in vtl.
+# This map holds all of the contextual information for your resolver invocation and has the following structure
+# {
+#    "arguments" : { ... },
+#    "source" : { ... },
+#    "result" : { ... },
+#    "identity" : { ... },
+#    "request" : { ... },
+#    "info": { ... }
+# }
+# The source map contains the resolution of the parent field.
+# We'll get the groupId from this map and pass it into the get group request template.
+# For every UserGroup item, we'll get the groupId from the source variable map and pass it as input to the get_group_request.vtl.

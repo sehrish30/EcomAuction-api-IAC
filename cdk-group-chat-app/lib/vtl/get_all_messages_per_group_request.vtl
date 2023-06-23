@@ -1,0 +1,31 @@
+ 
+#set($limit=$util.defaultIfNull($ctx.args.limit, 10))
+#if($limit>100)
+  #set($limit=100)
+#end
+ #set($gsi2pk = $util.dynamodb.toStringJson("GROUP#${ctx.args.groupId}"))
+ #set($gsi2sk = $util.dynamodb.toStringJson("MESSAGE#"))
+{
+    "version" : "2018-05-29",
+
+    "operation" : "Query",
+    "limit": $util.toJson($limit),
+    "nextToken": $util.toJson($ctx.args.nextToken),
+    "query" : {
+        "expression": "#GSI2PK = :GSI2PK and begins_with(#GSI2SK,:GSI2SK)",
+        "expressionNames":{
+        "#GSI2PK":"GSI2PK",
+        "#GSI2SK":"GSI2SK"
+        },
+        
+        "expressionValues" : {
+            ":GSI2PK" : $gsi2pk,
+            ":GSI2SK" :$gsi2sk
+        },
+        
+    },
+    "index":"getMessagesPerGroup",
+    "scanIndexForward" : true
+
+
+}
