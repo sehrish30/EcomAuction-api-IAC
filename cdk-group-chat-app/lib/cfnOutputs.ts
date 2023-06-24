@@ -6,6 +6,7 @@ import {
 } from "aws-cdk-lib/aws-appsync";
 import { UserPool, UserPoolClient } from "aws-cdk-lib/aws-cognito";
 import { Table } from "aws-cdk-lib/aws-dynamodb";
+import { CodeSigningConfig } from "aws-cdk-lib/aws-lambda";
 import { Construct } from "constructs";
 
 interface EcomAuctionCfnOutputsProps {

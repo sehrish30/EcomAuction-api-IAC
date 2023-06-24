@@ -11,8 +11,8 @@ import { EcomAuctionIAMRole } from "./iam-role";
 import { ManagedPolicy, Role } from "aws-cdk-lib/aws-iam";
 import { CodeSigningConfig, Runtime, Tracing } from "aws-cdk-lib/aws-lambda";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
-import { SigningProfile, Platform } from "aws-cdk-lib/aws-signer";
 import { join } from "path";
+import { SigningProfile, Platform } from "aws-cdk-lib/aws-signer";
 
 interface UserLambdaStackProps extends StackProps {
   groupChatGraphqlApi: CfnGraphQLApi;
@@ -36,13 +36,9 @@ export class UserLamdaStacks extends Stack {
     const userLambda = this.createLambda(
       "lambda_fns/user",
       "CreateUserAccountsLambda.ts",
-      "userLambdaHandler"
+      "userLambdaHandler",
     );
-    // const createGroupLambda = this.createLambda(
-    //   "lambda_fns/group",
-    //   "CreateGroupHandler.ts",
-    //   "createGroupLambdaHandler"
-    // );
+  
 
     const lambdaDataSources = this.createDataSource(
       props.groupChatGraphqlApi,
@@ -80,7 +76,6 @@ export class UserLamdaStacks extends Stack {
       runtime: Runtime.NODEJS_18_X,
       handler: "handler",
       entry: join(__dirname, directory, functionName),
-
       memorySize: 1024,
     });
 

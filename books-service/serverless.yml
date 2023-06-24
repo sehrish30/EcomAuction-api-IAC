@@ -95,6 +95,7 @@ appSync:
       field: createBook
       functions:
         - createBook
+
   dataSources:
     booksTable: # database resource used by lambdas
       type: AMAZON_DYNAMODB

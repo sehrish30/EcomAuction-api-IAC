@@ -23,9 +23,9 @@ interface GroupStackProps extends StackProps {
   groupChatTableDatasource: CfnDataSource;
 }
 
-export class GroupStack extends Stack {
+export class GroupLamdaStacks extends Stack {
   constructor(scope: Construct, id: string, props: GroupStackProps) {
-    super(scope, id);
+    super(scope, id, props);
 
     const createGroupLambda = this.createLambda(
       "lambda_fns/group",
@@ -79,7 +79,8 @@ export class GroupStack extends Stack {
       "getAllGroupsCreatedByUser",
       "Query",
       "./vtl/get_groups_created_by_user_response.vtl",
-      "./lib/vtl/get_groups_created_by_user_request.vtl"
+      "./vtl/get_groups_created_by_user_request.vtl",
+      "getAllGroupsCreatedByUserResolver"
     );
 
     this.getVtlResolver(
@@ -89,7 +90,8 @@ export class GroupStack extends Stack {
       "getGroupsUserBelongsTo",
       "Query",
       "./vtl/get_groups_user_belongs_to_request.vtl",
-      "./vtl/get_groups_user_belongs_to_response.vtl"
+      "./vtl/get_groups_user_belongs_to_response.vtl",
+      "getGroupsCreatedByUserResolver"
     );
     this.getVtlResolver(
       props.groupChatGraphqlApi,
@@ -98,7 +100,8 @@ export class GroupStack extends Stack {
       "group",
       "UserGroup",
       "./vtl/get_group_request.vtl",
-      "./vtl/get_group_response.vtl"
+      "./vtl/get_group_response.vtl",
+      "getUserGroupResolver"
     );
   }
 
@@ -130,13 +133,21 @@ export class GroupStack extends Stack {
     functionName: string,
     lambdaName: string
   ): NodejsFunction {
-    const signingProfile = new SigningProfile(this, "SigningProfile", {
-      platform: Platform.AWS_LAMBDA_SHA384_ECDSA,
-    });
+    const signingProfile = new SigningProfile(
+      this,
+      `SigningProfile-${functionName}`,
+      {
+        platform: Platform.AWS_LAMBDA_SHA384_ECDSA,
+      }
+    );
 
-    const codeSigningConfig = new CodeSigningConfig(this, "CodeSigningConfig", {
-      signingProfiles: [signingProfile],
-    });
+    const codeSigningConfig = new CodeSigningConfig(
+      this,
+      `CodeSigningConfig-${functionName}`,
+      {
+        signingProfiles: [signingProfile],
+      }
+    );
 
     const lambda = new NodejsFunction(this, lambdaName, {
       tracing: Tracing.ACTIVE,
@@ -195,30 +206,27 @@ export class GroupStack extends Stack {
     fieldName: string,
     typeName: string,
     requestTemplate: string,
-    responseTemplate: string
+    responseTemplate: string,
+    resolverName: string
   ) {
     //  connect these vtl mapping templates to a resolver
     // Attach mapping templates and dataSource to resolver
     // since the datasource is dynamodb resolver connects to dynamodb datasource through vtl
     // vtl directly communicates to dynamodb without the need of lambda
     // resolver using vtl
-    const vtlResolver: CfnResolver = new CfnResolver(
-      this,
-      "getGroupsCreatedByUserResolver",
-      {
-        apiId: groupChatGraphqlApi.attrApiId,
-        typeName,
-        fieldName,
-        dataSourceName: groupChatTableDatasource.name,
-        requestMappingTemplate: readFileSync(
-          join(__dirname, requestTemplate)
-        ).toString(),
+    const vtlResolver: CfnResolver = new CfnResolver(this, resolverName, {
+      apiId: groupChatGraphqlApi.attrApiId,
+      typeName,
+      fieldName,
+      dataSourceName: groupChatTableDatasource.name,
+      requestMappingTemplate: readFileSync(
+        join(__dirname, requestTemplate)
+      ).toString(),
 
-        responseMappingTemplate: readFileSync(
-          join(__dirname, responseTemplate)
-        ).toString(),
-      }
-    );
+      responseMappingTemplate: readFileSync(
+        join(__dirname, responseTemplate)
+      ).toString(),
+    });
 
     // Attach resolver to graphql schema
     vtlResolver.addDependency(apiSchema);

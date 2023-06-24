@@ -6,6 +6,8 @@ import {
 } from "aws-cdk-lib/aws-appsync";
 import { Table } from "aws-cdk-lib/aws-dynamodb";
 import { Role } from "aws-cdk-lib/aws-iam";
+import { CodeSigningConfig } from "aws-cdk-lib/aws-lambda";
+import { Platform, SigningProfile } from "aws-cdk-lib/aws-signer";
 import { Construct } from "constructs";
 import { EcomAuctionCfnOutputs } from "./cfnOutputs";
 import { EcomAuctionCloudWatch } from "./cloud-watch";
@@ -42,14 +44,6 @@ export class GroupChatAppStack extends Stack {
     this.apiSchema = graphql.apiSchema;
     this.groupChatGraphqlApi = graphql.groupChatGraphqlApi;
 
-    const cfnOutputs = new EcomAuctionCfnOutputs(this, "cfnouput", {
-      groupChatGraphqlApi: graphql.groupChatGraphqlApi,
-      apiSchema: graphql.apiSchema,
-      groupChatTable: dynamodb.groupChatTable,
-      userPool: cognito.userPool,
-      userPoolClient: cognito.userPoolClient,
-    });
-
     this.groupChatTableDatasource = new CfnDataSource(
       this,
       "groupChatDynamoDBTableDataSource",
@@ -64,5 +58,13 @@ export class GroupChatAppStack extends Stack {
         serviceRoleArn: this.IAMROLE.dynamoDBRole.roleArn,
       }
     );
+
+    const cfnOutputs = new EcomAuctionCfnOutputs(this, "cfnouput", {
+      groupChatGraphqlApi: graphql.groupChatGraphqlApi,
+      apiSchema: graphql.apiSchema,
+      groupChatTable: dynamodb.groupChatTable,
+      userPool: cognito.userPool,
+      userPoolClient: cognito.userPoolClient,
+    });
   }
 }

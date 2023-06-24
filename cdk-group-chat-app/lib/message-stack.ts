@@ -29,7 +29,7 @@ export class MessageStack extends Stack {
     id: string,
     props: EcomAuctionMessageStackProps
   ) {
-    super(scope, id);
+    super(scope, id, props);
 
     const { groupChatTable } = props;
     const { appsyncLambdaRole } = props.IAMRole;
@@ -89,7 +89,8 @@ export class MessageStack extends Stack {
         "Query",
         "getAllMessagesPerGroup",
         "./vtl/get_all_messages_per_group_request.vtl",
-        "./vtl/get_all_messages_per_group_response.vtl"
+        "./vtl/get_all_messages_per_group_response.vtl",
+        "getResultMessagesPerGroupResolver"
       );
 
     const getUserPerMessageResolver = this.createResolverVtltoDataSource(
@@ -98,7 +99,8 @@ export class MessageStack extends Stack {
       "Message",
       "user",
       "./vtl/get_user_per_message_request.vtl",
-      "./vtl/get_user_per_message_response.vtl"
+      "./vtl/get_user_per_message_response.vtl",
+      "getUserPerMessageResolver"
     );
     getUserPerMessageResolver.addDependency(getResultMessagesPerGroupResolver);
   }
@@ -109,14 +111,21 @@ export class MessageStack extends Stack {
     lambdaName: string,
     groupChatTable: Table
   ): NodejsFunction {
-    const signingProfile = new SigningProfile(this, "SigningProfile", {
-      platform: Platform.AWS_LAMBDA_SHA384_ECDSA,
-    });
+    const signingProfile = new SigningProfile(
+      this,
+      `SigningProfile-${functionName}`,
+      {
+        platform: Platform.AWS_LAMBDA_SHA384_ECDSA,
+      }
+    );
 
-    const codeSigningConfig = new CodeSigningConfig(this, "CodeSigningConfig", {
-      signingProfiles: [signingProfile],
-    });
-
+    const codeSigningConfig = new CodeSigningConfig(
+      this,
+      `CodeSigningConfig-${functionName}`,
+      {
+        signingProfiles: [signingProfile],
+      }
+    );
     const lambda = new NodejsFunction(this, lambdaName, {
       tracing: Tracing.ACTIVE,
       codeSigningConfig,
@@ -183,20 +192,21 @@ export class MessageStack extends Stack {
     typeName: string,
     fieldName: string,
     requestVtlTemplate: string,
-    responseVtlTemplate: string
+    responseVtlTemplate: string,
+    resolverName: string
   ): CfnResolver {
-    const resolver: CfnResolver = new CfnResolver(
-      this,
-      "getResultMessagesPerGroupResolver",
-      {
-        apiId: groupChatGraphqlApi.attrApiId,
-        typeName,
-        fieldName,
-        dataSourceName: dataSource.name,
-        requestMappingTemplate: readFileSync(requestVtlTemplate).toString(),
-        responseMappingTemplate: readFileSync(responseVtlTemplate).toString(),
-      }
-    );
+    const resolver: CfnResolver = new CfnResolver(this, resolverName, {
+      apiId: groupChatGraphqlApi.attrApiId,
+      typeName,
+      fieldName,
+      dataSourceName: dataSource.name,
+      requestMappingTemplate: readFileSync(
+        join(__dirname, requestVtlTemplate)
+      ).toString(),
+      responseMappingTemplate: readFileSync(
+        join(__dirname, responseVtlTemplate)
+      ).toString(),
+    });
 
     return resolver;
   }

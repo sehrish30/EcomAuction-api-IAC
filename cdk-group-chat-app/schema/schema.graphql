@@ -5,6 +5,9 @@ schema {
 }
 
 type Subscription {
+  # subscription response must be optional
+  # response for typingIndicator mutation and subscription has to be same, names can be different
+  # subscription resolver is optional, usually only used for authentication
   typingIndicator: TypingIndicator
     @aws_subscribe(mutations: ["typingIndicator"])
   newMessage: Message @aws_subscribe(mutations: ["sendMessage"])

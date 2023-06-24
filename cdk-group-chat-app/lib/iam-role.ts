@@ -1,3 +1,4 @@
+import { PhysicalName } from "aws-cdk-lib";
 import { ManagedPolicy, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 
@@ -13,6 +14,7 @@ export class EcomAuctionIAMRole extends Construct {
     // rile to allow appsync access dynamodb
     const appsyncLambdaRole = new Role(this, "LambdaRole", {
       assumedBy: new ServicePrincipal("appsync.amazonaws.com"),
+      roleName:  "appsyncAllow",
     });
     appsyncLambdaRole.addManagedPolicy(
       ManagedPolicy.fromAwsManagedPolicyName("AWSLambda_FullAccess")

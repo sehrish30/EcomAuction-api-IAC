@@ -1,3 +1,75 @@
+type Query {
+  getBookById(bookId: ID!): Book! @aws_iam # this will use iam role rest of these will use standarad authentication which is user pool
+  listBooks(
+    limit: Int!
+    nextPrice: Float
+    nextBookId: String
+    nextCreatedAt: String
+  ): BooksPage!
+  myOrders(limit: Int!, nextToken: String): OrderItemsPage!
+}
+
+type NextToken {
+  price: Float
+  bookId: String
+  createdAt: String
+}
+
+type OrderItemsPage {
+  OrderItems: [OrderItem]
+  nextToken: String
+}
+
+type OrderItem {
+  userId: ID! # get this userId from cognito token
+  orderId: ID!
+  book: Book!
+  quantity: Int!
+}
+
+type BooksPage {
+  books: [Book]
+  nextToken: NextToken
+}
+
+# can specify which properties to return if user only has iam role
+# ex: bookId: ID! @aws_iam
+# but if u want to show all attrbites to user u can either add @aws_iam to all properties
+# or at the type level
+type Book @aws_iam @aws_cognito_user_pools {
+  bookId: ID!
+  title: String!
+  description: String
+  imageUrl: AWSURL
+  author: String!
+  price: Float!
+  createdAt: AWSDateTime
+  updatedAt: AWSDateTime
+}
+
+input BookInput {
+  title: String!
+  description: String
+  imageUrl: AWSURL
+  author: String!
+  price: Float!
+}
+
+input OrderInput {
+  items: [OrderItemInput]
+}
+
+input OrderItemInput {
+  bookId: ID!
+  quantity: Int!
+}
+
+type Mutation {
+  # can only be called by admin, my groupName is Admin
+  createBook(newBook: BookInput): Book! @aws_auth(cognito_groups: ["Admin"])
+  createOrder(newOrder: OrderInput): Boolean!
+}
+
 schema {
   query: Query
   mutation: Mutation
@@ -5,115 +77,9 @@ schema {
 }
 
 type Subscription {
-  typingIndicator: TypingIndicator
-    @aws_subscribe(mutations: ["typingIndicator"])
-  newMessage: Message @aws_subscribe(mutations: ["sendMessage"])
+  # every connected client will be notified when book is created
+  # because book is @aws_iam @aws_cognito_user_pools where @aws_iam is for public users
+  onCreateBook: Book @aws_subscribe(mutations: ["createBook"])
 }
 
-type Mutation {
-  createUserAccount(input: UserInput!): User! @aws_cognito_user_pools
-  updateUserAccount(input: UpdateUserInput!): User! @aws_cognito_user_pools
-
-  createGroup(input: GroupInput!): Group! @aws_cognito_user_pools
-  addUserToGroup(userId: String!, groupId: String!): Boolean!
-    @aws_cognito_user_pools
-  sendMessage(input: MessageInput!): Message! @aws_cognito_user_pools
-
-  typingIndicator(
-    userId: String!
-    groupId: String!
-    typing: Boolean!
-  ): TypingIndicator! @aws_cognito_user_pools
-}
-
-type TypingIndicator @aws_cognito_user_pools {
-  userId: String!
-  groupId: String!
-  typing: Boolean!
-}
-type Query {
-  getAllGroupsCreatedByUser(
-    userId: String!
-    limit: Int
-    nextToken: String
-  ): GroupResult! @aws_cognito_user_pools
-  getAllMessagesPerGroup(
-    groupId: String!
-    limit: Int
-    nextToken: String
-  ): MessageResult! @aws_cognito_user_pools
-  getGroupsUserBelongsTo(
-    userId: String!
-    limit: Int
-    nextToken: String
-  ): UserGroupResult! @aws_cognito_user_pools
-}
-
-type User @aws_cognito_user_pools {
-  id: ID!
-  username: String!
-  email: String!
-  profilePicUrl: String!
-  updatedOn: AWSDateTime
-  createdOn: AWSDateTime
-}
-
-input UserInput @aws_cognito_user_pools {
-  username: String!
-  email: String!
-  profilePicUrl: String!
-}
-
-input UpdateUserInput @aws_cognito_user_pools {
-  id: ID!
-  username: String!
-  profilePicUrl: String!
-}
-
-type Message @aws_cognito_user_pools {
-  id: ID!
-  userId: String!
-  user: User
-  groupId: String!
-  messageText: String!
-  createdOn: AWSTimestamp!
-}
-
-type MessageResult @aws_cognito_user_pools {
-  items: [Message!]!
-  nextToken: String
-}
-input MessageInput @aws_cognito_user_pools {
-  userId: String!
-  groupId: String!
-  messageText: String!
-}
-
-type UserGroup @aws_cognito_user_pools {
-  userId: String!
-  group: Group!
-  createdOn: AWSTimestamp!
-}
-
-type Group @aws_cognito_user_pools {
-  id: ID!
-  userId: String!
-  name: String!
-  description: String!
-  createdOn: AWSTimestamp!
-}
-
-input GroupInput {
-  userId: String!
-  name: String!
-  description: String!
-}
-type GroupResult @aws_cognito_user_pools {
-  items: [Group!]! @aws_cognito_user_pools
-  nextToken: String
-}
-type UserGroupResult @aws_cognito_user_pools {
-  items: [UserGroup!]! @aws_cognito_user_pools
-  nextToken: String
-}
 # npx graphql-codegen

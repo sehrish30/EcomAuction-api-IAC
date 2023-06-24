@@ -207,7 +207,24 @@ Used startServerAndCreateLambdaHandler it simplifies the process of integrating 
 
 ## 👉 Architecture of Serverless chat app
 
-<img src="readmeimages/table-design.png" style="max-width: 100%; height: auto; object-fit: contain;">
-Single table design, we would use one single table for all our app. By having all entities in a single table, we can construct queries that return all the needed data with a single interaction with DynamoDB, speeding up the performance of the application for specific access patterns.
+Developed an AWS AppSync API that utilizes GraphQL queries, mutations, and subscriptions, and leverages VTL (Velocity Template Language) to interface with a DynamoDB datasource for handling queries. Additionally, implemented AWS Lambda functions to support mutations and subscriptions.
+
 <img src="readmeimages/chat.png" style="max-width: 100%; height: auto; object-fit: contain;">
 <img src="readmeimages/appsync-aws.png" style="max-width: 100%; height: auto; object-fit: contain;">
+
+Single table design, we would use one single table for all our app. By having all entities in a single table, we can construct queries that return all the needed data with a single interaction with DynamoDB, speeding up the performance of the application for specific access patterns.
+
+#### Access patterns:
+
+✅ Create/Update/Delete User Accounts.
+✅ Create/Update/Delete groups.
+✅ Add a users to a group.
+✅ Send Message in group.
+✅ Typing Indicator when a group member is typing.
+✅ Get all messages per group.
+✅ Get Groups a user belongs to.
+✅ Get all groups created by user.
+
+<img src="readmeimages/table-design.png" style="max-width: 100%; height: auto; object-fit: contain;">
+<img src="readmeimages/single-table-design.png" style="max-width: 100%; height: auto; object-fit: contain;">
+<img src="readmeimages/no_sql_workbench.png" style="max-width: 100%; height: auto; object-fit: contain;">
