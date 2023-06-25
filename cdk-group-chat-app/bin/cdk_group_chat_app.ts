@@ -85,3 +85,7 @@ So a secure web socket connection would be created when a user sends a message a
   Message
 > = async (event) => {
  */
+
+/**
+ * cdk deploy --all
+ */

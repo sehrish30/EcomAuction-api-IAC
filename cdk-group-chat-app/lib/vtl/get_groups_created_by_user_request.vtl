@@ -1,4 +1,3 @@
-
 ## gets the limit from the request and sets it to a variable called $limit
 ## If no limit was sent, a default of 10 is applied.
 #set($limit=$util.defaultIfNull($ctx.args.limit, 10))

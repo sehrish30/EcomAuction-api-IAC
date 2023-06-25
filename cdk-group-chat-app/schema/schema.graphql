@@ -10,7 +10,10 @@ type Subscription {
   # subscription resolver is optional, usually only used for authentication
   typingIndicator: TypingIndicator
     @aws_subscribe(mutations: ["typingIndicator"])
-  newMessage: Message @aws_subscribe(mutations: ["sendMessage"])
+    @aws_cognito_user_pools
+  newMessage: Message
+    @aws_subscribe(mutations: ["sendMessage"])
+    @aws_cognito_user_pools
 }
 
 type Mutation {

@@ -30,15 +30,19 @@ export class GroupLamdaStacks extends Stack {
     const createGroupLambda = this.createLambda(
       "lambda_fns/group",
       "CreateGroupHandler.ts",
-      "createGroupLambdaHandler"
+      "createGroupLambdaHandler",
+      props.groupChatTable
     );
 
     const addUserToGroupLambda = this.createLambda(
       "lambda_fns/group",
       "AddUserToGroupHandler.ts",
-      "addUserToGroupLambdaHandler"
+      "addUserToGroupLambdaHandler",
+      props.groupChatTable
     );
 
+    // we need to create our datasource
+    // attach lambda to datasource
     const createGroupDataSource = this.createDataSource(
       props.groupChatGraphqlApi,
       createGroupLambda,
@@ -48,11 +52,12 @@ export class GroupLamdaStacks extends Stack {
 
     const addUserToGroupDataSource = this.createDataSource(
       props.groupChatGraphqlApi,
-      createGroupLambda,
+      addUserToGroupLambda,
       props.IAMRole.appsyncLambdaRole,
       "AddUserToGroupLambdaDatasource"
     );
 
+    // we create a resolver and attach the datasource to it.
     const addUserToGroupResolver = this.createLambdaResolver(
       props.groupChatGraphqlApi,
       addUserToGroupLambda,
@@ -78,8 +83,8 @@ export class GroupLamdaStacks extends Stack {
       props.groupChatTableDatasource,
       "getAllGroupsCreatedByUser",
       "Query",
-      "./vtl/get_groups_created_by_user_response.vtl",
       "./vtl/get_groups_created_by_user_request.vtl",
+      "./vtl/get_groups_created_by_user_response.vtl",
       "getAllGroupsCreatedByUserResolver"
     );
 
@@ -118,7 +123,6 @@ export class GroupLamdaStacks extends Stack {
         apiId: groupChatGraphqlApi.attrApiId,
         name: dataSourceName,
         type: "AWS_LAMBDA",
-
         lambdaConfig: {
           lambdaFunctionArn: lambda.functionArn,
         },
@@ -131,7 +135,8 @@ export class GroupLamdaStacks extends Stack {
   private createLambda(
     directory: string,
     functionName: string,
-    lambdaName: string
+    lambdaName: string,
+    groupChatTable: Table
   ): NodejsFunction {
     const signingProfile = new SigningProfile(
       this,
@@ -166,6 +171,12 @@ export class GroupLamdaStacks extends Stack {
       )
     );
 
+    //Grant permissions and add dependsOn
+    groupChatTable.grantReadWriteData(lambda);
+
+    //set the database table name as an environment variable for the lambda function
+    lambda.addEnvironment("GroupChat_DB", groupChatTable.tableName);
+
     return lambda;
   }
 
@@ -190,9 +201,6 @@ export class GroupLamdaStacks extends Stack {
     // resolver depends on our graphql schema
     resolver.addDependency(apiSchema);
 
-    //Grant permissions and add dependsOn
-    groupChatTable.grantFullAccess(lambda);
-
     //set the database table name as an environment variable for the lambda function
     lambda.addEnvironment("GroupChat_DB", groupChatTable.tableName);
 
@@ -205,8 +213,8 @@ export class GroupLamdaStacks extends Stack {
     groupChatTableDatasource: CfnDataSource,
     fieldName: string,
     typeName: string,
-    requestTemplate: string,
-    responseTemplate: string,
+    requestVtlTemplate: string,
+    responseVtlTemplate: string,
     resolverName: string
   ) {
     //  connect these vtl mapping templates to a resolver
@@ -220,11 +228,10 @@ export class GroupLamdaStacks extends Stack {
       fieldName,
       dataSourceName: groupChatTableDatasource.name,
       requestMappingTemplate: readFileSync(
-        join(__dirname, requestTemplate)
+        join(__dirname, requestVtlTemplate)
       ).toString(),
-
       responseMappingTemplate: readFileSync(
-        join(__dirname, responseTemplate)
+        join(__dirname, responseVtlTemplate)
       ).toString(),
     });
 

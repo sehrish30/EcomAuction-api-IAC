@@ -24,7 +24,7 @@ export const handler: AppSyncResolverHandler<
     tableName = "groupChatDynamoDBTable";
   }
 
-  logger.info(`group input info", ${JSON.stringify(event.arguments)}`);
+  logger.info(`group input info", ${JSON.stringify(event.arguments)}}`);
   const { userId, groupId } = event.arguments;
 
   const params = {

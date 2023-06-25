@@ -1,3 +1,4 @@
+import { RemovalPolicy } from "aws-cdk-lib";
 import {
   AccountRecovery,
   UserPool,
@@ -29,6 +30,14 @@ export class EcomAuctionCognito extends Construct {
           required: true,
           mutable: true,
         },
+      },
+      removalPolicy: RemovalPolicy.DESTROY, // remove it when cdk destroy
+    });
+
+    // we can add custom domain as well
+    userPool.addDomain("CognitoDomain", {
+      cognitoDomain: {
+        domainPrefix: "ecom-auction-app",
       },
     });
 

@@ -41,6 +41,7 @@ export const handler: AppSyncResolverHandler<
   };
   const command = new PutCommand(book);
 
+  // use Query to get nextToken
   const getBookCommand = new GetCommand({
     TableName: process.env.BOOKES_TABLE as string,
     Key: {
