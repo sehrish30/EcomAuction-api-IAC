@@ -53,6 +53,7 @@ const createAuction = async (event: APIGatewayEvent, ctx: Context) => {
 
   const command = new PutCommand(auction);
   let response;
+
   try {
     response = await ddbDocClient.send(command);
   } catch (err) {

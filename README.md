@@ -228,3 +228,124 @@ Single table design, we would use one single table for all our app. By having al
 <img src="readmeimages/table-design.png" style="max-width: 100%; height: auto; object-fit: contain;">
 <img src="readmeimages/single-table-design.png" style="max-width: 100%; height: auto; object-fit: contain;">
 <img src="readmeimages/no_sql_workbench.png" style="max-width: 100%; height: auto; object-fit: contain;">
+
+## Nanny Booking API
+
+✅ Authenticating and authorizing(Groups) a GraphQL API using AWS Cognito.
+✅ Effectively using AWS Lambda Powertools to properly instrument your application.
+✅ Orchestrating part of an application with Step Functions.
+✅ Decoupling an Application with Queues.
+
+ENTITIES:
+📌 User
+📌 Job
+📌 Application
+📌 Ratings
+
+#### User:
+
+• Admin
+• Parent(Single or Couple)
+• Nanny
+
+User Profiles:
+
+Nanny attributes:
+• Full Names
+• Date of Birth
+• Gender
+• Spoken languages
+• Current Location
+• Nationality
+• Region of Origin
+• National ID Card or Some Kind of identification
+• Phone Number(Just of verification)
+• Profile Picture
+• Hourly Rate
+• Level of Education
+• Smoke/drink etc
+• Any Disability
+• Brief Description
+• List of activities they can do
+
+Parent attributes:
+• Full Names
+• Location
+• Date of Birth
+• Phone Number(Just for Verification)
+• List of Job postings
+
+#### Job:
+
+Parents can put up a job posting like(We need somebody, aged between 21 and 40 to look after our son everyday from 8AM to 6PM.
+Job Type
+Schedule(Time and Date)
+Location
+Number of Kids
+Cost etc.
+
+#### Applications:
+
+Nannies should be able to apply to a job posted by a Parent.
+Rate/Feedback:
+Rate/Leave feedback on a nanny after job completion by a parent.
+Rate/Leave Feedback on a parent after a job completion by a nanny.
+
+#### Ratings and Reviews
+
+Nanny's
+• Answer a set of questions based on their experience with a Parent.
+• Leave a brief review
+• Leave a rating
+Parents
+• Answer a set of questions based on their experience with a Nanny.
+• Leave a brief review
+• Leave a rating
+• Reviews/Ratings will be publicly visible on each users profile.
+
+#### Access patterns:
+
+🔹 Create/Read/Update/Delete User account(Parent,Nanny)
+🔹 Update User Account Status(VERIFIED,UNVERIFIED,DEACTIVATED) by admin only
+🔹 Create Job(By Parent Only)
+🔹 Apply to Job(By Nanny Only)
+🔹 Book Nanny(By Parent Only)
+🔹 View all Open/Closed Jobs(By Nanny or Admins Only)
+🔹 View all jobs applied to (By Nanny or admins only)
+🔹 View all applications for a job(By Parent or Admin only)
+🔹 View All jobs per parent(Only Parents or admin). A Parent can only view their jobs
+🔹 View All Nannies/Parents
+
+#### Database Design:
+
+1. Create/Read/Update/Delete User (Transaction Process)
+   PK=USER#<Username>
+   SK=USER#<Username>
+   PK=USEREMAIL#<Email>
+   SK=USEREMAIL#<Email>
+2. Create/Update/Read/Delete Jobs
+   PK=USER#<Username>
+   SK=JOB#<JobId>
+3. Create/Update Application
+   PK=JOB#<JobId>#APPLICATION#<ApplicationId>
+   PK=JOB#<JobId>#APPLICATION#<ApplicationId>
+4. List all jobs per User
+   PK=USER#<Username>
+   SK= BEGINS_WITH('JOB#')
+5. Book a Nanny (StepFunctions Workflow)
+   PK=USER#<Username>
+   SK=JOB#<JobId>
+   PK=JOB#<JobId>#APPLICATION#<ApplicationId>
+   PK=JOB#<JobId>#APPLICATION#<ApplicationId>
+
+Global Secondary Indexes:
+
+1. jobApplications: Get applications for a job. Parents have to see all applications for the job they posted, in-order to book who they intend to work with.
+   PK = GSI1PK AND SK=GSI1SK
+2. jobsAppliedTo: A Nanny would definitely love to see all the jobs they applied to
+   PK = GSI2PK AND SK=GSI2SK
+3. getJobsByStatus: It's essential to display OPEN jobs to jobseekers. The system admin would also love to see open /closed jobs for app performance.
+   PK = jobStatus AND SK=GSI1SK
+
+<img src="readmeimages/database_design.png" style="max-width: 100%; height: auto; object-fit: contain;">
+<img src="readmeimages/nanny-job.png" style="max-width: 100%; height: auto; object-fit: contain;">

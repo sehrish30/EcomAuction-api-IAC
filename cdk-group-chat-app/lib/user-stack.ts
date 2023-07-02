@@ -36,9 +36,8 @@ export class UserLamdaStacks extends Stack {
     const userLambda = this.createLambda(
       "lambda_fns/user",
       "CreateUserAccountsLambda.ts",
-      "userLambdaHandler",
+      "userLambdaHandler"
     );
-  
 
     const lambdaDataSources = this.createDataSource(
       props.groupChatGraphqlApi,

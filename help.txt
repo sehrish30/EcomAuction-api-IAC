@@ -150,3 +150,8 @@ example in notes service
 5) and infra service has certificate manager for this domain
 
 Serverless caching using momentum
+
+
+cdk init --language=typescript app
+
+git rm -r --cached .

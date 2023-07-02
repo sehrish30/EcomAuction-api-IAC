@@ -88,4 +88,7 @@ So a secure web socket connection would be created when a user sends a message a
 
 /**
  * cdk deploy --all
+ * cdk deploy UserLambdaStacks/GroupLambdaStacks/MessageLambdaStacks
+ * cdk destroy UserLambdaStacks/GroupLambdaStacks/MessageLambdaStacks
+ * cdk destroy --all
  */

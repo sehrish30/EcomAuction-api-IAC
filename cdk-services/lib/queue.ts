@@ -25,7 +25,7 @@ export class EcomAuctionQueue extends Construct {
   private checkProductsQueue(checkProductLambdaWorker: IFunction): IQueue {
     const queue = new Queue(this, "CheckProductsQueue", {
       queueName: "CheckProductsQueue",
-      visibilityTimeout: Duration.seconds(30), // 6*3 also default
+      visibilityTimeout: Duration.seconds(30), // 6*3 also default // 6*lambdaTimeout
       retentionPeriod: Duration.seconds(300), // 5 minutes
     });
 
