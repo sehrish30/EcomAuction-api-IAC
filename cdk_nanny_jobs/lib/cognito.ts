@@ -71,7 +71,6 @@ export class EcomAuctionNannyJobCognito extends Construct {
 
     new CfnUserPoolGroup(this, "Nanny", {
       userPoolId: userPool.userPoolId,
-
       groupName: "nanny",
       precedence: 123,
     });

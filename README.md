@@ -349,3 +349,85 @@ Global Secondary Indexes:
 
 <img src="readmeimages/database_design.png" style="max-width: 100%; height: auto; object-fit: contain;">
 <img src="readmeimages/nanny-job.png" style="max-width: 100%; height: auto; object-fit: contain;">
+
+## APARTMENT COMPLEX MANAGEMENT SYSTEM
+
+ACCESS PATTERNS:
+
+Create/update/delete Administrator accounts.
+
+PK:USER#EMAIL
+SK:USER#EMAIL
+
+<br/>
+
+Create/Update/Read/List/Delete Buildings
+
+PK:BUILDING
+SK:BUILDING#BUILDINGID
+
+<br/>
+
+Create/Update/Delete Apartments
+
+PK:BUILDING#BUILDINGID
+SK:APARTMENT#APARTMENTID
+
+<br/>
+
+list all buildings
+
+starts_with(BUILDING#)
+PK:BUILDING
+SK: BUILDING#
+
+<br/>
+
+list apartments per building
+
+starts_with(APARTMENT#)
+PK:BUILDING#BUILDINGID
+SK:APARTMENT#
+
+<br/>
+
+list all bookings per apartment
+
+begins_with(BOOKINGS#)
+PK:APARTMENTS#APARTMENTID
+SK:BOOKINGS#
+
+<br/>
+
+Create/update/read/delete account
+
+PK:USER#EMAIL
+SK:USER#EMAIL
+
+<br/>
+
+List all Buildings in their Area
+
+filter with `longitude` and `latitude`
+PK:BUILDING
+SK:BUILDING#BUILDINGID
+
+<br/>
+
+List available apartments for each building
+
+conditional expression `where status==available`
+PK:BUILDING#BUILDINGID
+SK:APARTMENT#
+
+<br/>
+
+Book an apartment
+
+BOOKING_STATUS = PENDING
+
+PK:USER#USERNAME
+SK:APARTMENT#APARTMENTID
+GSI
+GSI1PK:BUILDING#BUILDINGID
+GSI1SK:APARTMENT#APARTMENTID#STATUS

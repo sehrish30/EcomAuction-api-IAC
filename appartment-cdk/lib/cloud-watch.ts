@@ -1,9 +1,9 @@
 import { ManagedPolicy, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 
-interface EcomAuctionCloudWatchProps {}
+interface EcomApartmentCloudWatchProps {}
 
-export class EcomAuctionCloudWatch extends Construct {
+export class EcomApartmentCloudWatch extends Construct {
   public readonly cloudWatchRole: Role;
   public readonly appsyncLambdaRole: Role;
 

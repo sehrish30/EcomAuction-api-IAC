@@ -1,0 +1,163 @@
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}
+
+type Mutation {
+  createUserAccount(input: UserInput!): User! @aws_cognito_user_pools
+  updateUserAccount(input: UpdateUserInput!): User! @aws_cognito_user_pools
+  deleteUserAccount(id: ID!): Boolean! @aws_cognito_user_pools
+
+  createBuilding(input: BuildingInput!): Building!
+    @aws_cognito_user_pools(cognito_groups: ["Admins"])
+
+  createApartment(input: ApartmentInput): Apartment!
+    @aws_cognito_user_pools(cognito_groups: ["Admins"])
+
+  createApartmentBooking(input: CreateBookingInput!): Booking!
+    @aws_cognito_user_pools(cognito_groups: ["Tenants"])
+}
+
+type Subscription {
+  onCreateApartmentBooking: Booking
+    @aws_cognito_user_pools
+    @aws_subscribe(mutations: ["createApartmentBooking"])
+}
+
+type Query {
+  getUserAccount(id: ID!): User! @aws_cognito_user_pools
+  getBookings(bookingId: String): Booking
+
+  getAllUserAccounts(pagination: Pagination): UsersResult!
+    @aws_cognito_user_pools(cognito_groups: ["Admins", "Caretakers"])
+
+  getAllBookingsPerApartment(apartmentId: String!): [Booking!]!
+    @aws_cognito_user_pools(cognito_groups: ["Admins", "Caretakers"])
+}
+
+input CreateBookingInput {
+  userId: String!
+  apartmentId: String!
+  startDate: AWSDate!
+  endDate: AWSDate!
+  bookingStatus: BookingStatus!
+}
+
+input BuildingInput {
+  name: String!
+  userId: String!
+  numberOfApartments: Int!
+  address: AddressInput!
+}
+
+type Address @aws_cognito_user_pools {
+  streetAddress: String!
+  postalCode: String!
+  city: String!
+  country: String!
+}
+input AddressInput {
+  streetAddress: String!
+  postalCode: String!
+  city: String!
+  country: String!
+}
+type User @aws_cognito_user_pools {
+  id: ID!
+  firstName: String!
+  lastName: String!
+  email: String!
+  verified: Boolean!
+  userType: UserType!
+  updatedOn: AWSDateTime
+  createdOn: AWSDateTime!
+}
+type Booking @aws_cognito_user_pools {
+  id: ID!
+  userId: String!
+  user: User!
+  startDate: AWSDate!
+  endDate: AWSDate!
+  apartmentId: String!
+  bookingStatus: BookingStatus!
+  updateOn: AWSDateTime!
+  createdOn: AWSDateTime!
+}
+
+enum BookingStatus {
+  PENDING
+  APPROVED
+  CANCELLED
+}
+
+input UserInput {
+  firstName: String!
+  lastName: String!
+  email: String!
+  verified: Boolean!
+  userType: UserType!
+}
+
+input UpdateUserInput {
+  firstName: String!
+  lastName: String!
+  verified: Boolean!
+  userType: UserType!
+}
+
+type Building @aws_cognito_user_pools {
+  id: ID!
+  userId: String!
+  name: String!
+  address: Address!
+  numberOfApartments: Int!
+  apartments: [Apartment!]
+  updateOn: AWSDateTime!
+  createdOn: AWSDateTime!
+}
+
+type Apartment @aws_cognito_user_pools {
+  id: ID!
+  apartmentNumber: String!
+  building: Building!
+  tenant: User!
+  caretaker: User!
+  apartmentType: ApartmentType!
+  apartmentStatus: ApartmentStatus!
+  kitchen: Boolean!
+  numberOfRooms: Int!
+  createdOn: AWSDateTime!
+}
+
+input ApartmentInput @aws_cognito_user_pools {
+  apartmentNumber: String!
+  buildingId: String!
+  numberOfRooms: Int!
+  apartmentType: ApartmentType!
+  apartmentStatus: ApartmentStatus!
+}
+type UsersResult @aws_cognito_user_pools {
+  items: [User!]!
+  nextToken: String
+}
+
+input Pagination {
+  limit: Int
+  nextToken: String
+}
+
+enum ApartmentType {
+  SINGLE_ROOM
+  DOUBLE_ROOM
+  VILLA
+}
+enum ApartmentStatus {
+  VACANT
+  OCCUPIED
+}
+enum UserType {
+  ADMIN
+  TENANT
+  CARETAKER
+}

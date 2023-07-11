@@ -84,8 +84,6 @@ export const handler = async ({
 
     console.log(response);
 
-    // const newItems = getItems?.Payload?.filter((item) => item.id !== jobId);
-
     return getItems.Payload;
   } catch (err) {
     console.log(err);

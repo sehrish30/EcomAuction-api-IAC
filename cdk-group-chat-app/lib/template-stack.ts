@@ -9,6 +9,6 @@ export class EcomAuctionTemplateStack extends Stack {
     id: string,
     props: EcomAuctionTemplateStackProps
   ) {
-    super(scope, id);
+    super(scope, id, props);
   }
 }
