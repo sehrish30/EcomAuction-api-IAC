@@ -5,6 +5,7 @@ import { AppartmentCdkStack } from "../lib/apartment-cdk-stack";
 import { ApartmentUserStack } from "../lib/user-stack";
 import { BuildingLamdaStacks } from "../lib/building-stack";
 import { EcomAuctionApartmentStack } from "../lib/apartment-lambda-stack";
+import { ApartmentBookingLambdaStack } from "../lib/booking-lamda-stack";
 
 const app = new cdk.App();
 const acmsStack = new AppartmentCdkStack(app, "AppartmentCdkStack", {
@@ -46,3 +47,14 @@ new EcomAuctionApartmentStack(app, "AppartmentLambdaStack", {
   acmsGraphqlApi: acmsStack.acmsGraphqlApi,
   appsyncLambdaRole: acmsStack.appsyncLambdaRole,
 });
+
+new ApartmentBookingLambdaStack(app, "AppartmentBookingLambdaStack", {
+  env: {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    region: process.env.CDK_DEFAULT_REGION,
+  },
+  acmsDatabase: acmsStack.acmsDatabase,
+  apiSchema: acmsStack.apiSchema,
+  acmsGraphqlApi: acmsStack.acmsGraphqlApi,
+  appsyncLambdaRole: acmsStack.appsyncLambdaRole,
+})

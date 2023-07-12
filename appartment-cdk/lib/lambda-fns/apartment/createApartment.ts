@@ -1,12 +1,13 @@
 import { Logger } from "@aws-lambda-powertools/logger";
 import { DynamoDB } from "aws-sdk";
 import { uuid } from "../../utils";
-import CreateApartmentInput from "./CreateApartmentInput";
 
 import { ApartmentEntity } from "./entities/apartmentEntity";
 
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { ApartmentInput, MutationCreateApartmentArgs } from "../../../appsync";
+import CreateApartmentInput from "./CreateApartmentInput";
 
 const client = new DynamoDBClient({
   region: process.env.AWS_REGION,
@@ -16,7 +17,7 @@ const client = new DynamoDBClient({
 const ddbDocClient = DynamoDBDocumentClient.from(client);
 
 async function createApartment(
-  appsyncInput: CreateApartmentInput,
+  appsyncInput: MutationCreateApartmentArgs,
   logger: Logger
 ) {
   const documentClient = new DynamoDB.DocumentClient();
@@ -34,9 +35,11 @@ async function createApartment(
     id: id,
     ...appsyncInput.input,
     createdOn,
+    kitchen: false,
   });
 
   logger.info(`create apartment input info", ${apartmentInput}`);
+
   const params = {
     TableName: tableName,
     Item: apartmentInput.toItem(),

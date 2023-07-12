@@ -32,7 +32,11 @@ type Query {
   getAllUserAccounts(pagination: Pagination): UsersResult!
     @aws_cognito_user_pools(cognito_groups: ["Admins", "Caretakers"])
 
-  getAllBookingsPerApartment(apartmentId: String!): [Booking!]!
+  getAllBookingsPerApartment(
+    apartmentId: String!
+    limit: Int!
+    nextToken: String
+  ): [Booking!]!
     @aws_cognito_user_pools(cognito_groups: ["Admins", "Caretakers"])
 }
 

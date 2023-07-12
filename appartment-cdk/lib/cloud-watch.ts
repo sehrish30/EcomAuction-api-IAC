@@ -33,10 +33,13 @@ export class EcomApartmentCloudWatch extends Construct {
     const appsyncLambdaRole = new Role(this, "LambdaRole", {
       assumedBy: new ServicePrincipal("appsync.amazonaws.com"),
       roleName: "appsyncAllow",
+      managedPolicies: [
+        ManagedPolicy.fromAwsManagedPolicyName("AWSLambda_FullAccess"),
+        ManagedPolicy.fromAwsManagedPolicyName(
+          "service-role/AWSLambdaSQSQueueExecutionRole"
+        ),
+      ],
     });
-    appsyncLambdaRole.addManagedPolicy(
-      ManagedPolicy.fromAwsManagedPolicyName("AWSLambda_FullAccess")
-    );
 
     return appsyncLambdaRole;
   }

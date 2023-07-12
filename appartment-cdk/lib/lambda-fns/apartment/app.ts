@@ -3,13 +3,15 @@ import createApartment from "./createApartment";
 import { AppSyncResolverEvent, Context } from "aws-lambda";
 
 import CreateApartmentInput from "./CreateApartmentInput";
+import { MutationCreateApartmentArgs } from "../../../appsync";
 const logger = new Logger({ serviceName: "ApartmentComplexManagementApp" });
 
-export const handler = async(
-    event: AppSyncResolverEvent<CreateApartmentInput>,
-    context: Context
-)=> {
-    logger.addContext(context);
+export const handler = async (
+  event: AppSyncResolverEvent<MutationCreateApartmentArgs>,
+  context: Context
+) => {
+  logger.addContext(context);
+
   logger.info(
     `appsync event arguments ${JSON.stringify(
       event.arguments.input
@@ -22,4 +24,4 @@ export const handler = async(
     default:
       return null;
   }
-}
+};

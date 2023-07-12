@@ -3,6 +3,7 @@ import {
   CfnDataSource,
   CfnGraphQLApi,
   CfnGraphQLSchema,
+  CfnResolver,
 } from "aws-cdk-lib/aws-appsync";
 import { Table } from "aws-cdk-lib/aws-dynamodb";
 import { ManagedPolicy, Role } from "aws-cdk-lib/aws-iam";
@@ -42,6 +43,14 @@ export class EcomAuctionApartmentStack extends Stack {
       lambda,
       appsyncLambdaRole,
       "ACMSApartmentLambdaDatasource"
+    );
+
+    this.createResolver(
+      acmsGraphqlApi,
+      lambdaDataSource,
+      apiSchema,
+      "Mutation",
+      "createApartment"
     );
   }
 
@@ -114,5 +123,24 @@ export class EcomAuctionApartmentStack extends Stack {
       }
     );
     return lambdaDataSources;
+  }
+  private createResolver(
+    acmsGraphqlApi: CfnGraphQLApi,
+    lambdaDataSources: CfnDataSource,
+    apiSchema: CfnGraphQLSchema,
+    typeName: string,
+    fieldName: string
+  ) {
+    const createBuildingResolver: CfnResolver = new CfnResolver(
+      this,
+      "createBuildingResolver",
+      {
+        apiId: acmsGraphqlApi.attrApiId,
+        typeName,
+        fieldName,
+        dataSourceName: lambdaDataSources.attrName,
+      }
+    );
+    createBuildingResolver.addDependency(apiSchema);
   }
 }

@@ -1,10 +1,10 @@
 interface ApartmentParameters {
   id: string;
-  apartmentNumber: string;
-  buildingId: string;
-  numberOfRooms: number;
-  apartmentType: string;
-  apartmentStatus: string;
+  apartmentNumber?: string;
+  buildingId?: string;
+  numberOfRooms?: number;
+  apartmentType?: string;
+  apartmentStatus?: string;
   kitchen: boolean;
   createdOn: string;
 }
@@ -12,12 +12,13 @@ interface ApartmentParameters {
 export class ApartmentEntity {
   id: string;
   apartmentNumber: string;
-  buildingId: string;
-  numberOfRooms: number;
-  apartmentType: string;
-  apartmentStatus: string;
-  kitchen: boolean;
+  buildingId?: string;
+  numberOfRooms?: number;
+  apartmentType?: string;
+  apartmentStatus?: string;
+  kitchen?: boolean;
   createdOn: string;
+
   constructor({
     id,
     apartmentNumber,
@@ -29,7 +30,7 @@ export class ApartmentEntity {
     createdOn,
   }: ApartmentParameters) {
     this.id = id;
-    this.apartmentNumber = apartmentNumber;
+    this.apartmentNumber = apartmentNumber || "0";
     this.buildingId = buildingId;
     this.numberOfRooms = numberOfRooms;
     this.apartmentStatus = apartmentStatus;
