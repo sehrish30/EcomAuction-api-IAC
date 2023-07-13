@@ -400,12 +400,14 @@ export class ApartmentBookingLambdaStack extends Stack {
     //Grant permissions and add dependsOn
     // groupChatTable.grantReadWriteData(lambda);
     acmsDatabase.grantFullAccess(getAllBookingsPerApartmentLambda);
+    acmsDatabase.grantReadData(getUserPerBookingLambda);
 
     //set the database table name as an environment variable for the lambda function
     getAllBookingsPerApartmentLambda.addEnvironment(
       "ACMS_DB",
       acmsDatabase.tableName
     );
+    getUserPerBookingLambda.addEnvironment("ACMS_DB", acmsDatabase.tableName);
 
     const getAllBookingsPerApartmentDataSource: CfnDataSource =
       new CfnDataSource(this, dataSourceName, {
@@ -432,47 +434,64 @@ export class ApartmentBookingLambdaStack extends Stack {
       }
     );
 
-    // const getAllBookingsByApartmentFunction: CfnFunctionConfiguration =
-    //   new CfnFunctionConfiguration(this, "getAllBookingsPerApartmentFunction", {
-    //     apiId: bookingGraphqlApi.attrApiId,
-    //     dataSourceName: getAllBookingsPerApartmentDataSource.name,
-    //     functionVersion: "2018-05-29",
-    //     name: "getAllBookingsPerApartmentFunction",
-    //   });
+    const getAllBookingsByApartmentFunction: CfnFunctionConfiguration =
+      new CfnFunctionConfiguration(this, "getAllBookingsPerApartmentFunction", {
+        apiId: bookingGraphqlApi.attrApiId,
+        dataSourceName: getAllBookingsPerApartmentDataSource.name,
+        functionVersion: "2018-05-29",
+        name: "getAllBookingsPerApartmentFunction",
+      });
 
-    // getAllBookingsByApartmentFunction.addDependency(
-    //   getAllBookingsPerApartmentDataSource
-    // );
+    getAllBookingsByApartmentFunction.addDependency(
+      getAllBookingsPerApartmentDataSource
+    );
 
-    // const getUserPerBookingFunction: CfnFunctionConfiguration =
-    //   new CfnFunctionConfiguration(this, "getUserPerBookingFunction", {
-    //     apiId: bookingGraphqlApi.attrApiId,
-    //     dataSourceName: getUserPerBookingLambdaDataSource.name,
-    //     functionVersion: "2018-05-29",
-    //     name: "getUserPerBookingFunction",
-    //   });
+    const getUserPerBookingFunction: CfnFunctionConfiguration =
+      new CfnFunctionConfiguration(this, "getUserPerBookingFunction", {
+        apiId: bookingGraphqlApi.attrApiId,
+        dataSourceName: getUserPerBookingLambdaDataSource.name,
+        functionVersion: "2018-05-29",
+        name: "getUserPerBookingFunction",
+      });
 
-    // getUserPerBookingFunction.addDependency(getUserPerBookingLambdaDataSource);
+    getUserPerBookingFunction.addDependency(getUserPerBookingLambdaDataSource);
 
-    // const getResultBookingPerApartmentResolver: CfnResolver = new CfnResolver(
-    //   this,
-    //   "getResultBookingPerApartmentResolver",
-    //   {
-    //     apiId: bookingGraphqlApi.attrApiId,
-    //     typeName: "Query",
-    //     fieldName: "getAllBookingsPerApartment",
+    const getResultBookingPerApartmentResolver: CfnResolver = new CfnResolver(
+      this,
+      "getResultBookingPerApartmentResolver",
+      {
+        apiId: bookingGraphqlApi.attrApiId,
+        typeName: "Query",
+        fieldName: "getAllBookingsPerApartment",
 
-    //     // pipeline props kinds and pipelineConfig
-    //     kind: "PIPELINE",
-    //     pipelineConfig: {
-    //       functions: [
-    //         getAllBookingsByApartmentFunction.attrFunctionId,
-    //         getUserPerBookingFunction.attrFunctionId,
-    //       ],
-    //     },
-    //     // dataSourceName: lambdaDataSources.attrName,
-    //   }
-    // );
+        // pipeline props kinds and pipelineConfig
+        kind: "PIPELINE",
+        pipelineConfig: {
+          functions: [
+            getAllBookingsByApartmentFunction.attrFunctionId,
+            getUserPerBookingFunction.attrFunctionId,
+          ],
+        },
+        requestMappingTemplate: readFileSync(
+          join(
+            __dirname,
+            "./lambda-fns/vtl_templates/before_mapping_template.vtl"
+          )
+        ).toString(),
+
+        responseMappingTemplate: readFileSync(
+          join(
+            __dirname,
+            "./lambda-fns/vtl_templates/after_mapping_template.vtl"
+          )
+        ).toString(),
+        // dataSourceName: lambdaDataSources.attrName,
+      }
+    );
+
+    // readFileSync(
+    //     join(__dirname, "../schema/schema.graphql")
+    //   ).toString(),
 
     return getAllBookingsPerApartmentDataSource;
   }

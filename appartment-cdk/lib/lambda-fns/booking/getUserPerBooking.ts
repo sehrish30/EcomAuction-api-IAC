@@ -16,10 +16,34 @@ const logger = new Logger({
   serviceName: "GetAllBookingsPerAppartment",
 });
 
-// const keys = ctx.prev.result.items.map((item) => ({
-//     PK: `USER#${item.userId}`,
-//     SK: `USER#${item.userId}`
-//   }));
+interface Booking {
+  endDate: string;
+  apartmentId: string;
+  GSI1SK: string;
+  GSI1PK: string;
+  ENTITY: string;
+  createdOn: string;
+  userId: string;
+  startDate: string;
+  SK: string;
+  bookingStatus: string;
+  PK: string;
+  id: string;
+}
+
+interface User {
+  updatedOn: string;
+  ENTITY: string;
+  userType: string;
+  createdOn: string;
+  lastName: string;
+  SK: string;
+  email: string;
+  PK: string;
+  id: string;
+  verified: boolean;
+  firstName: string;
+}
 
 export const handler = async (
   event: AppSyncResolverEvent<QueryGetAllUserAccountsArgs>,
@@ -32,13 +56,47 @@ export const handler = async (
     tableName = "AcmsDynamoDBTable";
   }
 
+  let items = event.prev?.result as Booking[];
+
+  if (items?.length === 0) {
+    return [{}];
+  }
+
+  interface Ikeys {
+    PK: string;
+    SK: string;
+  }
+
+  const keys: Ikeys[] = [];
+
+  for (const item of items) {
+    keys.push({
+      PK: `USER#${item.userId}`,
+      SK: `USER#${item.userId}`,
+    });
+  }
+
   const params = {
-    TableName: tableName,
     ConsistentRead: true,
     RequestItems: {
       [tableName]: {
-        Keys: {},
+        Keys: keys,
       },
     },
   };
+
+  const command = new BatchGetCommand(params);
+
+  const response = await ddbDocClient.send(command);
+
+  const userResponses = response.Responses?.[tableName] as User[];
+
+  const userPopulatedItems = items.map((item, index) => {
+    return {
+      ...item,
+      user: userResponses[index],
+    };
+  });
+
+  return userPopulatedItems;
 };

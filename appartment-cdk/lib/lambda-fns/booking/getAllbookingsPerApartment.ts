@@ -27,25 +27,29 @@ export const handler = async (
     tableName = "AcmsDynamoDBTable";
   }
 
-  const params = {
+  let params = {
     TableName: tableName,
-    KeyConditionExpression: "#PK = :pk and begins_with(#SK,:sk)",
+    KeyConditionExpression: "#PK = :pk and begins_with(#SK, :sk)",
     ExpressionAttributeNames: {
       "#PK": "PK",
       "#SK": "SK",
     },
     ExpressionAttributeValues: {
-      ":sk": `APARTMENT#${event.arguments.apartmentId}`,
-      ":pk": "BOOKING#",
+      ":pk": `APARTMENT#${event.arguments.apartmentId}`,
+      ":sk": "BOOKING#",
     },
-    IndexName: "getAllApartmentsPerUser",
     ScanIndexForward: true,
     Limit: event.arguments.limit,
-    ExclusiveStartKey: JSON.parse(event.arguments.nextToken || "{}"),
+    ...(event.arguments.nextToken && {
+      ExclusiveStartKey: JSON.parse(event.arguments.nextToken),
+    }),
   };
+
   const command = new QueryCommand(params);
   try {
-    await ddbDocClient.send(command);
+    const response = await ddbDocClient.send(command);
+
+    return response.Items;
   } catch (err) {
     logger.info(`an error occured while sending query command", ${err}`);
     console.log(err);
