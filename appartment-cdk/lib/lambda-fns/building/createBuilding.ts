@@ -1,5 +1,4 @@
 import { Logger } from "@aws-lambda-powertools/logger";
-import { DynamoDB } from "aws-sdk";
 import { MutationCreateBuildingArgs } from "../../../appsync";
 import { uuid } from "../../utils";
 import { BuildingEntity } from "./entities/buildingEntity";
@@ -19,7 +18,7 @@ async function createBuilding(
 ) {
   let tableName = process.env.ACMS_DB;
 
-  const createdOn = Date.now().toString();
+  const createdOn = new Date().toISOString();
 
   const id: string = uuid();
 

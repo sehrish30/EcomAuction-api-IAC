@@ -32,7 +32,9 @@ async function createUserAccount(
 ): Promise<UserReturnParameters> {
   const documentClient = new DynamoDB.DocumentClient();
   let tableName = process.env.ACMS_DB;
-  const createdOn = Date.now().toString();
+
+  // AWSDatetime only accepts toISOString
+  const createdOn = new Date().toISOString();
   const id: string = uuid();
 
   if (tableName === undefined) {

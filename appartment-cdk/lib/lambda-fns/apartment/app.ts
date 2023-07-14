@@ -12,6 +12,7 @@ export const handler = async (
 ) => {
   logger.addContext(context);
 
+
   logger.info(
     `appsync event arguments ${JSON.stringify(
       event.arguments.input

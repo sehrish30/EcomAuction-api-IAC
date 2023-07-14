@@ -18,7 +18,8 @@ import {
   StreamViewType,
   Table,
 } from "aws-cdk-lib/aws-dynamodb";
-import { Role } from "aws-cdk-lib/aws-iam";
+import { ManagedPolicy, Role } from "aws-cdk-lib/aws-iam";
+
 import { Construct } from "constructs";
 import { readFileSync } from "fs";
 import { join } from "path";
@@ -207,6 +208,7 @@ export class AppartmentCdkStack extends Stack {
       },
 
       billingMode: BillingMode.PAY_PER_REQUEST,
+      // the entire item, as it appears after it was modified, is written to the stream.
       stream: StreamViewType.NEW_IMAGE,
 
       removalPolicy: RemovalPolicy.DESTROY,

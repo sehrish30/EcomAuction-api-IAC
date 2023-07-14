@@ -11,6 +11,9 @@ export const handler = async (
   context: Context
 ) => {
   logger.addContext(context);
+  // log to filter from dynamodb when streaming
+  console.log("BUILDING")
+  
   logger.info(
     `appsync event arguments ${event.arguments} and event info ${event.info}`
   );
