@@ -37,7 +37,7 @@ const orderReceiptPDF = async (
     // depends on ur business requirement
     fileName = "404.jpeg";
   }
-  console.log({ basit: process.env.TRY });
+
   console.log({
     bucketName: process.env.AUCTIONS_BUCKET_NAME,
     region: process.env.AWS_REGION,

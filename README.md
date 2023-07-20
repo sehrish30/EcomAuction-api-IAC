@@ -439,6 +439,7 @@ GSI1SK:APARTMENT#APARTMENTID#STATUS
 <img src="readmeimages/GET_ALL_BOOKINGS_PER_APARTMENT.png" style="max-width: 100%; height: auto; object-fit: contain;">
 <img src="readmeimages/GET_ALL_BUILDINGS_PER_USER.png" style="max-width: 100%; height: auto; object-fit: contain;">
 
-## Headless Browser Testing
+## Headless Browser Testing with CI/CD
 
 <img src="readmeimages/headles-testing.png" style="max-width: 100%; height: auto; object-fit: contain;">
+<img src="readmeimages/ciFlow.png" style="max-width: 100%; height: auto; object-fit: contain;">
