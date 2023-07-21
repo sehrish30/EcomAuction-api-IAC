@@ -2,15 +2,15 @@
   "name": "server",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "jest": {
     "setupFilesAfterEnv": [
       "./tests/setup.js"
     ]
   },
   "scripts": {
-    "start": "node index.js",
-    "server": "nodemon index.js --ignore tests",
+    "start": "node server.js",
+    "server": "nodemon server.js --ignore tests",
     "client": "npm run start --prefix client",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "build": "NPM_CONFIG_PRODUCTION=false npm install --legacy-peer-deps --prefix client && npm run build --prefix client",
