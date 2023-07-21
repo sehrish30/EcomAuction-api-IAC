@@ -1,0 +1,109 @@
+AuctionsEventBridge:
+  Type: AWS::Events::EventBus
+  Properties:
+    Name: AUCTION_EVENT_BUS
+
+TargetSQS:
+  Type: AWS::SQS::Queue
+  Properties:
+    QueueName: QR_MESSAGE_QUEUE
+    RedrivePolicy:
+      # ref between this sqs queue and real queue
+      deadLetterTargetArn: !GetAtt TargetDLQ.Arn
+      # if a message comes back to sqs how many times sqs queue should retry
+      # before sending it to dead letter queue
+      # 1 means whenever the message will come back from sqs queue it will be available one more time to get processed by lambda
+      # so sqs will make it availble one more time for processing
+      # so once it comes back now the rceieve count is 2 so no longer available for processing
+      maxReceiveCount: 1
+
+TargetDLQ:
+  Type: AWS::SQS::Queue
+  Properties:
+    QueueName: QR_MESSAGE_DLQ
+
+# this rule will make sure only the events = event rule
+# event rules in event bridge that matches this pattern will be forwarded to this sqs
+TargetSQSRule:
+  Type: AWS::Events::Rule
+  Properties:
+    # EventBusName this rule will be attched
+    EventBusName: !GetAtt AuctionsEventBridge.Arn
+    # you can have total 5 targets
+    Targets:
+      # Arn of target resource which is sqs in this matched id case
+      - Arn: !GetAtt TargetSQS.Arn
+        # id is specifuc to this particular target that has to be unique
+        Id: qr-event-bus-target-sqs-${sls:stage}
+    # filter messages by assing event patterns based on attributes
+    EventPattern:
+      # source Identifies the service that generated the event
+      source:
+        - ${self:custom.EVENT_BRIDGE_SOURCE}
+      # fields and values that appear in the detail field
+      detail-type:
+        - ${self:custom.AUCTION_DETAIL_TYPE}
+      # detail:
+      # JSON object that contains information about the event.
+      # here u can add other attabributes that you want to filter
+
+# sls:stage = self:provider.stage
+# we need policy to allow event bridge to add message from eventQueue to sqs queue
+TargetSQSPolicy:
+  Type: AWS::SQS::QueuePolicy
+  Properties:
+    Queues:
+      # ref returns queue url for queue resource
+      - !Ref TargetSQS
+    PolicyDocument:
+      Statement:
+        - Action:
+            # so event bus can send message to this sqs queue
+            - "SQS:SendMessage"
+          Effect: "Allow"
+          Resource: !GetAtt TargetSQS.Arn
+          # by using principal event bridge will be able to consume this policy
+          Principal:
+            # Service not AWS because it is a service in AWS account
+            Service: events.amazonaws.com
+# get all principal of resources from here
+# https://gist.github.com/shortjared/4c1e3fe52bdfa47522cfe5b41e5d6f22
+
+# lambda consumer to batch process these messages that are in the queue
+
+# we use batch processing and reserved concrurency limit
+# batch processing is like if we have 100 messages in the sqs
+# and batch processing is set to 10 so 10 messages will be processed by 1 lambda
+# but to avoid too many concurrent invocations of lambda functions in parallel we will set concrurency limit to 10
+# so suppose if we have 400 messages so we dont invoke 400/10 = 40 lambda invocations
+# so if there are more messages in the queue the messages have to wait until existing lambda functions dont finish processing
+# if batch size = 10 doesnot mean sqs will wait for 10 messages even if messages are less than 10 they will be processed immediately
+# but if u want to wait for some time before processing messages then u have to set maximumBatchingWindow = how long to wait for the messages
+# so lambda will wait until maximumBatchingWindow expires and then do the processing
+# Queue visibility timeout Vs lambda timeout
+
+# Queue visibility timeout means if one the message is taken by lambda sqs will wait visibility timeout suppose its 5s
+# until its processed by lambda if lambda couldnot process it in 5s it will reappear in the queue then it will be processed by another
+# lambda function
+# recommended timeout value is 6*Lambda timeout
+# so we can set that lambda timeout 6s
+# so if we have maximumBatchingWindow = 5s
+# visibility timeout = 6*Lambdatimeout + maximumBatchingWindow = 6*6 + 5 = 41s
+# other ur message will reappear in sqs queue while previous lambda are processing the message
+# and then will be processed by another lambda
+
+# Handling partial failures
+# suppose if lambda processed 10 messages
+# and 3 messages got failed
+# if we donot handle partial failures all those 10 messages could be sent back in sqs queue and will be reprocessed
+
+# therefor u shd track the messages that are failed to process
+# and put them in ReportBatchItemFailuresObject = Return Failure Messages on
+# this will only send 3 messages to this sqs
+
+# Dead Letter Queue(DLQ)
+# we can define how many times a message can come back to sqs queue
+# suppose after the second time it got back to sqs queue we will not process them by sending to lambda
+# infact we will send them to dead letter queue so we can further inspect what has gone wrong with those messages
+# other wise it will be infitie loop they will keep appearing in sqs queue and keep invokign lambda functions
+# u can manually check DLQ

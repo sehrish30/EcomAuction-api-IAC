@@ -1,0 +1,4 @@
+OrdersQueue:
+  Type: AWS::SQS::Queue
+  Properties:
+    QueueName: ${self:custom.OrdersQueue.name}

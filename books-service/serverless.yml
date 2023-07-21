@@ -1,0 +1,115 @@
+service: books-service
+
+frameworkVersion: "3"
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: ${opt:stage, 'dev'}
+  region: us-east-2
+  deploymentBucket:
+    name: ${env:BUCKET_NAME}
+  environment:
+    BOOKES_TABLE: !Ref BooksTable
+    APPSYNC_ID: ${appsync:id}
+    APPSYNC_ARN: ${appsync:arn}
+    APPSYNC_URL: ${appsync:url}
+
+  iam:
+    role:
+      statements:
+        - ${file(./iam/BooksTableIAM.yml):BooksTableIAM}
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-appsync-plugin
+
+# functions:
+#   getBookById:
+#     handler: src/getBookById.handler
+
+# you can add CloudFormation resource templates here
+resources:
+  Resources:
+    BooksTable: ${file(./resources/DynamoTable.yml):BooksTable}
+    OrdersTable: ${file(./resources/DynamoTable.yml):OrdersTable}
+    CognitoUserPool: ${file(./resources/Cognito.yml):CognitoUserPool}
+    CognitoUserPoolClient: ${file(./resources/Cognito.yml):CognitoUserPoolClient}
+    CongitoAdminGroup: ${file(./resources/Cognito.yml):CongitoAdminGroup}
+    CongitoCustomGroup: ${file(./resources/Cognito.yml):CongitoCustomGroup}
+    CongitoAdminIAMRole: ${file(./resources/Cognito.yml):CongitoAdminIAMRole}
+    CongitoCustomersIAMRole: ${file(./resources/Cognito.yml):CongitoCustomersIAMRole}
+    CognitoIdentityPool: ${file(./resources/Cognito.yml):CognitoIdentityPool}
+    CognitoUnAuthenticatedIAMRole: ${file(./resources/Cognito.yml):CognitoUnAuthenticatedIAMRole}
+    CognitoIdentityPoolRoleAttachement: ${file(./resources/Cognito.yml):CognitoIdentityPoolRoleAttachement}
+
+appSync:
+  name: ${self:custom.appSyncName.name}
+  authentication:
+    type: "AMAZON_COGNITO_USER_POOLS"
+    config:
+      awsRegion: us-east-2
+      defaultAction: ALLOW
+      userPoolId: !Ref CognitoUserPool
+  additionalAuthentications:
+    - type: AWS_IAM # to provide roles for guest users and authenticated user
+  # schema:
+  #   - "schema.graphql"
+  pipelineFunctions:
+    getBookById:
+      # dataSource: booksTable
+      dataSource:
+        type: "AWS_LAMBDA"
+        config:
+          function:
+            timeout: 30
+            handler: "src/getBookById.handler"
+    listBooks:
+      dataSource:
+        type: "AWS_LAMBDA"
+        config:
+          function:
+            timeout: 30
+            handler: "src/listBooks.handler"
+    createBook:
+      dataSource:
+        type: "AWS_LAMBDA"
+        config:
+          function:
+            timeout: 30
+            handler: "src/createBook.handler"
+
+  resolvers:
+    Query.getBookById:
+      dataSource: booksTable
+      functions:
+        - getBookById
+    Query.listBooks:
+      dataSource: booksTable
+      functions:
+        - listBooks
+    createBook:
+      type: Mutation
+      field: createBook
+      functions:
+        - createBook
+
+  dataSources:
+    booksTable: # database resource used by lambdas
+      type: AMAZON_DYNAMODB
+      description: "dynamo db table"
+      config:
+        tableName: !Ref BooksTable
+
+custom:
+  appSyncName:
+    name: books-${self:provider.stage}
+  bookTableName:
+    name: Books-table-${self:provider.stage}
+# {type}.{field}.request.vtl , {type}.{field}.response.vtl
+# https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html
+# request helps appsync make a request to dynamo db
+# https://github.com/sid88in/serverless-appsync-plugin
+# https://benoitboure.com/how-to-use-typescript-with-appsync-lambda-resolvers

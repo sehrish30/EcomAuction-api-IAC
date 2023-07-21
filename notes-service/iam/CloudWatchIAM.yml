@@ -1,0 +1,8 @@
+CloudWatchIAM:
+  Effect: Allow
+  Action:
+    - cloudwatch:DescribeAlarmsForMetric
+    - cloudwatch:GetMetricData
+    - logs:FilterLogEvents
+    - logs:DescribeMetricFilters
+  Resource: "*"

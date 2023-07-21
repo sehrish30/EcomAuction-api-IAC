@@ -1,0 +1,6 @@
+HeartBeatTableIAM:
+  Effect: Allow
+  Action:
+    - dynamodb:Query
+    - dynamodb:PutItem
+  Resource: !GetAtt HeartBeatDynamoTable.Arn

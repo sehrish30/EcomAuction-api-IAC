@@ -1,0 +1,29 @@
+{
+  "name": "orders-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.328.0",
+    "@aws-sdk/client-s3": "^3.327.0",
+    "@aws-sdk/client-sfn": "^3.329.0",
+    "@aws-sdk/lib-dynamodb": "^3.328.0",
+    "serverless-iam-roles-per-function": "^3.2.0",
+    "stream": "^0.0.2",
+    "stripe": "^12.4.0",
+    "util": "^0.12.5"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.115",
+    "serverless-dotenv-plugin": "^6.0.0",
+    "serverless-plugin-typescript": "^2.1.4",
+    "serverless-step-functions": "^3.13.1",
+    "typescript": "^5.0.4"
+  }
+}

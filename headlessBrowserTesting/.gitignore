@@ -1,0 +1,4 @@
+node_modules
+nohup.out
+.DS_Store
+/build

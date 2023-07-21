@@ -1,0 +1,360 @@
+CodePipeline:
+  Type: AWS::CodePipeline::Pipeline
+  Properties:
+    Name: external-verification-service-pipeline-${self:provider.stage}
+    # allow code pipeline to create a service role so it can be used with new pipeline
+    RoleArn: !GetAtt CodeDeployServiceRole.Arn
+    ArtifactStore:
+      Type: S3
+      Location: !Ref CodePipelineArtifactStore
+    Stages:
+      - Name: Source
+        Actions:
+          - Name: Source
+            RunOrder: 1
+            ActionTypeId:
+              Category: Source
+              Owner: ThirdParty
+              Provider: GitHub
+              Version: "1" # 2 isnot available in my region
+            Configuration:
+              Owner: !Ref GithubOwner
+              Repo: !Ref GithubRepository
+              Branch: !Ref GithubBranch
+              PollForSourceChanges: false
+              OAuthToken: ${ssm:/secret/dev} # ${ssm:/secret/dev}
+            OutputArtifacts:
+              - Name: SourceCode
+      - Name: Build
+        Actions:
+          - Name: Build
+            RunOrder: 2
+            ActionTypeId:
+              Category: Build
+              Owner: AWS
+              Provider: CodeBuild
+              Version: "1"
+            Configuration:
+              ProjectName: !Ref CodeBuildProject
+            OutputArtifacts:
+              - Name: BuildOutput
+            InputArtifacts:
+              - Name: SourceCode
+
+      - Name: QA
+        Actions:
+          - Name: ManualApproval
+            RunOrder: 3
+            ActionTypeId:
+              Category: Approval
+              Owner: AWS
+              Provider: Manual
+              Version: "1"
+            Configuration:
+              NotificationArn: !Ref AdminTopic
+              CustomData: "Comments on the manual approval"
+
+      - Name: Deploy
+        Actions:
+          - Name: Deploy
+            RunOrder: 4
+            ActionTypeId:
+              Category: Build
+              Owner: AWS
+              Provider: CodeBuild
+              Version: "1"
+            Configuration:
+              ProjectName: !Ref CodeBuildDeployDevProject
+            InputArtifacts:
+              - Name: SourceCode
+
+      # - Name: QA
+      #   Actions:
+      #     - Name: Deploy
+      #       # approval runs once completed
+      #       RunOrder: 1
+      #       ActionTypeId:
+      #         Category: Build
+      #         Owner: AWS
+      #         Provider: CodeBuild
+      #         Version: "1"
+      #       Configuration:
+      #         ProjectName: !Ref CodeBuildQAProject
+      #       InputArtifacts:
+      #         - Name: SourceCode
+
+      #     - Name:
+      #         Approval
+      #         # approval runs once completed else they will run parallel
+      #       RunOrder: 2
+      #       ActionTypeId:
+      #         Category: Approval
+      #         Owner: AWS
+      #         Provider: Manual
+      #         Version: "1"
+      #       Configuration:
+      #         CustomData: Approve or Reject this change after running tests
+
+      # - Name: Prod
+      #   Actions:
+      #     - Name: Deploy
+      #       ActionTypeId:
+      #         Category: Build
+      #         Owner: AWS
+      #         Provider: CodeBuild
+      #         Version: "1"
+      #       Configuration:
+      #         ProjectName: !Ref CodeBuildProdProject
+      #       InputArtifacts:
+      #         - Name: SourceCode
+
+CodeBuildSourceCredentials:
+  Type: AWS::CodeBuild::SourceCredential
+  Properties:
+    AuthType: PERSONAL_ACCESS_TOKEN
+    ServerType: GITHUB
+    Token: ${ssm:/secret/dev} # ${ssm:/secret/dev}
+
+CodeBuildProject:
+  Type: AWS::CodeBuild::Project
+  Properties:
+    Name: infra-codebuild-${self:provider.stage}
+    ServiceRole: !GetAtt CodePipelineServiceRole.Arn
+    ConcurrentBuildLimit: 1
+    Source:
+      Type: GITHUB
+      Location: !Ref GithubRepositoryLink
+      BuildSpec: ./external-verification-service/config/build/buildspec.dev.yml
+      Auth:
+        Type: OAUTH
+        Resource: !Ref CodeBuildSourceCredentials
+    # output setting of the artifact build by code build
+    Artifacts:
+      Type: "NO_ARTIFACTS" # The build project does not produce any build output.
+    # triggers that will trigger web hook project
+    # Triggers:
+    #   Webhook: true
+    #   # FilterGroups:
+    #   #   - - Type: EVENT
+    #   #       Pattern: PUSH, PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED
+    #   #         # Filters GitHub push events Type: BASE_REF,!Sub ^refs/heads/${env:GithubBranch}$
+    #   #       - Type: HEAD_REF
+    #   #         Pattern: "main"
+    # Filters push events to the 'master' branch
+    Triggers:
+      Webhook: true
+      FilterGroups:
+        # both should match before code build project is triggered
+        - - Type: EVENT
+            Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED, PUSH
+          - Type: HEAD_REF
+            Pattern: "main"
+    Environment:
+      Type: LINUX_CONTAINER
+      ComputeType: BUILD_GENERAL1_SMALL
+      Image: !Ref CodeBuildEnvironmentImage
+      EnvironmentVariables:
+        - Name: BUCKET_NAME
+          Value: ${env:BUCKET_NAME}
+        - Name: GITHUB_TOKEN
+          Value: ${env:GITHUB_TOKEN}
+
+CodeBuildDeployDevProject:
+  Type: AWS::CodeBuild::Project
+  Properties:
+    Name: !Sub Dev-${self:provider.stage}
+    ServiceRole: !GetAtt CodeDeployServiceRole.Arn
+    Source:
+      Type: CODEPIPELINE
+      BuildSpec: external-verification-service/config/deploy/buildspec.dev.yml
+    # output setting of the artifact build by code build
+    Artifacts:
+      Type: CODEPIPELINE # The build project does not produce any build output.
+    Environment:
+      Type: LINUX_CONTAINER
+      ComputeType: BUILD_GENERAL1_SMALL
+      Image: !Ref CodeBuildEnvironmentImage
+      EnvironmentVariables:
+        - Name: BUCKET_NAME
+          Value: ${env:BUCKET_NAME}
+        - Name: GITHUB_TOKEN
+          Value: ${env:GITHUB_TOKEN}
+
+CodeBuildQAProject:
+  Type: AWS::CodeBuild::Project
+  Properties:
+    Name: !Sub QA-${self:provider.stage}
+    ServiceRole: !GetAtt CodePipelineServiceRole.Arn
+    Source:
+      Type: CODEPIPELINE
+      BuildSpec: external-verification-service/config/deploy/deployspec.dev.yml
+    # output setting of the artifact build by code build
+    Artifacts:
+      Type: CODEPIPELINE # The build project does not produce any build output.
+    Environment:
+      Type: LINUX_CONTAINER
+      ComputeType: BUILD_GENERAL1_SMALL
+      Image: !Ref CodeBuildEnvironmentImage
+      EnvironmentVariables:
+        - Name: ENV_NAME
+          Value: qa
+
+CodeBuildProdProject:
+  Type: AWS::CodeBuild::Project
+  Properties:
+    Name: !Sub prod-${self:provider.stage}
+    ServiceRole: !GetAtt CodePipelineServiceRole.Arn
+    TimeoutInMinutes: 60
+    QueuedTimeoutInMinutes: 480
+    Source:
+      Type: CODEPIPELINE
+      BuildSpec: external-verification-service/config/deploy/deployspec.dev.yml
+    # output setting of the artifact build by code build
+    Artifacts:
+      Type: CODEPIPELINE # The build project does not produce any build output.
+    Environment:
+      Type: LINUX_CONTAINER
+      ComputeType: BUILD_GENERAL1_SMALL
+      Image: !Ref CodeBuildEnvironmentImage
+      EnvironmentVariables:
+        - Name: ENV_NAME
+          Value: prod
+
+# because we need to deploy it serverless deploy which will deploy to many resoirces
+CodeDeployServiceRole:
+  Type: "AWS::IAM::Role"
+  Properties:
+    AssumeRolePolicyDocument:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: "Allow"
+          Principal:
+            Service:
+              - codepipeline.amazonaws.com
+              - codedeploy.${aws:region}.amazonaws.com
+              - codebuild.amazonaws.com
+          Action: "sts:AssumeRole"
+    Path: "/"
+    Policies:
+      - PolicyName: "AdministratorAccess"
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Action: "*"
+              Resource: "*"
+
+CodePipelineServiceRole:
+  Type: AWS::IAM::Role
+  Properties:
+    RoleName: CodePipelineServiceRole
+    AssumeRolePolicyDocument:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+              - codepipeline.amazonaws.com
+              - codebuild.amazonaws.com
+          Action:
+            - "sts:AssumeRole"
+    Policies:
+      - PolicyName: root
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Sid: CloudWatchLogsPolicy
+              Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: "*"
+            - Sid: CodeCommitPolicy
+              Effect: Allow
+              Action:
+                - codecommit:GitPull
+              Resource: "*"
+            - Sid: S3GetObjectPolicy
+              Effect: Allow
+              Action:
+                - s3:GetObject
+                - s3:GetObjectVersion
+              Resource: "*"
+            - Sid: S3PutObjectPolicy
+              Effect: Allow
+              Action:
+                - s3:PutObject
+              Resource: "*"
+            - Sid: ECRPullPolicy
+              Effect: Allow
+              Action:
+                - ecr:BatchCheckLayerAvailability
+                - ecr:GetDownloadUrlForLayer
+                - ecr:BatchGetImage
+              Resource: "*"
+            - Sid: ECRAuthPolicy
+              Effect: Allow
+              Action:
+                - ecr:GetAuthorizationToken
+              Resource: "*"
+            - Sid: S3BucketIdentity
+              Effect: Allow
+              Action:
+                - s3:GetBucketAcl
+                - s3:GetBucketLocation
+              Resource: "*"
+            - Sid: CodeBuildPolicy
+              Effect: Allow
+              Action:
+                - codebuild:BatchGetBuilds
+                - codebuild:StartBuild
+              Resource: "*"
+            - Sid: SSM
+              Effect: Allow
+              Action:
+                - ssm:Describe
+                - ssm:Get*
+                - ssm:List*
+              Resource: "*"
+            - Sid: Cloudformation
+              Effect: Allow
+              Action:
+                - cloudformation:DescribeStacks
+              Resource: "*"
+
+CodePipelineArtifactStore:
+  Type: AWS::S3::Bucket
+  Properties:
+    VersioningConfiguration:
+      Status: Enabled
+
+# code pipeline webhook
+# which will create webhook in github
+# which will trigger this pipeline
+# whenever merge or push to main branch
+CodePipelineWebHook:
+  Type: AWS::CodePipeline::Webhook
+  Properties:
+    Authentication: GITHUB_HMAC
+    AuthenticationConfiguration:
+      SecretToken: ${ssm:/secret/dev} # ${ssm:/secret/dev}
+    RegisterWithThirdParty: true
+    Filters:
+      - JsonPath: "$.ref"
+        # MatchEquals: "refs/heads/{Branch}"
+        MatchEquals: "main"
+      - JsonPath: "$.repository.name"
+        MatchEquals: "{Repo}"
+    # recommended way
+    TargetPipeline: !Ref CodePipeline
+    TargetAction: Source
+    TargetPipelineVersion: !GetAtt CodePipeline.Version
+
+AdminTopic:
+  Type: AWS::SNS::Topic
+  Properties:
+    TopicName: Approvaltopic-${self:provider.stage}
+    Subscription:
+      - Endpoint: sehrishwaheed98@gmail.com
+        Protocol: email

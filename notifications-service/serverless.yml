@@ -1,0 +1,61 @@
+service: notifications-service
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  #  Setting the memory allocation to the optimal level can help optimize the function's performance and save costs. default = 128MB
+  memorySize: 128
+  stage: ${opt:stage, 'dev'}
+  region: us-east-2
+  iam:
+    role:
+      statements:
+        - ${file(iam/SendMailIAM.yml):SendMailIAM}
+
+  environment:
+    SES_SENDER_EMAIL: "sehrishwaheed30@gmail.com"
+
+plugins:
+  - serverless-plugin-typescript
+
+functions:
+  sendMail:
+    handler: src/handlers/sendMail.handler
+    # trigger for this functions is SQS
+    events:
+      - sqs:
+          arn: ${self:custom.mailQueue.arn}
+          # means 1 request will be processed at a time (for testing purpose)
+          # default is 10 and also maximum
+          batchSize: 1
+
+# you can add CloudFormation resource templates here
+resources:
+  Resources:
+    MailQueue: ${file(./resources/MailQueue.yml):MailQueue}
+  Outputs:
+    MailQueueArn: ${file(./resources/MailQueue.yml):Outputs.MailQueueArn}
+    MailQueueUrl: ${file(./resources/MailQueue.yml):Outputs.MailQueueUrl}
+
+custom:
+  mailQueue:
+    name: MailQueue-${self:provider.stage}
+    arn: !GetAtt MailQueue.Arn
+    # Ref intrinsic function returns url of Queue
+    url: !Ref MailQueue
+  bundle:
+    linting: true
+# other services send messages to this queue
+# then messages will be forwarded to notification services by sqs queue we built
+# and the emails will be sent
+# for this other services require url of the message queue
+
+# using outputs you can output variables from one stack
+# and import them in other stack like global variables
+# sqs message queues have public urls used by clients to send messages to queue
+# by using these outputs we create a sort of dependency
+# where if we try to deploy suppose auction service to prod
+# but notification service isnot deployed we will get an error
+# so notification service will become dependency of that service for smooth operation of that service

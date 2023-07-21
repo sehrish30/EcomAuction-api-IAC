@@ -1,0 +1,41 @@
+service: logs-service
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-2
+  stage: ${opt:stage, 'dev'}
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-plugin-log-retention
+
+functions:
+  logs:
+    handler: src/handlers/logs.handler
+    # remove indefinite data retention in the cloudwatch
+    logRetentionInDays: 7 # set the retention for specific log group 7 days
+    # auctomatically give permissions
+    events:
+      - http:
+          method: get
+          path: logs
+
+resources:
+  Resources:
+    # create firehouse subscription filter
+    # these filters get applied on log streams
+    # and we will create a filter pattern
+    # and output can be sent to either either lambda function or kinesis or ElasticSearch
+    # we will send it s3 bucket
+    S3Bucket: ${file(./resources/S3Bucket.yml):S3Bucket}
+    KinesisIAM: ${file(./iam/KinesisIAM.yml):KinesisIAM}
+    DeliveryStream: ${file(./resources/DeliveryStream.yml):DeliveryStream}
+    CloudWatchIAM: ${file(./iam/CloudWatchIAM.yml):CloudWatchIAM}
+    FirehouseSubscriptionFilter: ${file(./resources/DeliveryStream.yml):FirehouseSubscriptionFilter}
+
+custom:
+  logBucketName:
+    name: logging-bucket-sdsjj32kjds-${self:provider.stage}

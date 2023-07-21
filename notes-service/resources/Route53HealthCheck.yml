@@ -1,0 +1,10 @@
+Route53HealthCheck:
+  Type: "AWS::Route53::HealthCheck"
+  Properties:
+    HealthCheckConfig:
+      Port: 443
+      Type: HTTPS
+      ResourcePath: /notes
+      FullyQualifiedDomainName: ${env:DOMAIN_NAME}
+      RequestInterval: 30 # no of seconds between the time that Amazon Route 53 gets a response from your endpoint and the time that it sends the next health check request
+      FailureThreshold: 1 # endpoint must pass or fail

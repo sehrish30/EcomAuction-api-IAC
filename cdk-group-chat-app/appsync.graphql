@@ -1,0 +1,12 @@
+# we are using AWS Appsync to build out the GraphQL API, we'll be
+# making use of AWS Appsync Scalars which aren't available in the default GraphQL Language.
+
+scalar AWSDate
+scalar AWSTime
+scalar AWSDateTime
+scalar AWSTimestamp
+scalar AWSEmail
+scalar AWSJSON
+scalar AWSURL
+scalar AWSPhone
+scalar AWSIPAddress

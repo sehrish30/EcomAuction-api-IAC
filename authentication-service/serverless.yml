@@ -1,0 +1,142 @@
+service: authentication-service
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-2
+  stage: ${opt:stage, 'dev'}
+  environment:
+    # takes the content of secret.pem and put it in environment variable
+    AUTH0_PUBLIC_KEY: ${file(secret.pem)}
+    REGION: ${self:provider.region}
+    AUTHENTICATION_TABLE_NAME: ${self:custom.AuthenticationTable.name}
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-iam-roles-per-function
+
+functions:
+  auth:
+    handler: src/handlers/auth.handler
+
+  loginOrRegister:
+    handler: src/handlers/loginOrRegister.handler
+    iamRoleStatements:
+      - ${file(./iam/AuthenticationTableIAM.yml):QueryAuthenticationTableIAM}
+      - ${file(./iam/AuthenticationTableIAM.yml):CreateAuthenticationTableIAM}
+    events:
+      - http:
+          cors: true
+          path: login-or-register
+          method: POST
+          authorizer: auth
+          # use auth.handler auth function to authorize itself
+          # authorizer: ${self:custom.authorizer}
+
+  publicEndpoint:
+    handler: src/handlers/public.handler
+    events:
+      - http:
+          path: public
+          method: POST
+          # cors: true
+  privateEndpoint:
+    handler: src/handlers/private.handler
+    events:
+      - http:
+          path: private
+          method: POST
+          cors: true
+
+  addToUserRatingQueue:
+    handler: src/handlers/addToUserRatingQueue.handler
+    iamRoleStatements:
+      - ${file(./iam/UserReputationQueueIAM.yml):UserReputationQueueIAM}
+    events:
+      - http:
+          path: rating
+          method: POST
+    environment:
+      QUEUE_URL: !GetAtt UserReputationQueue.QueueUrl
+
+  disconnectHandler:
+    handler: src/handlers/disconnectHandler.handler
+    iamRoleStatements:
+      - ${file(./iam/SocketsTableIAM.yml):SocketsTableDeleteIAM}
+    events:
+      - websocket:
+          route: $disconnect
+          routeResponseSelectionExpression: $default
+    environment:
+      CONNECTIONS_WEBSOCKET_TABLE: !Ref SocketsTable
+
+  connectSocket:
+    handler: src/handlers/connectSocket.handler
+    iamRoleStatements:
+      - ${file(./iam/SocketsTableIAM.yml):SocketsTablePutIAM}
+    events:
+      - websocket:
+          route: $connect
+          # respond to a websocket message using the body parameter
+          routeResponseSelectionExpression: $default
+
+    environment:
+      CONNECTIONS_WEBSOCKET_TABLE: !Ref SocketsTable
+
+  onMessage:
+    handler: src/handlers/onMessage.handler
+    events:
+      - websocket:
+          route: onMessage
+          routeResponseSelectionExpression: $default
+
+  listenToQueue:
+    handler: src/handlers/listenToQueue.handler
+    environment:
+      AUTHENTICATION_TABLE_NAME: !Ref AuthenticationTable
+      APIG_ENDPOINT: ${self:custom.socketServiceEndpoint}
+    events:
+      - sqs:
+          arn: !GetAtt UserReputationQueue.Arn
+          # batchSize 1 means sqs will only send one message to the lambda
+          batchSize: 1
+    iamRoleStatements:
+      - ${file(./iam/UserReputationQueueIAM.yml):UserReputationReceiveQueueIAM}
+      - ${file(./iam/AuthenticationTableIAM.yml):UpdateAuthenticationTableIAM}
+      - ${file(./iam/InvokeAPIGatewayIAM.yml):InvokeAPIGatewayIAM}
+
+resources:
+  # these resources are needed in order to properly handle 401 and unauthrizued 403 cases
+  Resources:
+    AuthenticationTable: ${file(./resources/AuthenticationTable.yml):AuthenticationTable}
+    SocketsTable: ${file(./resources/SocketsTable.yml):SocketsTable}
+    # This response is needed for custom authorizer failures cors support ¯\_(ツ)_/¯
+    GatewayResponse: ${file(./resources/APIGatewayAuthentication.yml):GatewayResponse}
+    AuthFailureGatewayResponse: ${file(./resources/APIGatewayAuthentication.yml):AuthFailureGatewayResponse}
+    UserReputationQueue: ${file(./resources/UserReputationQueue.yml):UserReputationQueue}
+    UserReputationDLQ: ${file(./resources/UserReputationQueue.yml):UserReputationDLQ}
+    SESUserEmail: ${file(./resources/SESUserEmail.yml):SESUserEmail}
+
+  Outputs:
+    AuthenticationTableName: ${file(./resources/AuthenticationTable.yml):Outputs.AuthenticationTableName}
+    AuthenticationTableArn: ${file(./resources/AuthenticationTable.yml):Outputs.AuthenticationTableArn}
+custom:
+  service:
+    name: authentication-service
+  AuthenticationTable:
+    name: !Ref AuthenticationTable
+    arn: !GetAtt AuthenticationTable.Arn
+  # authorizer: arn:aws:lambda:${self:provider.region}:${aws:accountId}:function:authentication-service-${self:provider.stage}-auth
+  bundle:
+    linting: true
+
+  socketServiceEndpoint:
+    Fn::Join:
+      - ""
+      - - "https://"
+        - Ref: WebsocketsApi # ApiGatewayRestApi
+        - ".execute-api."
+        - Ref: AWS::Region
+        - ".amazonaws.com/"
+        - ${self:provider.stage}

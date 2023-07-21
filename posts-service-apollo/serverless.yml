@@ -1,0 +1,53 @@
+service: apollo-lambda
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-2
+  httpApi:
+    cors: true
+  environment:
+    PORT: ${env:PORT}
+    DATABASE_CLOUD: ${env:DATABASE_CLOUD}
+    CLOUDINARY_CLOUD_NAME: ${env:CLOUDINARY_CLOUD_NAME}
+    CLOUDINARY_API_KEY: ${env:CLOUDINARY_API_KEY}
+    CLOUDINARY_API_SECRET: ${env:CLOUDINARY_API_SECRET}
+
+useDotenv: true
+
+package:
+  patterns:
+    - "!@aws-sdk/*"
+
+custom:
+  # webpack:
+  #   webpackConfig: ./webpack.config.js # Name of webpack configuration file
+  # jetpack:
+  #   loaders:
+  #     - test: /\.graphql$/
+  #       loader: graphql-tag/loader
+  httpApi:
+    cors: true
+
+functions:
+  graphql:
+    # Make sure your file path is correct!
+    # (e.g., if your file is in the root folder use server.graphqlHandler )
+    # The format is: <FILENAME>.<HANDLER>
+    handler: src/server.graphqlHandler # highlight-line
+    events:
+      - httpApi:
+          path: /
+          method: POST
+      - httpApi:
+          path: /
+          method: GET
+
+# Omit the following lines if you aren't using TS!
+plugins:
+  - serverless-plugin-typescript
+  # - serverless-jetpack
+
+  # - serverless-webpack
+
+  # // serverless invoke local -f graphql -p query.json

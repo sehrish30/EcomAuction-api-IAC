@@ -1,0 +1,25 @@
+overwrite: true
+
+schema:
+  - lib/schema/schema.graphql #your schema file
+  - appsync.graphql # 👈 how to map these scalars to TypeScript from appsync.graphql
+
+# lib/schema/schema.graphql
+
+generates:
+  # where to save output
+  appsync.d.ts:
+    plugins:
+      - typescript
+
+config:
+  scalars:
+    AWSJSON: string
+    AWSDate: string
+    AWSTime: string
+    AWSDateTime: string
+    AWSTimestamp: number
+    AWSEmail: string
+    AWSURL: string
+    AWSPhone: string
+    AWSIPAddress: string

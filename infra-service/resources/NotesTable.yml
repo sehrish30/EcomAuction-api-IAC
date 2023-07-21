@@ -1,0 +1,29 @@
+# dynamo db table in different regions will have their own arn
+# global table doesnot return Table name through ref
+NotesTable:
+  Type: AWS::DynamoDB::GlobalTable
+  # when you want to keep resources running incase of accidental stack remove
+  # usually used for tables and s3
+  DeletionPolicy: Retain
+  UpdateReplacePolicy: Retain
+  Properties:
+    # if no name serverless framework will name
+    TableName: NotesTable-${sls:stage}
+    BillingMode: PAY_PER_REQUEST
+    AttributeDefinitions:
+      # list of attrbutes that describe the key schema for the table and indexes
+      - AttributeName: NotesId
+        AttributeType: S
+    KeySchema:
+      - AttributeName: NotesId
+        KeyType: HASH
+    Replicas: # must include service default region in replica as well
+      - Region: us-east-1
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+      - Region: us-east-2
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+    # must enable dynamo stream for replicas to work
+    StreamSpecification:
+      StreamViewType: NEW_AND_OLD_IMAGES # Old/ updated new records

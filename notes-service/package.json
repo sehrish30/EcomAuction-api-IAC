@@ -1,0 +1,39 @@
+{
+  "name": "notes-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.115",
+    "@types/http-errors": "^2.0.1",
+    "jest": "^29.5.0",
+    "serverless-dotenv-plugin": "^6.0.0",
+    "serverless-iam-roles-per-function": "^3.2.0",
+    "serverless-jetpack": "^0.11.1",
+    "serverless-layers": "^2.6.1",
+    "serverless-plugin-typescript": "^2.1.4",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cloudwatch": "^3.332.0",
+    "@aws-sdk/client-cloudwatch-logs": "^3.332.0",
+    "@aws-sdk/client-dynamodb": "^3.332.0",
+    "@aws-sdk/client-ses": "^3.332.0",
+    "@aws-sdk/lib-dynamodb": "^3.332.0",
+    "@middy/core": "^4.4.1",
+    "@middy/http-cors": "^4.4.1",
+    "@middy/http-error-handler": "^4.4.1",
+    "@middy/http-event-normalizer": "^4.4.1",
+    "@middy/http-json-body-parser": "^4.4.1",
+    "@middy/validator": "^4.4.1",
+    "aws-jwt-verify": "^4.0.0",
+    "http-errors": "^2.0.0",
+    "serverless-domain-manager": "^7.0.4"
+  }
+}

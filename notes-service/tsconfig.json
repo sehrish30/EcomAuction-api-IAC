@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "preserveConstEnums": true,
+    "strictNullChecks": true,
+    "sourceMap": true,
+    "allowJs": true,
+    "target": "es5",
+    "outDir": ".build",
+    // "outDir": "src/layers/logging/nodejs/node_modules/logging/dist/.",
+    "moduleResolution": "node",
+    "lib": ["es2015"],
+    "rootDir": "./",
+    "esModuleInterop": true,
+    "paths": {
+      "logging": ["./src/layers/logging/nodejs/node_modules/logging"],
+      "/opt/nodejs/node_modules/logging": [
+        "./src/layers/logging/nodejs/node_modules/logging"
+      ]
+    }
+  },
+  "exclude": ["**/*.spec.ts", "**/*.test.ts"],
+  "include": ["src/**/*.ts", "src/layers/**/node_modules/**/*"]
+}

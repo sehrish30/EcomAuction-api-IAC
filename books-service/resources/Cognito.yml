@@ -1,0 +1,174 @@
+CognitoUserPool:
+  Type: AWS::Cognito::UserPool
+  Properties:
+    UserPoolName: "Books"
+    UsernameAttributes: # Determines whether email addresses or phone numbers can be specified as user names when a user sign
+      - email
+
+# application communicate through client, attach it with user pool
+CognitoUserPoolClient:
+  Type: AWS::Cognito::UserPoolClient
+  Properties:
+    ClientName: Web
+    UserPoolId: !Ref CognitoUserPool
+
+# user pool groups
+CongitoAdminGroup:
+  Type: AWS::Cognito::UserPoolGroup
+  Properties:
+    Description: "Admin users belong to this group"
+    GroupName: "Admin"
+    Precedence: 0 # if user is part of multiple groups precendence means high priority
+    RoleArn: !GetAtt CongitoAdminIAMRole.Arn # because admins have extra permissions
+    UserPoolId: !Ref CognitoUserPool
+
+# user pool groups
+CongitoCustomGroup:
+  Type: AWS::Cognito::UserPoolGroup
+  Properties:
+    Description: "Customers users belong to this group"
+    GroupName: "Customer"
+    Precedence: 1 # if user is part of multiple groups precendence means high priority
+    RoleArn: !GetAtt CongitoCustomersIAMRole.Arn # because admins have extra permissions
+    UserPoolId: !Ref CognitoUserPool
+
+# IAM ROLE for cognito Admin
+CongitoAdminIAMRole:
+  Type: AWS::IAM::Role
+  Properties:
+    RoleName: CognitoAdminRole-${self:provider.stage}
+    Description: "This is the iam role for admins of feedback"
+    AssumeRolePolicyDocument:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Principal: # who is going to assume that role, its federation cognito
+            Federated:
+              - "cognito-identity.amazonaws.com"
+          Action:
+            - "sts:AssumeRoleWithWebIdentity"
+    Policies:
+      - PolicyName: "AdminPolicy"
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Action:
+                - "dynamodb:*"
+              Resource:
+                - !GetAtt BooksTable.Arn
+                - !GetAtt OrdersTable.Arn
+
+CongitoCustomersIAMRole:
+  Type: AWS::IAM::Role
+  Properties:
+    RoleName: CognitoCustomerRole
+    Description: "This is the iam role for customers"
+    AssumeRolePolicyDocument:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Principal: # who is going to assume that role, its federation cognito
+            Federated:
+              - "cognito-identity.amazonaws.com"
+          Action:
+            - "sts:AssumeRoleWithWebIdentity"
+    Policies:
+      - PolicyName: "CustomerPolicy"
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Action:
+                - "dynamodb:*"
+              Resource:
+                - !GetAtt OrdersTable.Arn
+            - Effect: "Allow"
+              Action:
+                - "dynamodb:GetItem"
+                - "dynamodb:Query"
+                - "dynamodb:Scan"
+                - "dynamodb:BatchGetItem"
+              Resource:
+                - !GetAtt BooksTable.Arn
+                - !Join [
+                    ":",
+                    [
+                      "arn:aws:dynamodb",
+                      "${aws:region}",
+                      "${aws:accountId}",
+                      !Join [
+                        "/",
+                        [
+                          "table",
+                          "${self:custom.bookTableName.name}",
+                          "index",
+                          "ByPriceAndCreatedAtIndex",
+                        ],
+                      ],
+                    ],
+                  ]
+
+
+# connect user pool with identity pool
+# only identity role can have iam role for unauthenticated user
+CognitoIdentityPool:
+  Type: AWS::Cognito::IdentityPool
+  Properties:
+    AllowUnauthenticatedIdentities: true # allow unauthenticated access
+    CognitoIdentityProviders:
+      - ClientId: !Ref CognitoUserPoolClient # associate identity pool with our user pool
+        ProviderName: !GetAtt CognitoUserPool.ProviderName
+    IdentityPoolName: AuctionBooksIdentityPool-${self:provider.stage}
+
+# attach roles to authenticated and unauthenticated users
+CognitoIdentityPoolRoleAttachement:
+  Type: AWS::Cognito::IdentityPoolRoleAttachment
+  Properties:
+    IdentityPoolId: !Ref CognitoIdentityPool
+    Roles:
+      unauthenticated: !GetAtt CognitoUnAuthenticatedIAMRole.Arn
+
+# IAM ROLE for cognito unauthenticated federation
+CognitoUnAuthenticatedIAMRole:
+  Type: AWS::IAM::Role
+  Properties:
+    RoleName: CognitoUnAuthRole-${self:provider.stage}
+    Description: "This is the iam role for unauthenticated users"
+    AssumeRolePolicyDocument:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Principal: # who is going to assume that role, its federation cognito
+            Federated:
+              - "cognito-identity.amazonaws.com"
+          Action:
+            - "sts:AssumeRoleWithWebIdentity"
+    Policies:
+      - PolicyName: "UnAuthUserPolicy"
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Action:
+                - "appsync:GraphQL"
+              Resource:
+                - !Join [
+                    ":",
+                    [
+                      "arn:aws:appsync",
+                      "${self:provider.region}",
+                      "${aws:accountId}",
+                      !Join [
+                        "/",
+                        [
+                          "apis",
+                          "${appsync:id}",
+                          "types",
+                          "Query",
+                          "fields",
+                          "getBookById",
+                        ],
+                      ],
+                    ],
+                  ]

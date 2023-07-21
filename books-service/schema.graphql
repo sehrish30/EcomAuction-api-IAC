@@ -1,0 +1,85 @@
+type Query {
+  getBookById(bookId: ID!): Book! @aws_iam # this will use iam role rest of these will use standarad authentication which is user pool
+  listBooks(
+    limit: Int!
+    nextPrice: Float
+    nextBookId: String
+    nextCreatedAt: String
+  ): BooksPage!
+  myOrders(limit: Int!, nextToken: String): OrderItemsPage!
+}
+
+type NextToken {
+  price: Float
+  bookId: String
+  createdAt: String
+}
+
+type OrderItemsPage {
+  OrderItems: [OrderItem]
+  nextToken: String
+}
+
+type OrderItem {
+  userId: ID! # get this userId from cognito token
+  orderId: ID!
+  book: Book!
+  quantity: Int!
+}
+
+type BooksPage {
+  books: [Book]
+  nextToken: NextToken
+}
+
+# can specify which properties to return if user only has iam role
+# ex: bookId: ID! @aws_iam
+# but if u want to show all attrbites to user u can either add @aws_iam to all properties
+# or at the type level
+type Book @aws_iam @aws_cognito_user_pools {
+  bookId: ID!
+  title: String!
+  description: String
+  imageUrl: AWSURL
+  author: String!
+  price: Float!
+  createdAt: AWSDateTime
+  updatedAt: AWSDateTime
+}
+
+input BookInput {
+  title: String!
+  description: String
+  imageUrl: AWSURL
+  author: String!
+  price: Float!
+}
+
+input OrderInput {
+  items: [OrderItemInput]
+}
+
+input OrderItemInput {
+  bookId: ID!
+  quantity: Int!
+}
+
+type Mutation {
+  # can only be called by admin, my groupName is Admin
+  createBook(newBook: BookInput): Book! @aws_auth(cognito_groups: ["Admin"])
+  createOrder(newOrder: OrderInput): Boolean!
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}
+
+type Subscription {
+  # every connected client will be notified when book is created
+  # because book is @aws_iam @aws_cognito_user_pools where @aws_iam is for public users
+  onCreateBook: Book @aws_subscribe(mutations: ["createBook"])
+}
+
+# npx graphql-codegen

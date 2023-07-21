@@ -1,0 +1,278 @@
+service: auction-service
+
+frameworkVersion: "3"
+
+# Configuration validation
+configValidationMode: error
+
+# https://www.serverless.com/plugins/serverless-dotenv-plugin
+useDotenv: true
+provider:
+  name: aws
+  runtime: nodejs18.x
+  memorySize: 256
+  timeout: 10
+  stage: ${opt:stage, 'dev'}
+  region: us-east-2
+  environment:
+    AUCTIONS_TABLE_NAME: ${self:custom.AuctionsTable.name}
+    MAIL_QUEUE_URL: ${self:custom.MailQueue.url}
+    AUCTIONS_BUCKET_NAME: ${self:custom.AuctionsBucket.name}
+    LISTING_AGREEMENT_BUCKET_NAME: ${self:custom.ListingAgreement.name}
+    AUCTION_DETAIL_TYPE: auctionDetail
+    EVENT_BRIDGE_SOURCE: auction-service
+    REGION: us-east-2
+
+  iam:
+    role:
+      statements:
+        - ${file(./iam/SSMParameterIAM.yml):SSMParameterIAM}
+        - ${file(./iam/ListingBucketIAM.yml):ListingBucketPutBucketPolicy}
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-iam-roles-per-function
+  - serverless-apigateway-service-proxy
+  - serverless-dotenv-plugin
+
+functions:
+  createAuction:
+    handler: src/handlers/createAuction.handler
+    # environment:
+    #   variable2: value2
+    iamRoleStatements:
+      - ${file(./iam/AuctionsTableIAM.yml):AuctionsTableCreateAuctionIAM}
+    # invoke lambda function using api gateway
+    events:
+      - http:
+          path: /auction
+          method: post
+          # this is going to allow request origin allowed for preflight requests
+          # allowed origins should be in lambda functions for that im using middy cors
+          # https://www.serverless.com/blog/cors-api-gateway-survival-guide/
+          cors: true
+          authorizer: ${self:custom.authorizer}
+  getAuctions:
+    handler: src/handlers/getAuctions.handler
+    events:
+      - http:
+          method: get
+          path: /auctions
+          cors: true
+          # arn of the lambda authorizer
+          # our auth service is in the same account as this service
+          # else we would assume a role
+          authorizer: ${self:custom.authorizer}
+    iamRoleStatements:
+      - ${file(./iam/AuctionsTableIAM.yml):AuctionsTableGetAuctionsIAM}
+  getAuction:
+    handler: src/handlers/getAuction.handler
+    events:
+      - http:
+          method: get
+          path: /auction/${id}
+          cors: true
+          authorizer: ${self:custom.authorizer}
+    iamRoleStatements:
+      - ${file(./iam/AuctionsTableIAM.yml):AuctionsTableGetAuctionIAM}
+  placeBid:
+    handler: src/handlers/placeBid.handler
+    events:
+      - http:
+          method: PATCH
+          path: auction/{id}/bid
+          cors: true
+          authorizer: ${self:custom.authorizer}
+    iamRoleStatements:
+      - ${file(./iam/AuctionsTableIAM.yml):AuctionsTableUpdateAuctionIAM}
+  processAuctions:
+    handler: src/handlers/processAuctions.handler
+    events:
+      - schedule: rate(300 minutes)
+    iamRoleStatements:
+      - ${file(./iam/AuctionsTableIAM.yml):AuctionsTableProcessAuctionsIAM}
+      # allow lambda functions to send messages to this queue
+      - ${file(./iam/MailQueueIAM.yml):MailQueueIAM}
+
+  uploadAuctionPicture:
+    handler: src/handlers/uploadAuctionPicture.handler
+    events:
+      - http:
+          method: PATCH
+          cors: true
+          path: auction/{id}/picture
+          authorizer: ${self:custom.authorizer}
+    iamRoleStatements:
+      - ${file(./iam/AuctionsTableIAM.yml):AuctionsTableUpdateAuctionIAM}
+      - ${file(./iam/AuctionsBucketIAM.yml):AuctionsBucketIAM}
+
+  addQRCodeEvent:
+    handler: src/handlers/addQRCodeEvent.handler
+    environment:
+      # same as self:custom.EventBus.value this will also return value which is event bus name
+      EventBusName: !Ref AuctionsEventBridge
+      EventBridgeSource: ${self:custom.eventBridgeSource}
+    events:
+      - http:
+          path: /qr-code
+          method: post
+    iamRoleStatements:
+      - ${file(./iam/EventBridgeIAM.yml):EventBridgeIAM}
+
+  # lambda function that will process messages in sqs queue as lambda worker function
+  processQRCodeEvents:
+    handler: src/handlers/processQRCodeEvents.handler
+    events:
+      - sqs:
+          arn: ${self:custom.TargetSQS.arn}
+          batchSize: 10
+          # maximumConcurrency means maximum lambda invocations in parallel
+          maximumConcurrency: 5
+          # return failures messages
+          functionResponseType: ReportBatchItemFailures
+      # this lambda functions is triggered by event source mapping
+      # which is a managed Lambda service which will pull the messages from sqs queue
+      # and invoke lambda function
+      # so we have to set event source mapping with sqs queue
+    iamRoleStatements:
+      - ${file(./iam/AuctionsBucketIAM.yml):AuctionsBucketIAM}
+
+  getSignedUrl:
+    handler: src/handlers/getSignedUrl.handler
+    events:
+      - http:
+          path: s3Url
+          method: get
+          cors: true
+          authorizer: ${self:custom.authorizer}
+    iamRoleStatements:
+      - ${file(./iam/ListingBucketIAM.yml):ListingBucketGetObjectBucketIAM}
+      - ${file(./iam/ListingBucketIAM.yml):ListingBucketPutIAM}
+
+  executePayload:
+    handler: src/handlers/executePayload.handler
+    iamRoleStatements:
+      - ${file(./iam/SNSPublishIAM.yml):SNSPublishIAM}
+      - ${file(./iam/ListingBucketIAM.yml):ListingBucketGetObjectBucketIAM}
+    # destinations only work with asynchronous invocation events like s3, eventbridge and sns not sqs because it follows lambda polling pattern not async
+    # https://docs.aws.amazon.com/lambda/latest/dg/lambda-services.html
+    destinations:
+      # put message to sns topic to report to admins
+      # resource must be existing
+      # onSuccess: arn:aws:sns:<region>:<accountId>:<topicName>
+      # first these params should exist so will comment it and create them before
+      # when deploying the service for the first time and then deploy with these
+      onSuccess: ${ssm:${self:custom.SuccessSnsParam.name}}
+      onFailure: ${ssm:${self:custom.SuccessSnsParam.name}}
+    events:
+      # lambda looking at the event of object created in s3 bucket
+      # that will invoke this lambda function
+      - s3:
+          # resouceId: ListingBucket
+          # try to use event from resource
+          # try to use ssm for arn
+          bucket: ${self:custom.ListingAgreement.arn}
+          event: s3:ObjectCreated:*
+          existing: true
+
+resources:
+  Resources:
+    AuctionsTable: ${file(./resources/AuctionsTable.yml):AuctionsTable}
+    AuctionsBucket: ${file(./resources/AuctionsBucket.yml):AuctionsBucket}
+    AuctionsBucketPolicy: ${file(./resources/AuctionsBucket.yml):AuctionsBucketPolicy}
+    AuctionsEventBridge: ${file(./resources/EventBridge.yml):AuctionsEventBridge}
+    TargetSQS: ${file(./resources/EventBridge.yml):TargetSQS}
+    TargetSQSRule: ${file(./resources/EventBridge.yml):TargetSQSRule}
+    TargetSQSPolicy: ${file(./resources/EventBridge.yml):TargetSQSPolicy}
+    TargetDLQ: ${file(./resources/EventBridge.yml):TargetDLQ}
+    WebACL: ${file(./resources/CloudFront.yml):WebACL}
+    CloudFrontDistribution: ${file(./resources/CloudFront.yml):CloudFrontDistribution}
+    CloudFrontCachePolicy: ${file(./resources/CloudFront.yml):CloudFrontCachePolicy}
+    ExecutePayloadSuccessSNS: ${file(./resources/SNS.yml):ExecutePayloadSuccessSNS}
+    ExecutePayloadFailureSNS: ${file(./resources/SNS.yml):ExecutePayloadFailureSNS}
+    ListingBucket: ${file(./resources/ListingBucket.yml):ListingBucket}
+    SuccessSnsParam: ${file(./resources/ApplicationParameter.yml):SuccessSnsParam}
+    FailureSnsParam: ${file(./resources/ApplicationParameter.yml):FailureSnsParam}
+
+  Outputs:
+    AuctionsTableName: ${file(./resources/AuctionsTable.yml):Outputs.AuctionsTableName}
+    AuctionsTableArn: ${file(./resources/AuctionsTable.yml):Outputs.AuctionsTableArn}
+
+custom:
+  #psudeo parameters = #{AWS::Region}:#{AWS::AccountId}
+  # to authorize in another lambda before hitting this route
+  authorizer: arn:aws:lambda:${self:provider.region}:${aws:accountId}:function:authentication-service-${self:provider.stage}-auth
+  eventBridgeSource: "auction-service"
+
+  bundle:
+    linting: true
+  AuctionsTable:
+    name: !Ref AuctionsTable
+    arn: !GetAtt AuctionsTable.Arn
+  TargetSQS:
+    arn: !GetAtt TargetSQS.Arn
+  # also put it in environment variable because will be accessed by lambda
+  MailQueue:
+    # access cloudformation outputs from notification service
+    arn: ${cf:notifications-service-${self:provider.stage}.MailQueueArn}
+    url: ${cf:notifications-service-${self:provider.stage}.MailQueueUrl}
+  AuctionsBucket:
+    name: auctions-bucket-sdsjj32kjds-${self:provider.stage}
+  ListingAgreement:
+    name: listing-agreement-sdsjj32kjds-${sls:stage}
+    arn: !Ref ListingBucket
+  EventBus:
+    value: !Ref AuctionsEventBridge
+  # bcz custom or resources doesnot have access to environment variables it is accessible in events
+  AUCTION_DETAIL_TYPE: auctionDetail
+  EVENT_BRIDGE_SOURCE: auction-service
+  # service proxy integration
+  apiGatewayServiceProxies:
+    # should see another endpoint in api gateway "/eventbridge"
+    - eventbridge: # source and detailType are hardcoded; detail defaults to POST body
+        path: /qr-code-event
+        method: post
+        source: ${self:custom.EVENT_BRIDGE_SOURCE}
+        detailType: ${self:custom.AUCTION_DETAIL_TYPE}
+        eventBusName: { Ref: AuctionsEventBridge }
+        cors: true
+  ADMIN_EMAIL: ${env:adminEmail}
+  ADMIN_EMAIL2: ${env:adminEmail2}
+  ExecutePayloadSuccessSNS:
+    arn: !Ref ExecutePayloadSuccessSNS
+    name: ExecutePayloadSuccess-${self:provider.stage}
+  ExecutePayloadFailureSNS:
+    arn: !Ref ExecutePayloadFailureSNS
+    name: ExecutePayloadFailure-${self:provider.stage}
+  SuccessSnsParam:
+    name: /auctions/${sls:stage}/successSnsParam
+  FailureSnsParam:
+    name: /auctions/${sls:stage}/failureSnsParam
+# custom variable self, refers to this serverless.yml file
+# and then we can select object from upper scope of this file provider
+# self:provider.stage
+
+# intrinsic functions
+# Ref when u pass logocal id of the resource it returns resource name
+# !GetAtt to return Arn
+
+# whenever we connect api gateway to anything other than lambda function
+
+# we will have to do vtl template behind the scenes
+# and we can simply use that plugin to pass the data
+# that we wanted to pass down to the event bridge
+# Service APIGatway Service Proxy
+# https://www.serverless.com/plugins/serverless-apigateway-service-proxy#eventbridge
+
+# Cloudfront+Waf
+# Standard DDOS protection from cloudfront
+# Protect other origins from a centralized place
+# Drop bad traffic at the edge
+# No need to enable CORS
+# Ability to use Cloudfront cache to cache GET requests
+
+# sunchronous lambda invocation - > Push model -> Api gateway -> Lambda
+# asynchronous invocation -> event model ->Amazon SNS + S3 -> Lambda function
+# Stream (Poll based) ->  DynamoDB OR  Kinesis OR SQS -> Lambda
+# event source mapping is a resource in lambda that reads items from a stream or queue and invokes a lambda function
+

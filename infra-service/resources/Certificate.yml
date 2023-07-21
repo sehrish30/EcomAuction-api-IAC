@@ -1,0 +1,22 @@
+NotesCeritifcate:
+  Type: AWS::CertificateManager::Certificate
+  Properties:
+    DomainName: ${env:DOMAIN_NAME}
+    DomainValidationOptions:
+      - DomainName: ${env:DOMAIN_NAME}
+        HostedZoneId: Z03436721Y2YMJT47MOF1 # hosted zome id of this domain name, get it from route53
+    SubjectAlternativeNames: # to request ssl certificate for our sub domain name, like www.domainname.com
+      - ${env:ALL_DOMAIN_NAMES}
+    # validate the domain name belongs to us, first option email, second option dns
+    ValidationMethod: DNS
+# validate the domain name belongs to u
+# first is through email second is dns
+# aws certificate manager will give u a cname
+# and you have to use the cname to create a record set in your route53
+# DNS option requires you to create a DNS record in your Route 53 hosted zone to prove that you own the domain name.
+# cname we use to validate that domain name belongs to us
+# copy the cname and check if record of cname is there in rote53
+
+# cloudformation willnot delete the record set it created in route53
+# if u need to launch this cloudformation stack again you dont have to delete this record set ,
+# cloudformation will use same record set

@@ -1,0 +1,34 @@
+{
+  "name": "authentication-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.115",
+    "@types/http-errors": "^2.0.1",
+    "@types/jsonwebtoken": "^9.0.2",
+    "serverless-plugin-typescript": "^2.1.4",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "@aws-sdk/client-apigatewaymanagementapi": "^3.332.0",
+    "@aws-sdk/client-dynamodb": "^3.329.0",
+    "@aws-sdk/client-sfn": "^3.332.0",
+    "@aws-sdk/client-sqs": "^3.332.0",
+    "@aws-sdk/lib-dynamodb": "^3.329.0",
+    "@middy/core": "^4.4.0",
+    "@middy/http-cors": "^4.4.0",
+    "@middy/http-error-handler": "^4.4.0",
+    "@middy/http-event-normalizer": "^4.4.0",
+    "@middy/http-json-body-parser": "^4.4.0",
+    "http-errors": "^2.0.0",
+    "jsonwebtoken": "^9.0.0",
+    "serverless-iam-roles-per-function": "^3.2.0",
+    "socket.io-client": "^4.6.1"
+  }
+}

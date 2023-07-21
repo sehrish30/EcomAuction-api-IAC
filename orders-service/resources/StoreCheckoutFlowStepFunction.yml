@@ -1,0 +1,171 @@
+StoreCheckoutFlowStepFunction:
+  # standard workflow because we have asynchronous exectuion
+  id: StoreCheckoutFlowStateMachine
+  name: storeCheckoutFlow-${sls:stage}
+  # definition means tell starting state
+  definition:
+    StartAt: checkInventory
+    States:
+      checkInventory:
+        # first define type of state since its unit of task
+        Type: Task
+        Resource:
+          # logical if arn of lambda function
+          Fn::GetAtt: [checkInventory, Arn] # Or !GetAtt checkInventory.Arn
+        # Catch the error we threw from lambda function
+        Catch:
+          - ErrorEquals: [AuctionNotFound]
+            # next to another state if error found
+            Next: auctionNotFoundError
+          - ErrorEquals: [AuctionOutOfStock]
+            # next to another state if this error found
+            Next: auctionOutOfStockError
+        ResultPath: "$.auction" # so input dont get replaced by return value, $ is entire input document and we are attching returned value of checkIndevntory as auction to it, if only $ to next function will replace the entire object with input of prev lambda function
+        Next: calculateTotal
+      calculateTotal:
+        Type: Task
+        Resource:
+          Fn::GetAtt: [calculateTotal, Arn]
+        ResultPath: "$.total"
+        Next: isRedeemNeeded
+      isRedeemNeeded:
+        Type: Choice
+        Choices:
+          - Variable: $.redeem
+            BooleanEquals: true
+            Next: RedeemPoints
+            # Default anything doesnot match this state, here it means customer doesnot want to redeem
+        Default: BillCustomer
+      RedeemPoints:
+        Type: Task
+        Resource:
+          Fn::GetAtt: [redeemPoints, Arn]
+        # so prev total will be replaced by new total which has points as well
+        ResultPath: "$.total"
+        Catch:
+          # States.ALL means match with all errors general error handling because we have not given error names in lambda function as well
+          - ErrorEquals: [States.ALL]
+            Next: redeemPointsError
+        Next: BillCustomer
+      BillCustomer:
+        Type: Task
+        # must specify ResultPath otherwise function result will replace all input object
+        ResultPath: "$.billingStatus"
+        # retry the state
+        Retry:
+          - ErrorEquals: [States.ALL]
+            MaxAttempts: 3
+        # if it didnot work in the third time so catch the error
+        Catch:
+          - ErrorEquals: [States.ALL]
+            # ResultPath so result doesnot replace entire input state
+            # so to keep all other inputs intact
+            ResultPath: "$.customerBilling"
+            Next: billingError
+        Resource:
+          Fn::GetAtt: [billCustomer, Arn]
+        Next: PrepareOrder
+      PrepareOrder:
+        # add it to sqs queue
+        # then a lambda worker attach it to the sqs queue
+        # and lambda worker will pick up a message
+        # and a find a proper courier and attach the courier information
+        # let say its info is courier email to dispatch an email to the courier
+        # wait for out state machine until task is completed
+        # so i will use callback pattern
+        # attach task token to the message we are sending to sqs queue
+        # and once lambda completed its task it will callback with task task token
+        # then state machine when it will receive callback will move to next state
+        Type: Task
+        # Resource is particular to state and step function not arn
+        # arn:aws:states:::sqs:sendMessage is resource related to state machine
+        # suffix task token = waitForTaskToken
+        # if u dont add waitForTaskToken its not going to wait make sure u add that
+        Resource: arn:aws:states:::sqs:sendMessage.waitForTaskToken
+        # ResulltPath because we are returning something from output object from sqsWorker
+        ResultPath: "$.courierStatus"
+        Parameters:
+          QueueUrl: !Ref OrdersQueue
+          MessageBody:
+            # $ represents entire message object in body of message
+            Input.$: "$"
+            # associate the task token
+            # $$ indicates context object of state machine
+            Token.$: "$$.Task.Token" # From the context
+          # attach lamda worker that consumes the messages from sqs queue
+        Catch:
+          - ErrorEquals: [NoCourierAvailable]
+            ResultPath: "$.courierError"
+            Next: refundCustomer
+        Next: dispatchOrder
+      refundCustomer:
+        Type: Task
+        Resource:
+          Fn::GetAtt: [refundCustomer, Arn]
+        # so prev total will be replaced by new total which has points as well
+        ResultPath: "$.refundStatus"
+        Catch:
+          # States.ALL means match with all errors general error handling because we have not given error names in lambda function as well
+          - ErrorEquals: [States.ALL]
+            Next: couldNotRefundCustomerReportAdmin
+        Next: restoreQuantity
+        # Type: Pass
+        # Result: "Customer is refunded"
+        # ResultPath: "$.refundStatus"
+        # Next: restoreQuantity
+      restoreQuantity:
+        Type: Task
+        Resource:
+          Fn::GetAtt: [restoreQuantity, Arn]
+        Next: restoreRedeemPoints
+        Catch:
+          - ErrorEquals: [States.ALL]
+            ResultPath: "$.restoreQuantityError"
+            Next: restoreQuantityError
+      auctionNotFoundError:
+        Type: Pass
+        Result: "No such auction found"
+        End: true
+      auctionOutOfStockError:
+        Type: Pass
+        Result: "Sorry the book is out of stock"
+        End: true
+      redeemPointsError:
+        Type: Pass
+        Result: "Error in redeeming points"
+        End: true
+      billingError:
+        Type: Pass
+        Result: "Billing error"
+        ResultPath: "$.billingStatus"
+        Next: restoreRedeemPoints
+      restoreRedeemPoints:
+        Type: Task
+        Resource:
+          Fn::GetAtt: [restoreRedeemPoints, Arn]
+        End: true
+      restoreQuantityError:
+        Type: Pass
+        Result: "Quantity couldnot be restored"
+        End: true
+      dispatchOrder:
+        # send any message to this sns topic it will be sent to this email with message body
+        # after that store manager can coordinate with the query and dispatch the order
+        Type: Task
+        # publish a message to sns topic to what sns topic so for that we will specify arn
+        Resource: arn:aws:states:::sns:publish
+        Parameters:
+          TopicArn: !Ref NotifyCourier
+          # $ means send entire input object
+          # whenever we pass dynamic value we need to pass $ here
+          # else if its static we can pass message: "hey this is a message"
+          Message.$: "$"
+        Next: dispatched
+      dispatched:
+        Type: Pass
+        Result: "Your order will be dispatched in 24 hrs"
+        End: true
+      couldNotRefundCustomerReportAdmin:
+        Type: Pass
+        Result: "Sent email to admin"
+        End: true

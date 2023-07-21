@@ -1,0 +1,20 @@
+# dynamo db table in different regions will have their own arn
+# global table doesnot return Table name through ref
+# no more using just table we are using global table
+NotesTable:
+  Type: AWS::DynamoDB::Table
+  # when you want to keep resources running incase of accidental stack remove
+  # usually used for tables and s3
+  DeletionPolicy: Retain
+  UpdateReplacePolicy: Retain
+  Properties:
+    # if no name serverless framework will name
+    TableName: NotesTable-${sls:stage}
+    BillingMode: PAY_PER_REQUEST
+    AttributeDefinitions:
+      # list of attrbutes that describe the key schema for the table and indexes
+      - AttributeName: NotesId
+        AttributeType: S
+    KeySchema:
+      - AttributeName: NotesId
+        KeyType: HASH

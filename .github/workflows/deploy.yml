@@ -1,0 +1,64 @@
+name: deploy headless browser testing
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./headlessBrowserTesting
+
+    strategy:
+      matrix:
+        node-version: ["18.15.0"]
+
+    # start copy of mongodb and redis
+    services:
+      mongodb:
+        image: mongo
+        ports:
+          - 27017:27017
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+
+    env:
+      NODE_ENV: ci
+      PORT: 3000
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install Dependencies
+        run: |
+          npm install --legacy-peer-deps
+          npm run build
+      - name: Start server
+        run: |
+          nohup npm run start &
+          sleep 3
+      - name: Run tests
+        run: npm run test
+# nohup means if the shell is closed
+# dont kill anything this command
+# creates
+
+# &: will run this command in a subshell
+# in the background
+
+# you can use pkill node
+# to kill node process
+
+# sleep so tests dont start immediately when
+# server isnot ready yet
+
+# Express API => Mongodb => Redis Server

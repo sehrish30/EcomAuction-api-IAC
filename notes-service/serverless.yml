@@ -1,0 +1,251 @@
+service: notes-service
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: ${opt:stage, 'dev'}
+  region: us-east-2
+
+  # No cloudfront infront of api gateway, it will not create cloudfront distribution infront of api gateway
+  # default bahavior is it will create cloudfront distribution and access this api through cloudfront distribution
+  endpointType: REGIONAL
+  deploymentBucket:
+    name: ${env:BUCKET_NAME}
+  environment:
+    APP_NAME: Auction Notes App
+    APP_STAGE: ${opt:stage,self:provider.stage}
+    SERVICE_NAME: Notes Service
+    NOTES_TABLE: ${self:custom.NOTES_TABLE.name}
+
+# can also be specified for each lambda function
+# https://www.serverless.com/framework/docs/providers/aws/guide/layers
+# only work with serverless-jetpack plugin when you use typescript plugin
+# not compiling my typescript file
+
+layers:
+  logging:
+    path: ./src/layers/logging
+    name: "reporting-${self:provider.stage}"
+    description: "logging for reporting urgent issues to production team"
+    compatibleRuntimes:
+      - nodejs18.x
+    package:
+      patterns:
+        - node_modules/**
+
+  # logger:
+  #   path: logger
+  #   # path: logger
+  #   name: "loggers-${self:provider.stage}"
+  #   description: "loggers for reporting urgent issues to production team"
+  #   compatibleRuntimes:
+  #     - nodejs18.x
+  #   package:
+  #     patterns:
+  #       - node_modules/**
+
+useDotenv: true
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-iam-roles-per-function
+  - serverless-dotenv-plugin
+  - serverless-jetpack
+  - serverless-layers
+  - serverless-domain-manager
+
+functions:
+  authorizer:
+    # authorizer are either in token mode which is default or default mode
+    # token mode pass token in authorizer header
+    handler: src/handlers/cognitoUserPoolAuthorizer.handler
+    environment:
+      COGNITO_USERPOOL_ID: !Ref CognitoUserPool
+      COGNITO_WEB_CLIENT_ID: !Ref CognitoUserPoolClient
+
+  createNote:
+    handler: src/handlers/createNote.handler
+    iamRoleStatements:
+      - ${file(./iam/NotesTableIAM.yml):PutItemNotesTableIAM}
+    events:
+      - http:
+          method: post
+          path: notes
+          authorizer: authorizer
+  updateNote:
+    handler: src/handlers/updateNote.handler
+    iamRoleStatements:
+      - ${file(./iam/NotesTableIAM.yml):UpdateItemNotesTableIAM}
+    events:
+      - http:
+          method: put
+          path: notes/{noteId}
+          authorizer: authorizer
+
+  deleteNote:
+    handler: src/handlers/deleteNote.handler
+    iamRoleStatements:
+      - ${file(./iam/NotesTableIAM.yml):DeleteItemNotesTableIAM}
+    # environment:
+    # cannot get it like this because now Im using global table
+    #   NOTES_TABLE: !Ref NotesTable # get TableName
+    events:
+      - http:
+          method: delete
+          path: notes/{noteId}
+          authorizer: authorizer
+
+  getAllNotes:
+    handler: src/handlers/getAllNotes.handler
+    iamRoleStatements:
+      - ${file(./iam/NotesTableIAM.yml):ScanItemNotesTableIAM}
+    # environment:
+    #   NOTES_TABLE: !Ref NotesTable # get TableName
+    events:
+      - http:
+          method: get
+          path: notes
+          # this is cognito user pool that only checks
+          # if user is in the user pool or not
+          # if you want to check actual credentials
+          # you have to use iam authorizer or lambda authorizer
+          # so u can check if user belongs to "no access" user pool group
+          # if so return unauthorized access
+          authorizer:
+            name: userpool_authorizer
+            # without type it will treat this as regular lambda authorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
+
+  oldNoteDeleter:
+    handler: src/handlers/oldNoteDeleter.handler
+    # environment:
+    #   NOTES_TABLE: !Ref NotesTable # get TableName
+    iamRoleStatements:
+      - ${file(./iam/NotesTableIAM.yml):DeleteItemNotesTableIAM}
+      - ${file(./iam/NotesTableIAM.yml):ScanItemNotesTableIAM}
+    events:
+      # eventbridge rule to send events to lambda function using default event bus, scheduled patterns
+      # Invoke lambda function every 2 minutes
+      - schedule: cron(0/2 * ? * MON-FRI *)
+
+  reportingError:
+    handler: src/handlers/reportingError.handler
+    environment:
+      NODE_PATH: "./:/opt/nodejs/node_modules"
+    layers:
+      # - !Ref LoggerLambdaLayer
+      - !Ref LoggingLambdaLayer
+    events:
+      - http:
+          method: post
+          path: error-handling
+    package:
+      patterns:
+        - ./:/opt/nodejs/node_modules/**
+        - node_modules/**
+
+  getReportingError:
+    handler: src/handlers/getReportingError.handler
+    events:
+      - http:
+          method: get
+          path: error-handling
+
+  # sns subscription lambda function
+  dispatchErrorsSNSTopicSubscription:
+    handler: src/handlers/dispatchErrorsSNSTopicSubscription.handler
+    environment:
+      SESarn:
+        !Join [
+          ":",
+          [
+            "arn:aws:ses",
+            "${self:provider.region}",
+            "${aws:accountId}",
+            !Join ["/", ["identity", "${self:custom.SESEmail.name}"]],
+          ],
+        ]
+      SESEmail: ${self:custom.SESEmail.name}
+
+    iamRoleStatements:
+      - ${file(./iam/CloudWatchIAM.yml):CloudWatchIAM}
+      - ${file(./iam/SendMailIAM.yml):SendMailIAM}
+    events:
+      - sns:
+          arn: !Ref ReportingSNSTopic
+          topicName: ${self:custom.ReportingSNSSopic.name}
+
+resources:
+  Resources:
+    # NotesTable: ${file(./resources/NotesTable.yml):NotesTable}
+    CognitoUserPool: ${file(./resources/CognitoUserPool.yml):CognitoUserPool}
+    CognitoUserPoolDomain: ${file(./resources/CognitoUserPool.yml):CognitoUserPoolDomain}
+    CognitoFacebookUserPoolIdentityProvider: ${file(./resources/CognitoUserPool.yml):CognitoFacebookUserPoolIdentityProvider}
+    CognitoGoogleUserPoolIdentityProvider: ${file(./resources/CognitoUserPool.yml):CognitoGoogleUserPoolIdentityProvider}
+    CognitoUserPoolClient: ${file(./resources/CognitoUserPool.yml):CognitoUserPoolClient}
+    ReportingSNSTopic: ${file(./resources/ReportingSNSTopic.yml):ReportingSNSTopic}
+    # create this only after lambda function is created so comment it down
+    CloudwatchMerticFilter: ${file(./resources/CloudwatchMerticFilter.yml):CloudwatchMerticFilter}
+    SESUserEmail: ${file(./resources/SESUserEmail.yml):SESUserEmail}
+    CloudWatchAlarm: ${file(./resources/CloudWatchAlarm.yml):CloudWatchAlarm}
+    Route53HealthCheck: ${file(./resources/Route53HealthCheck.yml):Route53HealthCheck}
+
+custom:
+  layersDeploymentBucket: notes-service-dev-serverlessdeploymentbucket-1fvto0n6ho805
+  serverless-layers:
+    arn: !Ref LoggingLambdaLayer
+  healthCheckId:
+    name: !Ref Route53HealthCheck
+  MetricFilter:
+    name: Notes-errors-${self:provider.stage}
+  GetMetricFilter:
+    name: Notes-errors-get-${self:provider.stage}
+  ReportingSNSSopic:
+    name: reporting-sns-topic-${self:provider.stage}
+  AlarmName:
+    name: notes-${self:provider.stage}
+  SESEmail:
+    name: !Ref SESUserEmail
+    value: !Ref SESUserEmail
+  RegionOfInfra:
+    value: us-east-2
+  NOTES_TABLE:
+    name: ${cf(${self:custom.RegionOfInfra.value}):infra-service-${self:provider.stage}.NotesTable}
+    arn: ${cf(${self:custom.RegionOfInfra.value}):infra-service-${self:provider.stage}.NotesTableArn}
+  customDomain: ${file(./resources/CustomDomain.yml):CustomDomain}
+
+  Outputs:
+    UserPoolId:
+      Value: !Ref CognitoUserPool
+      Export:
+        Name: "UserPool::Id"
+    UserPoolClientId:
+      Value: !Ref CognitoUserPoolClient
+      Export:
+        Name: "UserPoolClient::Id"
+    FacebookIdentityPoolId:
+      Value: !Ref CognitoFacebookUserPoolIdentityProvider
+      Export:
+        Name: "FacebookIdentityPool::Id"
+    GoogleIdentityPoolId:
+      Value: !Ref CognitoGoogleUserPoolIdentityProvider
+      Export:
+        Name: "GoogleIdentityPool::Id"
+    LoggingLambdaLayer:
+      Value:
+        # lambda layer name in title case with suffix LambdaLayer
+        # reference to lambda layer to be used in other cloudformation stacks or services
+        Ref: LoggingLambdaLayer
+      Export:
+        Name: LoggingLambdaLayer
+# can be referenced in other services like
+# can be referenced in lambda function like
+# layers
+#  - ${self:custom.logging.arn}
+# custom:
+#   logging:
+#      arn: ${cf:notes-service-${self:provider.stage}.LoggingLambdaLayer}
+#      arn: !ImportValue LoggingLambdaLayer

@@ -1,0 +1,9 @@
+{
+    "version": "2018-05-29",
+    "operation": "GetItem",
+    "key" : {
+        "PK": $util.dynamodb.toStringJson("USER#${ctx.source.userId}"),
+        "SK": $util.dynamodb.toStringJson("USER#${ctx.source.userId}") 
+    },
+    "consistentRead": true
+}

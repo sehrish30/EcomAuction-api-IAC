@@ -1,0 +1,4 @@
+StateMachineIAM:
+  Effect: Allow
+  Action: states:*
+  Resource: ${self:custom.StoreCheckoutFlowStateMachine.arn}

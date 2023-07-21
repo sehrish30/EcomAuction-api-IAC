@@ -1,0 +1,39 @@
+AuctionsTable:
+  Type: AWS::DynamoDB::Table
+  Properties:
+    TableName: AuctionsTable-${self:provider.stage}
+    BillingMode: PAY_PER_REQUEST
+    # AttributeDefinitions items must be in our table
+    # when we define attributes in dynamo db we define our core schema of our table
+    # and each defined in AttributeDefinitions should also be defined in KeySchema or GlobalSecondaryIndexes
+    AttributeDefinitions:
+      - AttributeName: Id
+        AttributeType: S
+      - AttributeName: Status
+        AttributeType: S
+      - AttributeName: EndingAt
+        AttributeType: S
+    # KeySchema tells dynamo db what to do with the schema
+    KeySchema:
+      - AttributeName: Id
+        KeyType: HASH
+    GlobalSecondaryIndexes:
+      - IndexName: StatusAndEndDate
+        KeySchema:
+          - AttributeName: Status
+            KeyType: HASH
+          - AttributeName: EndingAt
+            # RANGE allows us to sort and filter
+            KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+
+Outputs:
+  AuctionsTableName:
+    Value: ${self:custom.AuctionsTable.name}
+    Export:
+      Name: AuctionsTable-${sls:stage}-Name
+  AuctionsTableArn:
+    Value: ${self:custom.AuctionsTable.arn}
+    Export:
+      Name: AuctionsTable-${sls:stage}-Arn

@@ -1,0 +1,157 @@
+ open ~/.aws
+ mkdir notes
+ cd notes
+ npx serverless create --template aws-nodejs
+ serverless create -t aws-nodejs
+ npm init -y
+ touch .gitignore
+
+npm i --save-dev @types/aws-lambda
+https://www.serverless.com/plugins/serverless-plugin-typescript
+
+ npm i @types/aws-lambda
+
+
+serverless deploy
+serverless deploy -f createAuction -v
+
+serverless logs -f createAuction
+serverless logs -f getAuctions
+
+Some ways to optimize AWS Lambda function performance include
+choosing the right memory allocation, limiting the number of 
+modules imported, minimizing network latency, and reducing the initial startup time.
+
+// serverless deploy function --function getAuctions
+// serverless logs -f getAuctions -t
+
+// serverless logs -f processAuctions -t
+// serverless logs -f processAuctions --startTime 1m
+// serverless logs -f processAuctions --startTime 1h
+// serverless invoke -f processAuctions -l
+// with -l u will get logs of invoked function
+// createAuction
+// serverless logs -f createAuction -t
+// serverless deploy function --function processAuctions
+
+curl --location --request POST 'https://dev-mtzrfmcr246svjn6.us.auth0.com/oauth/token' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--data-urlencode 'client_id=ky4C6XXzXQhXHNnnPh9iDJqo6QW59zPV' \
+--data-urlencode 'username=sehrishwaheed98@gmail.com' \
+--data-urlencode 'password=testing1234!' \
+--data-urlencode 'grant_type=password' \
+--data-urlencode 'scope=openid'
+
+{
+  "nickname": "sehrishwaheed98",
+  "name": "sehrishwaheed98@gmail.com",
+  "picture": "https://s.gravatar.com/avatar/f2ec43d44b79520fb880f0b00b1f62b9?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fse.png",
+  "updated_at": "2023-05-01T14:25:06.173Z",
+  "email": "sehrishwaheed98@gmail.com",
+  "email_verified": true,
+  "iss": "https://dev-mtzrfmcr246svjn6.us.auth0.com/",
+  "aud": "ky4C6XXzXQhXHNnnPh9iDJqo6QW59zPV",
+  "iat": 1682951106,
+  "exp": 1682987106,
+  "sub": "auth0|641e11cff939365a568f0faf"
+}
+
+
+
+
+"indentRainbow.includedLanguages": ["python", "yaml", "yml", "nim", "nims"] 
+
+serverless deploy --stage prod
+
+npm i --save-dev serverless-iam-roles-per-function
+
+serverless logs -f getAllNotes
+serverless logs -f authorizer
+serverless logs -f createNote
+serverless logs -f deleteNote
+serverless logs -f updateNote
+
+serverless logs -f putEvents
+serverless logs -f checkInventory
+serverless logs -f sqsWorker
+
+https://github.com/mjzone/lambda-error-emails/blob/master/logging/handler.js
+
+serverless package --package my-artifact --stage dev
+
+An auction API is typically used as part of an online auction website or platform to support buying and selling of goods, services or products through an auction process. Here are some of the key features that an auction API could include:
+
+Bidding and auction management: The API should allow users to place bids on items and track the status of the auctions they participate in. The API should also allow auction managers to update auction details, such as minimum bids or auction end times.
+
+Notifications: The API should allow users to receive notifications about the status of auctions they are interested in. This could include emails for winning or losing bids, notifications for new items up for auction, and updates on ending times for auctions.
+
+Payment processing: The API could include integration with payment gateways to process payments for items sold through auctions.
+
+Fraud prevention: The API could include fraud prevention features such as validation of user identities, and monitoring for suspicious activity or bidding patterns.
+
+Data Analytics: The API could provide reporting and analytics features to help auction managers track performance and gather insights into user behavior.
+
+Customization: An auction API should allow customization of the auction experience to meet the specific needs of the platform or client using it.
+
+Overall, a well-designed auction API can provide a powerful tool for managing online auctions and delivering a seamless user experience for buyers and sellers alike.
+
+https://github.com/mjzone/large-payload-handling/tree/master
+
+
+1) serverless-jetpack (For Lambda Functions packaging with typescript)
+2) Create a layer folder in src or outside
+3) Create a layer lambda according to serverless framework
+4) Go to layer folder example: src/layers/logging/nodejs/node_modules/logging
+5) run tsc index.ts
+6) It will generate index.js
+7) Go to tsconfig.json
+8) Add line => "include": ["src/**/*.ts", "src/layers/**/node_modules/**/*"]
+9) It will include those node_modules while compiling
+
+15) Use the plugin - serverless-layers, It attaches automatically layers to the provider and for each function
+16) And add 
+    provider:
+      deploymentBucket:
+        name: notes-service-dev-serverlessdeploymentbucket-1fvto0n6ho805
+    in the provider of your serverless.yml
+17) Check your .serverless/logging
+18) Unzip it and check the node_modules path
+19) In our case its nodejs/node_modules which contains our folder logging
+18) put it in the environment of the function
+19) NODE_PATH: "./:/opt/nodejs/node_modules"
+20) It works event without specifying NODE_PATH
+21) https://www.shawntorsitano.com/2022/06/19/creating-lambda-layers-with-typescript-and-cdk-the-right-way/
+22) In tsconfig.json 
+23) Add this in tsconfig.json
+ "paths": {
+      "logging": ["./src/layers/logging/nodejs/node_modules/logging"],
+      "/opt/nodejs/node_modules/logging": [
+        "./src/layers/logging/nodejs/node_modules/logging"
+      ]
+    }
+
+// the following steps should not be done rather add paths in tsconfig.json
+10) Create a folder src/@types
+11) Make a file logging.d.ts 
+12) logging refers to your module name here my module name is logging so I used it
+13) declare your module
+14) declare module "logging" {
+      export default function log<T>(event: T): Promise<{
+          statusCode: number;
+          body: string;
+      }>;
+    }
+
+1) serverless-domain-manager for domain for api gateway
+example in notes service
+2) and then customDomain in custom variables
+3) Create health check 
+4) healthCheckId from AWS::Route53::HealthCheck
+5) and infra service has certificate manager for this domain
+
+Serverless caching using momentum
+
+
+cdk init --language=typescript app
+
+git rm -r --cached .

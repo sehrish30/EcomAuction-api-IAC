@@ -1,0 +1,20 @@
+# serverless create_domain
+# https://domainName/basePath/*
+CustomDomain:
+  domainName: ${env:DOMAIN_NAME}
+  stage: ${self:provider.stage}
+  basePath: notes
+  # certificateName: "*.foo.com" # no need if in aws certificate manager will automatically be figured out
+  createRoute53Record: true
+  createRoute53IPv6Record: true
+  endpointType: "regional"
+  securityPolicy: tls_1_2
+  apiType: rest
+  autoDomain: false
+  route53Params:
+    # if request isnot healthy then it will be sent to another region
+    healthCheckId: ${self:custom.healthCheckId.name}
+    routingPolicy: latency # latency routing policy, when you have resources in multiple AWS Regions and you want to route traffic to the region that provides the best latency.
+
+# Serverless Domain Manager:
+

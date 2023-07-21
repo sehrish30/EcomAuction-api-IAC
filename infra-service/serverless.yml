@@ -1,0 +1,46 @@
+# Welcome to Serverless!
+#
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+# We've included some commented out config examples here.
+# Just uncomment any of them to get that config option.
+#
+# For full config options, check the docs:
+#    docs.serverless.com
+#
+# Happy Coding!
+
+service: infra-service
+
+frameworkVersion: "3"
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: dev
+  region: us-east-2
+  deploymentBucket:
+    name: ${env:BUCKET_NAME}
+
+custom:
+  NotesTable:
+    value: NotesTable-${sls:stage}
+# you can add CloudFormation resource templates here
+resources:
+  Resources:
+    NotesTable: ${file(./resources/NotesTable.yml):NotesTable}
+    NotesCeritifcate: ${file(./resources/Certificate.yml):NotesCeritifcate}
+
+  # no intrisic functions in global dynamo db table
+  Outputs:
+    NotesTable:
+      Value: NotesTable-${sls:stage}
+      Export:
+        Name: NotesTable
+    NotesTableArn:
+      Value: arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/NotesTable-${sls:stage}
+      Export:
+        Name: NotesTableArn

@@ -1,0 +1,13 @@
+AuctionsTableGetAuctionsIAM:
+  Effect: Allow
+  Action:
+    - dynamodb:Query
+  Resource:
+    - ${self:custom.AuctionsTable.arn}
+
+AuctionsTableUpdateAuctionsIAM:
+  Effect: Allow
+  Action:
+    - dynamodb:UpdateItem
+  Resource:
+    - ${self:custom.AuctionsTable.arn}

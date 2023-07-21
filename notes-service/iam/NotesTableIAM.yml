@@ -1,0 +1,34 @@
+PutItemNotesTableIAM:
+  Effect: Allow
+  Action:
+    - dynamodb:PutItem
+  # Resource: !GetAtt NotesTable.Arn
+  Resource: !Sub ${self:custom.NOTES_TABLE.arn}
+
+UpdateItemNotesTableIAM:
+  Effect: Allow
+  Action:
+    - dynamodb:UpdateItem
+  # Resource: !GetAtt NotesTable.Arn
+  Resource: !Sub ${self:custom.NOTES_TABLE.arn}
+
+DeleteItemNotesTableIAM:
+  Effect: Allow
+  Action:
+    - dynamodb:DeleteItem
+  # Resource: !GetAtt NotesTable.Arn
+  Resource: !Sub ${self:custom.NOTES_TABLE.arn}
+
+QueryItemNotesTableIAM:
+  Effect: Allow
+  Action:
+    - dynamodb:Query
+  # Resource: !GetAtt NotesTable.Arn
+  Resource: !Sub ${self:custom.NOTES_TABLE.arn}
+
+ScanItemNotesTableIAM:
+  Effect: Allow
+  Action:
+    - dynamodb:Scan
+  # Resource: !GetAtt NotesTable.Arn
+  Resource: !Sub ${self:custom.NOTES_TABLE.arn}
