@@ -26,7 +26,7 @@ export const submitBlog = (values, file, history) => async (dispatch) => {
   });
 
   // uploading file from client
-  const newResponse = await axios.put(uploadConfig.data.url, file, {
+  await axios.put(uploadConfig.data.url, file, {
     headers: {
       // same file type required for s3
       "Content-Type": file.type,

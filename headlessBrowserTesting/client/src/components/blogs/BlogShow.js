@@ -11,6 +11,7 @@ class BlogShow extends Component {
     if (this.props.blog.imageUrl) {
       return (
         <img
+          alt="blog"
           src={`https://asdf-images-bank.s3.me-south-1.amazonaws.com/${this.props.blog.imageUrl}`}
         />
       );

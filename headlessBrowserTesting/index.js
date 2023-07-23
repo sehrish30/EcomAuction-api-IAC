@@ -15,8 +15,6 @@ mongoose.connect(keys.mongoURI, {
   useUnifiedTopology: true,
 });
 
-const app = express();
-
 app.use(bodyParser.json());
 
 // maintaining a session on incoming requests
