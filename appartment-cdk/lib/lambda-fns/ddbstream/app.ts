@@ -3,8 +3,8 @@ import { SNSClient, PublishCommand } from "@aws-sdk/client-sns";
 
 const client = new SNSClient({ region: process.env.AWS_REGION });
 
-if(!process.env.TopicArn){
-console.log("No topic arn found")
+if (!process.env.TopicArn) {
+  console.log("No topic arn found");
 }
 
 const input = {
