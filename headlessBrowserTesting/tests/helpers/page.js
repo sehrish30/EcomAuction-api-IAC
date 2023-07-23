@@ -24,7 +24,7 @@ class CustomPage {
 
   static async build() {
     const browser = await puppeteer.launch({
-      headless: true,
+      headless: "new", // false if u want to see browser and inspect it
       // tinker around settings of vm
       args: ["--no-sandbox"],
     });

@@ -26,7 +26,7 @@ module.exports = (app) => {
 
       const fileType = req.query.fileType;
 
-      const fileExt = fileType.substring(fileType.indexOf("/") + 1);
+      const fileExt = fileType?.substring(fileType.indexOf("/") + 1) ?? "";
 
       const key = `${req.user.id}/${uuidv4()}.${fileExt}`;
 
