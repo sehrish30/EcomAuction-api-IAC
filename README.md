@@ -443,3 +443,7 @@ GSI1SK:APARTMENT#APARTMENTID#STATUS
 
 <img src="readmeimages/headles-testing.png" style="max-width: 100%; height: auto; object-fit: contain;">
 <img src="readmeimages/ciFlow.png" style="max-width: 100%; height: auto; object-fit: contain;">
+<img src="readmeimages/ci.png" style="max-width: 100%; height: auto; object-fit: contain;">
+<img src="readmeimages/s3Upload.png" style="max-width: 100%; height: auto; object-fit: contain;">
+<img src="readmeimages/s3sign.png" style="max-width: 100%; height: auto; object-fit: contain;">
+<img src="readmeimages/security.png" style="max-width: 100%; height: auto; object-fit: contain;">

@@ -19,12 +19,15 @@ module.exports = (app) => {
   });
 
   app.post("/api/blogs", requireLogin, async (req, res) => {
-    const { title, content } = req.body;
+    const { title, content, imageUrl } = req.body;
 
     const blog = new Blog({
       title,
       content,
       _user: req.user.id,
+      // only image name because u may rename ur bucket
+      // or migrate the data to some other data storage
+      imageUrl,
     });
 
     try {

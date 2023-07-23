@@ -38,6 +38,7 @@ app.use(passport.session());
 
 require("./routes/authRoutes")(app);
 require("./routes/blogRoutes")(app);
+require("./routes/uploadRoutes")(app);
 
 // make sure server starts on port 300 in CI and production environment
 if (["production", "ci"].includes(process.env.NODE_ENV)) {
